@@ -134,8 +134,16 @@
       </div>
       <div class="nav-section">Hệ thống</div>
       <div class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        Cảnh báo
+      </div>
+      <div class="nav-item">
         <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Lịch sử
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Cài đặt
       </div>
     </div>
   </div>
@@ -145,45 +153,27 @@
       <div class="page-title">Cài đặt giọng nói</div>
       <span class="badge bg"><span class="dot"></span>Micro online · Điện thoại kết nối</span>
     </div>
-    <div class="page-sub">UC07 — Nhận diện tiếng Việt tự nhiên qua micro điện thoại · Độ chính xác tối thiểu 85%</div>
+    <div class="page-sub">UC07 — Cấu hình nhận diện giọng nói · Ra lệnh trực tiếp thực hiện trên ứng dụng điện thoại</div>
 
     <div class="cols">
       <div>
-        <div class="section-label">Trạng thái micro</div>
+        <div class="section-label">Trạng thái kết nối</div>
         <div class="card" style="margin-bottom:14px">
-          <div class="mic-panel">
-            <div class="mic-ring listening">
-              <div class="mic-btn mic-listening">
-                <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-              </div>
-            </div>
-            <div class="waveform">
-              <div class="wbar" style="height:8px"></div>
-              <div class="wbar" style="height:20px"></div>
-              <div class="wbar" style="height:14px"></div>
-              <div class="wbar" style="height:28px"></div>
-              <div class="wbar" style="height:10px"></div>
-              <div class="wbar" style="height:22px"></div>
-              <div class="wbar" style="height:16px"></div>
-              <div class="wbar" style="height:26px"></div>
-              <div class="wbar" style="height:12px"></div>
-              <div class="wbar" style="height:18px"></div>
-            </div>
-            <div class="mic-status">Đang lắng nghe</div>
-            <div class="mic-sub">Phát lệnh bằng tiếng Việt<br>Nhận dạng trong vòng 3 giây</div>
-          </div>
-
-          <div class="test-box">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span class="test-text">Lệnh cuối nhận được: <span class="test-phrase">"Mở cửa"</span> — khớp 91% · Thực thi lúc 13:55:10</span>
-          </div>
-
-          <div class="divider"></div>
           <div class="stat-row"><span class="stat-key">Kết nối điện thoại</span><span class="badge bg"><span class="dot"></span>Online</span></div>
           <div class="stat-row"><span class="stat-key">Chất lượng micro</span><span class="stat-val">Tốt (-18 dB)</span></div>
           <div class="stat-row"><span class="stat-key">Ngôn ngữ</span><span class="stat-val">Tiếng Việt</span></div>
           <div class="stat-row"><span class="stat-key">Ngưỡng chấp nhận</span><span class="stat-val">≥ 85%</span></div>
           <div class="stat-row"><span class="stat-key">Timeout mỗi lần nghe</span><span class="stat-val">5 giây</span></div>
+        </div>
+
+        <div class="card" style="display:flex;align-items:center;gap:12px;padding:14px 18px;margin-bottom:14px">
+          <div style="width:36px;height:36px;border-radius:8px;background:var(--color-background-info);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--color-text-info);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:2px">Ra lệnh giọng nói trên điện thoại</div>
+            <div style="font-size:12px;color:var(--color-text-secondary)">Mở <strong>dieu_khien_giong_noi.mobile</strong> để nói "Mở cửa" hoặc "Đóng cửa"</div>
+          </div>
         </div>
 
         <div class="section-label">Cấu hình</div>
@@ -230,46 +220,6 @@
             </div>
             <div class="cmd-acc acc-g">89% tb</div>
           </div>
-          <div class="cmd-item">
-            <div class="cmd-icon ci-green">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
-            </div>
-            <div>
-              <div class="cmd-phrase">"Bật đèn"</div>
-              <div class="cmd-desc">Bật LED trắng — ghi đè tự động</div>
-            </div>
-            <div class="cmd-acc acc-g">93% tb</div>
-          </div>
-          <div class="cmd-item">
-            <div class="cmd-icon ci-gray">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
-            </div>
-            <div>
-              <div class="cmd-phrase">"Tắt đèn"</div>
-              <div class="cmd-desc">Tắt LED trắng</div>
-            </div>
-            <div class="cmd-acc acc-g">90% tb</div>
-          </div>
-          <div class="cmd-item">
-            <div class="cmd-icon ci-amber">
-              <svg viewBox="0 0 24 24"><path d="M12 2v10"/><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/></svg>
-            </div>
-            <div>
-              <div class="cmd-phrase">"Bật quạt"</div>
-              <div class="cmd-desc">Bật quạt mini — ghi đè tự động</div>
-            </div>
-            <div class="cmd-acc acc-a">86% tb</div>
-          </div>
-          <div class="cmd-item">
-            <div class="cmd-icon ci-gray">
-              <svg viewBox="0 0 24 24"><path d="M12 2v10"/><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/></svg>
-            </div>
-            <div>
-              <div class="cmd-phrase">"Tắt quạt"</div>
-              <div class="cmd-desc">Tắt quạt mini</div>
-            </div>
-            <div class="cmd-acc acc-a">85% tb</div>
-          </div>
         </div>
 
         <div class="unavail-bar">
@@ -294,24 +244,6 @@
                 <td style="font-size:12px;font-family:var(--font-mono)">"Mở cửa"</td>
                 <td><span class="badge bg">Thực thi</span></td>
                 <td style="font-size:12px;color:var(--color-text-success)">91%</td>
-              </tr>
-              <tr>
-                <td class="muted">13:20:44</td>
-                <td style="font-size:12px;font-family:var(--font-mono)">"Bật đèn"</td>
-                <td><span class="badge bg">Thực thi</span></td>
-                <td style="font-size:12px;color:var(--color-text-success)">93%</td>
-              </tr>
-              <tr>
-                <td class="muted">12:48:31</td>
-                <td style="font-size:12px;font-family:var(--font-mono)">"Tắt qu..." (nhiễu)</td>
-                <td><span class="badge bd">Thất bại</span></td>
-                <td style="font-size:12px;color:var(--color-text-danger)">62%</td>
-              </tr>
-              <tr>
-                <td class="muted">12:48:38</td>
-                <td style="font-size:12px;font-family:var(--font-mono)">"Tắt quạt"</td>
-                <td><span class="badge bg">Thực thi</span></td>
-                <td style="font-size:12px;color:var(--color-text-warning)">87%</td>
               </tr>
               <tr>
                 <td class="muted">11:10:05</td>

@@ -127,8 +127,16 @@
       </div>
       <div class="nav-section">Hệ thống</div>
       <div class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        Cảnh báo
+      </div>
+      <div class="nav-item">
         <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Lịch sử
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Cài đặt
       </div>
     </div>
   </div>
@@ -138,7 +146,7 @@
       <div class="page-title">Quản lý khuôn mặt</div>
       <span class="badge bg"><span class="dot"></span>Camera sẵn sàng · 3 khuôn mặt đã đăng ký</span>
     </div>
-    <div class="page-sub">UC06 · UC08 — Nhận diện qua camera điện thoại · Độ chính xác tối thiểu 90%</div>
+    <div class="page-sub">UC06 · UC08 — Quản lý danh sách khuôn mặt · Đăng ký mẫu mới thực hiện trên ứng dụng điện thoại</div>
 
     <div class="section-label">Khuôn mặt đã đăng ký</div>
     <div class="face-grid">
@@ -186,32 +194,21 @@
 
     <div class="cols">
       <div>
-        <div class="section-label">Quy trình đăng ký</div>
-        <div class="enroll-box">
-          <div class="stat-row">
-            <span class="stat-key">Đang đăng ký</span>
-            <span class="stat-val">Bảo Trân — thêm mẫu</span>
+        <div class="section-label">Đăng ký khuôn mặt mới</div>
+        <div class="card" style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 18px;text-align:center">
+          <div style="width:48px;height:48px;border-radius:12px;background:var(--color-background-info);display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:var(--color-text-info);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
           </div>
-          <div class="camera-frame">
-            <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            <span class="camera-label">Camera đang chờ — nhìn thẳng vào ống kính</span>
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px">Dùng ứng dụng điện thoại</div>
+            <div style="font-size:12px;color:var(--color-text-secondary)">Quy trình chụp mẫu khuôn mặt yêu cầu camera điện thoại.<br>Mở <strong>nhan_dien_khuon_mat.mobile</strong> trên điện thoại để đăng ký.</div>
           </div>
-          <div class="progress-bar"><div class="progress-fill"></div></div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-            <span style="font-size:11px;color:var(--color-text-tertiary)">Tiến độ thu mẫu</span>
-            <span style="font-size:11px;font-weight:500;color:var(--color-text-info)">3 / 5 mẫu</span>
-          </div>
-          <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:10px">Hướng dẫn: nhìn thẳng · quay trái · quay phải · ngẩng lên · cúi xuống</div>
-          <div class="step-dots">
-            <div class="sdot done"></div>
-            <div class="sdot done"></div>
-            <div class="sdot done"></div>
-            <div class="sdot active"></div>
-            <div class="sdot"></div>
-          </div>
-          <div style="display:flex;gap:8px;margin-top:10px">
-            <button class="btn-sm" style="flex:1;text-align:center;padding:8px">Hủy</button>
-            <button class="btn-sm" style="flex:1;text-align:center;padding:8px;background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)">Chụp mẫu</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
+            <span style="font-size:11px;padding:3px 8px;border-radius:99px;background:var(--color-background-tertiary);color:var(--color-text-secondary)">nhìn thẳng</span>
+            <span style="font-size:11px;padding:3px 8px;border-radius:99px;background:var(--color-background-tertiary);color:var(--color-text-secondary)">quay trái</span>
+            <span style="font-size:11px;padding:3px 8px;border-radius:99px;background:var(--color-background-tertiary);color:var(--color-text-secondary)">quay phải</span>
+            <span style="font-size:11px;padding:3px 8px;border-radius:99px;background:var(--color-background-tertiary);color:var(--color-text-secondary)">ngẩng lên</span>
+            <span style="font-size:11px;padding:3px 8px;border-radius:99px;background:var(--color-background-tertiary);color:var(--color-text-secondary)">cúi xuống</span>
           </div>
         </div>
 
