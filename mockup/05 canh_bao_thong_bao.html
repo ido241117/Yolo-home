@@ -28,7 +28,7 @@
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .page-title{font-size:16px;font-weight:500;color:var(--color-text-primary)}
 .page-sub{font-size:12px;color:var(--color-text-tertiary);margin-bottom:18px}
-.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px}
+.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:20px}
 .scard{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px}
 .scard-num{font-size:22px;font-weight:500;color:var(--color-text-primary);line-height:1}
 .scard-lbl{font-size:11px;color:var(--color-text-tertiary);margin-top:4px}
@@ -114,7 +114,7 @@
       <div class="nav-item active">
         <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
         Cảnh báo
-        <span class="nav-badge">2</span>
+        <span class="nav-badge">1</span>
       </div>
       <div class="nav-item">
         <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -130,33 +130,23 @@
   <div class="main">
     <div class="topbar">
       <div class="page-title">Cảnh báo & thông báo</div>
-      <span class="badge bd"><span class="dot"></span>2 cảnh báo đang hoạt động</span>
+      <span class="badge bd"><span class="dot"></span>1 cảnh báo đang hoạt động</span>
     </div>
     <div class="page-sub">Sự kiện được ghi nhận tự động theo thời gian thực</div>
 
     <div class="summary-grid">
       <div class="scard">
-        <div class="scard-num" style="color:var(--color-text-danger)">2</div>
+        <div class="scard-num" style="color:var(--color-text-danger)">1</div>
         <div class="scard-lbl">Đang hoạt động</div>
       </div>
       <div class="scard">
-        <div class="scard-num">7</div>
+        <div class="scard-num">5</div>
         <div class="scard-lbl">Hôm nay</div>
       </div>
       <div class="scard">
         <div class="scard-num" style="color:var(--color-text-warning)">3</div>
         <div class="scard-lbl">Xâm nhập / người lạ</div>
       </div>
-      <div class="scard">
-        <div class="scard-num" style="color:var(--color-text-danger)">4</div>
-        <div class="scard-lbl">Khí gas / môi trường</div>
-      </div>
-    </div>
-
-    <div class="active-bar">
-      <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <span class="active-bar-text">Khí gas MQ135 đang vượt ngưỡng — 420 ppm · Buzzer + LED đỏ đang kích hoạt</span>
-      <button class="ack-btn">Xác nhận</button>
     </div>
 
     <div class="filter-row">
@@ -171,24 +161,6 @@
     <div class="section-label">Feed sự kiện</div>
     <div class="feed-card">
       <div class="feed">
-
-        <div class="event">
-          <div class="event-icon ei-d">
-            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          </div>
-          <div class="event-body">
-            <div class="event-title">Nồng độ khí gas vượt ngưỡng</div>
-            <div class="event-desc">MQ135 đọc 420 ppm — vượt ngưỡng 400 ppm. Buzzer kích hoạt, LED RGB chuyển đỏ nhấp nháy.</div>
-            <div class="event-meta">
-              <span class="event-time">14:31:52</span>
-              <span class="badge bd"><span class="dot"></span>Đang hoạt động</span>
-              <span class="badge bx">UC02</span>
-            </div>
-          </div>
-          <div class="event-right">
-            <span class="badge bd">Nguy hiểm</span>
-          </div>
-        </div>
 
         <div class="event">
           <div class="event-icon ei-a">
@@ -223,24 +195,6 @@
           </div>
           <div class="event-right">
             <span class="badge ba">Cảnh báo</span>
-          </div>
-        </div>
-
-        <div class="event">
-          <div class="event-icon ei-g">
-            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          </div>
-          <div class="event-body">
-            <div class="event-title">Cảnh báo khí gas — đã giải quyết</div>
-            <div class="event-desc">Nồng độ gas trở về 310 ppm, dưới ngưỡng 400 ppm. Buzzer và LED tự động tắt sau 12 giây cảnh báo.</div>
-            <div class="event-meta">
-              <span class="event-time">13:47:05</span>
-              <span class="badge bg">Đã giải quyết</span>
-              <span class="badge bx">UC02</span>
-            </div>
-          </div>
-          <div class="event-right">
-            <span class="badge bx">Đã xử lý</span>
           </div>
         </div>
 
