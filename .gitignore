@@ -5,10 +5,17 @@ backend/**/__pycache__/
 backend/.env
 *.pyc
 
-# Node
+# Node — frontend
 frontend/node_modules/
 frontend/dist/
 frontend/.env
+
+# Node — mobile
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/android/
+mobile/ios/
 
 # Doc (internal only)
 ../doc/

@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { sendFeedData } from "../services/api";
+import { useState, useEffect, useRef } from "react";
+import { getFeeds, sendFeedData } from "../services/api";
+import { getDeviceMode, setDeviceMode } from "./ThresholdPanel";
 
 // Remote IR buttons — mapped to feed "remote"
 const IR_BUTTONS = [
@@ -88,15 +89,52 @@ function DeviceInfoCard({ icon, iconClass, title, toggleOn, onToggle, disabled, 
 }
 
 export default function ControlPanel() {
-  const [fanOn, setFanOn]   = useState(false);
-  const [ledOn, setLedOn]   = useState(true);   // HARDCODE tạm — feed led-switch chưa có
-  const [relayOn, setRelayOn] = useState(true);  // HARDCODE tạm — feed relay-switch chưa có
+  const [fanOn, setFanOn]     = useState(false);
+  const [ledOn, setLedOn]     = useState(false);
+  const [relayOn, setRelayOn] = useState(false);
+  const [currentTemp,  setCurrentTemp]  = useState(null);
+  const [currentLight, setCurrentLight] = useState(null);
+  const [fanMode,   setFanModeState]   = useState(() => getDeviceMode("fan"));
+  const [lightMode, setLightModeState] = useState(() => getDeviceMode("light"));
   const [sending, setSending] = useState({});
   const [sendError, setSendError] = useState(null);
-  const [lastCmd, setLastCmd] = useState(null);   // { btn, label, ms }
-  const [lcdLines, setLcdLines] = useState(["LED:ON  FAN:ON", "RLY:ON"]);
+  const [lastCmd, setLastCmd] = useState(null);
+  const [lcdLines, setLcdLines] = useState(["LED:OFF FAN:OFF", "RLY:OFF"]);
+
+  // Tracks which feed keys are currently being written — polling skips these
+  const pendingKeys = useRef(new Set());
+
+  useEffect(() => {
+    const fetchFeeds = async () => {
+      try {
+        const r = await getFeeds();
+        const feeds = r.data;
+        const get = (key) => feeds.find((f) => f.key === key);
+        const fanSpeed = parseFloat(get("fan-speed")?.last_value) || 0;
+        const led      = get("led-switch")?.last_value === "ON";
+        const relay    = get("relay-switch")?.last_value === "ON";
+        const temp     = parseFloat(get("temperature")?.last_value) || null;
+        const light    = parseFloat(get("signal")?.last_value) || null;
+        if (!pendingKeys.current.has("fan"))   { setFanOn(fanSpeed > 0); }
+        if (!pendingKeys.current.has("led"))   { setLedOn(led); }
+        if (!pendingKeys.current.has("relay")) { setRelayOn(relay); }
+        setCurrentTemp(temp);
+        setCurrentLight(light);
+        if (!pendingKeys.current.has("fan") && !pendingKeys.current.has("led") && !pendingKeys.current.has("relay")) {
+          setLcdLines([
+            `LED:${led ? "ON" : "OFF"}  FAN:${fanSpeed > 0 ? "ON" : "OFF"}`,
+            `RLY:${relay ? "ON" : "OFF"}`,
+          ]);
+        }
+      } catch { /* backend down */ }
+    };
+    fetchFeeds();
+    const iv = setInterval(fetchFeeds, 5000);
+    return () => clearInterval(iv);
+  }, []);
 
   const send = async (feedKey, value, key) => {
+    pendingKeys.current.add(key);
     setSending((s) => ({ ...s, [key]: true }));
     setSendError(null);
     try {
@@ -105,28 +143,38 @@ export default function ControlPanel() {
       setSendError(e);
     } finally {
       setSending((s) => ({ ...s, [key]: false }));
+      // Giữ lock thêm 10s sau khi ghi xong — Adafruit cần ~5-8s để sync last_value
+      setTimeout(() => pendingKeys.current.delete(key), 10000);
     }
+  };
+
+  const applyMode = (device, mode) => {
+    setDeviceMode(device, mode);
+    if (device === "fan")   setFanModeState(mode);
+    if (device === "light") setLightModeState(mode);
   };
 
   const handleFan = async () => {
     const next = !fanOn;
+    applyMode("fan", "manual");
     setFanOn(next);
     updateLcd({ fan: next, led: ledOn, relay: relayOn });
-    await send("fan-switch", next ? "ON" : "OFF", "fan");
+    await send("fan-speed", next ? "50" : "0", "fan");
   };
 
-  const handleLed = () => {
+  const handleLed = async () => {
     const next = !ledOn;
+    applyMode("light", "manual");
     setLedOn(next);
     updateLcd({ fan: fanOn, led: next, relay: relayOn });
-    // HARDCODE — khi có feed: send("led-switch", next ? "ON" : "OFF", "led")
+    await send("led-switch", next ? "ON" : "OFF", "led");
   };
 
-  const handleRelay = () => {
+  const handleRelay = async () => {
     const next = !relayOn;
     setRelayOn(next);
     updateLcd({ fan: fanOn, led: ledOn, relay: next });
-    // HARDCODE — khi có feed: send("relay-switch", next ? "ON" : "OFF", "relay")
+    await send("relay-switch", next ? "ON" : "OFF", "relay");
   };
 
   const updateLcd = ({ fan, led, relay }) => {
@@ -143,11 +191,21 @@ export default function ControlPanel() {
     setLastCmd({ btn: btn.label, label: btn.sub, ms });
 
     // Apply local state based on button
-    if (btn.value === "BTN_1") { setLedOn(true);  updateLcd({ fan: fanOn, led: true,  relay: relayOn }); }
-    if (btn.value === "BTN_2") { setFanOn(true);  updateLcd({ fan: true,  led: ledOn, relay: relayOn }); }
-    if (btn.value === "BTN_3") { setRelayOn(true); updateLcd({ fan: fanOn, led: ledOn, relay: true }); }
-    if (btn.value === "BTN_5") { setLedOn(true);  setFanOn(true);  setRelayOn(true);  updateLcd({ fan: true,  led: true,  relay: true  }); }
-    if (btn.value === "BTN_6") { setLedOn(false); setFanOn(false); setRelayOn(false); updateLcd({ fan: false, led: false, relay: false }); }
+    if (btn.value === "BTN_1") { applyMode("light","manual"); setLedOn(true);   updateLcd({ fan: fanOn,  led: true,  relay: relayOn }); await send("led-switch",   "ON",  "led"); }
+    if (btn.value === "BTN_2") { applyMode("fan","manual"); setFanOn(true);   updateLcd({ fan: true,   led: ledOn, relay: relayOn }); await send("fan-speed",    "50",  "fan"); }
+    if (btn.value === "BTN_3") { setRelayOn(true); updateLcd({ fan: fanOn,  led: ledOn, relay: true   }); await send("relay-switch", "ON",  "relay"); }
+    if (btn.value === "BTN_5") {
+      applyMode("fan", "manual"); applyMode("light", "manual");
+      setLedOn(true); setFanOn(true); setRelayOn(true);
+      updateLcd({ fan: true, led: true, relay: true });
+      await Promise.all([send("led-switch","ON","led"), send("fan-speed","50","fan"), send("relay-switch","ON","relay")]);
+    }
+    if (btn.value === "BTN_6") {
+      applyMode("fan", "manual"); applyMode("light", "manual");
+      setLedOn(false); setFanOn(false); setRelayOn(false);
+      updateLcd({ fan: false, led: false, relay: false });
+      await Promise.all([send("led-switch","OFF","led"), send("fan-speed","0","fan"), send("relay-switch","OFF","relay")]);
+    }
   };
 
   return (
@@ -175,10 +233,11 @@ export default function ControlPanel() {
             title="Đèn LED trắng"
             toggleOn={ledOn}
             onToggle={handleLed}
-            mode="Thủ công"
-            modeColor="#d97706"
+            disabled={sending.led}
+            mode={{ auto: "Tự động", manual: "Thủ công", ai: "AI" }[lightMode]}
+            modeColor={{ auto: "#16a34a", manual: "#d97706", ai: "#2563eb" }[lightMode]}
             rows={[
-              { label: "Ánh sáng hiện tại", value: "-- lux" },
+              { label: "Ánh sáng hiện tại", value: currentLight != null ? `${currentLight} lux` : "-- lux" },
               { label: "Ngưỡng tự động",    value: "200 lux" },
               { label: "Phím remote",        value: "BTN_1" },
             ]}
@@ -190,10 +249,10 @@ export default function ControlPanel() {
             toggleOn={fanOn}
             onToggle={handleFan}
             disabled={sending.fan}
-            mode="Tự động"
-            modeColor="#16a34a"
+            mode={{ auto: "Tự động", manual: "Thủ công", ai: "AI" }[fanMode]}
+            modeColor={{ auto: "#16a34a", manual: "#d97706", ai: "#2563eb" }[fanMode]}
             rows={[
-              { label: "Nhiệt độ hiện tại", value: "-- °C" },
+              { label: "Nhiệt độ hiện tại", value: currentTemp != null ? `${currentTemp} °C` : "-- °C" },
               { label: "Ngưỡng tự động",    value: "30°C" },
               { label: "Phím remote",        value: "BTN_2" },
             ]}
@@ -204,6 +263,7 @@ export default function ControlPanel() {
             title="Relay"
             toggleOn={relayOn}
             onToggle={handleRelay}
+            disabled={sending.relay}
             mode="Thủ công"
             modeColor="#d97706"
             rows={[

@@ -72,10 +72,11 @@ export default function Dashboard() {
   const temp      = parseFloat(getFeed("temperature")?.last_value) || null;
   const humidity  = parseFloat(getFeed("gauge")?.last_value) || null;
   const light     = parseFloat(getFeed("signal")?.last_value) || null;
-  const fanSwitch = getFeed("fan-switch");
   const fanSpeed  = getFeed("fan-speed");
 
-  const fanOn = fanSwitch?.last_value === "1" || fanSwitch?.last_value === "ON";
+  const fanOn  = parseFloat(fanSpeed?.last_value) > 0;
+  const ledOn  = getFeed("led-switch")?.last_value === "ON";
+  const relayOn = getFeed("relay-switch")?.last_value === "ON";
 
   // Progress bar percentages (capped 0-100)
   const tempPct  = temp     != null ? Math.min(100, Math.max(0, ((temp - 15) / 25) * 100)) : 0;
@@ -155,15 +156,15 @@ export default function Dashboard() {
             icon="☀"
             iconClass="device-icon-blue"
             name="Đèn LED trắng"
-            sub={`Tự động — ánh sáng đủ (${light ?? "--"} lux)`}
-            on={light != null && light < 300}
+            sub={ledOn ? "Đang bật" : `Tắt — ánh sáng đủ (${light ?? "--"} lux)`}
+            on={ledOn}
           />
           <DeviceCard
             icon="⚡"
             iconClass="device-icon-amber"
             name="Relay"
-            sub="Thủ công — đang bật"
-            on={true}
+            sub={relayOn ? "Đang bật" : "Đang tắt"}
+            on={relayOn}
           />
           <DeviceCard
             icon="⚡"

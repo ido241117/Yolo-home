@@ -1,6 +1,15 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime, timedelta
 import hashlib
+from utils.adafruit import send_feed_data
+
+
+def _push_lock_state(locked: bool, fail_count: int):
+    try:
+        send_feed_data("lock-status",    "LOCKED" if locked else "UNLOCKED")
+        send_feed_data("pin-fail-count", str(fail_count))
+    except Exception:
+        pass
 
 security_bp = Blueprint("security", __name__)
 
@@ -67,6 +76,7 @@ def pin_verify():
         _pin_log.insert(0, entry)
         if len(_pin_log) > 50:
             _pin_log.pop()
+        _push_lock_state(False, 0)
         return jsonify({"success": True, "locked": False, "fail_count": 0,
                         "message": "Mật mã đúng — cửa đã mở"})
     else:
@@ -83,6 +93,7 @@ def pin_verify():
         _pin_log.insert(0, entry)
         if len(_pin_log) > 50:
             _pin_log.pop()
+        _push_lock_state(_fail_count >= MAX_FAIL, _fail_count)
         return jsonify({
             "success": False,
             "locked": _fail_count >= MAX_FAIL,

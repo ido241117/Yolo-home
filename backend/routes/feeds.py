@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from utils.adafruit import get_feeds_from_blocks, send_feed_data, get_dashboard_blocks
+from utils.adafruit import get_feeds_from_blocks, send_feed_data, get_dashboard_blocks, get_feed_history
 
 feeds_bp = Blueprint("feeds", __name__)
 
@@ -13,12 +13,19 @@ def list_feeds():
 
 @feeds_bp.route("/feeds/<feed_key>/data", methods=["GET"])
 def feed_data(feed_key):
-    """Returns last_value only — Bong_Bong feed history is private."""
-    feeds = get_feeds_from_blocks()
-    match = next((f for f in feeds if f["key"] == feed_key), None)
-    if not match:
-        return jsonify({"error": f"Feed '{feed_key}' not found"}), 404
-    return jsonify([{"value": match["last_value"]}])
+    """Returns historical data points for a feed from Adafruit IO."""
+    limit = request.args.get("limit", 100, type=int)
+    try:
+        data = get_feed_history(feed_key, limit)
+        # Adafruit returns a list of {id, value, created_at, ...}
+        return jsonify(data if isinstance(data, list) else [])
+    except Exception as e:
+        msg = str(e)
+        if "404" in msg:
+            return jsonify({"error": "not_found", "message": f"Feed '{feed_key}' not found"}), 404
+        if "401" in msg or "403" in msg:
+            return jsonify({"error": "permission_denied", "message": "No access to this feed history"}), 403
+        return jsonify({"error": "adafruit_error", "message": msg}), 502
 
 
 @feeds_bp.route("/feeds/<feed_key>/data", methods=["POST"])

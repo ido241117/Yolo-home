@@ -219,7 +219,7 @@ export default function FacePanel() {
             ))}
             {log.length === 0 && (
               <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 8 }}>
-                (Dữ liệu mẫu — log thật từ app mobile khi có feed face-result)
+                (Dữ liệu mẫu — log thật từ app mobile gửi POST /security/face/log)
               </div>
             )}
           </div>

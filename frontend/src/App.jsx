@@ -6,6 +6,8 @@ import ThresholdPanel from "./pages/ThresholdPanel";
 import PinPanel from "./pages/PinPanel";
 import FacePanel from "./pages/FacePanel";
 import VoicePanel from "./pages/VoicePanel";
+import AlertPanel from "./pages/AlertPanel";
+import HistoryPanel from "./pages/HistoryPanel";
 import "./App.css";
 
 const NAV = [
@@ -18,24 +20,24 @@ const NAV = [
   {
     section: "THIẾT BỊ",
     items: [
-      { to: "/control",    icon: "✳", label: "Điều khiển" },
+      { to: "/control", icon: "✳", label: "Điều khiển" },
       { to: "/thresholds", icon: "⚙", label: "Ngưỡng tự động" },
     ],
   },
   {
     section: "BẢO MẬT",
     items: [
-      { to: "/pin",   icon: "🔒", label: "Mật mã" },
-      { to: "/face",  icon: "👤", label: "Khuôn mặt" },
+      { to: "/pin", icon: "🔒", label: "Mật mã" },
+      { to: "/face", icon: "👤", label: "Khuôn mặt" },
       { to: "/voice", icon: "🎤", label: "Giọng nói" },
     ],
   },
   {
     section: "HỆ THỐNG",
     items: [
-      { to: "/alerts",  icon: "🔔", label: "Cảnh báo", disabled: true },
-      { to: "/history", icon: "📈", label: "Lịch sử",  disabled: true },
-      { to: "/settings",icon: "⚙", label: "Cài đặt",  disabled: true },
+      { to: "/alerts", icon: "🔔", label: "Cảnh báo" },
+      { to: "/history", icon: "📈", label: "Lịch sử" },
+      { to: "/settings", icon: "⚙", label: "Cài đặt", disabled: true },
     ],
   },
 ];
@@ -77,13 +79,15 @@ export default function App() {
         </aside>
         <main className="main-content">
           <Routes>
-            <Route path="/"          element={<Dashboard />} />
-            <Route path="/control"   element={<ControlPanel />} />
-            <Route path="/ai"        element={<AIPanel />} />
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/control" element={<ControlPanel />} />
+            <Route path="/ai" element={<AIPanel />} />
             <Route path="/thresholds" element={<ThresholdPanel />} />
-            <Route path="/pin"       element={<PinPanel />} />
-            <Route path="/face"      element={<FacePanel />} />
-            <Route path="/voice"     element={<VoicePanel />} />
+            <Route path="/pin" element={<PinPanel />} />
+            <Route path="/face" element={<FacePanel />} />
+            <Route path="/voice" element={<VoicePanel />} />
+            <Route path="/alerts" element={<AlertPanel />} />
+            <Route path="/history" element={<HistoryPanel />} />
           </Routes>
         </main>
       </div>

@@ -4,6 +4,7 @@
 ![Protocol](https://img.shields.io/badge/Protocol-MQTT-orange)
 ![AI](https://img.shields.io/badge/AI-Google%20Teachable%20Machine-brightgreen)
 ![Language](https://img.shields.io/badge/Language-MicroPython%20%7C%20Python-yellow)
+![Mobile](https://img.shields.io/badge/Mobile-React%20Native%20Expo-9cf)
 
 ---
 
@@ -32,7 +33,8 @@
 - **Thiết bị ngoại vi:** Cảm biến DHT20, PIR, ánh sáng, màn hình LCD 1602 (I2C), động cơ RC Servo, quạt mini, LED RGB.
 
 ### 💻 Phần mềm & Hệ thống
-- **Frontend:** React 19 + Vite + Recharts
+- **Frontend Web:** React 19 + Vite + Recharts
+- **Mobile App:** React Native + Expo SDK 54 + expo-router
 - **Backend:** Python Flask + Flask-CORS + python-dotenv
 - **Cloud/IoT:** Adafruit IO (MQTT / REST API)
 - **AI:** Google Teachable Machine (khuôn mặt & giọng nói)
@@ -55,7 +57,19 @@ Yolo-home/
 │   ├── .env.example
 │   ├── src/
 │   └── package.json
-└── mockup/
+├── mobile/                  # React Native Expo — mobile app
+│   ├── app/
+│   │   ├── _layout.tsx
+│   │   └── (tabs)/
+│   │       ├── index.tsx    # Dashboard
+│   │       ├── face.tsx     # Nhận diện khuôn mặt
+│   │       ├── voice.tsx    # Điều khiển giọng nói
+│   │       └── alerts.tsx   # Cảnh báo khẩn cấp
+│   ├── services/
+│   │   └── api.ts           # ← đổi BASE_URL thành IP của máy
+│   ├── constants/Colors.ts
+│   └── package.json
+└── mockup/                  # HTML mockup tham khảo thiết kế
 ```
 
 ---
@@ -115,6 +129,37 @@ npm run dev
 
 ---
 
+### Mobile App (React Native Expo)
+
+**Yêu cầu thêm:** Cài [Expo Go](https://expo.dev/go) trên điện thoại Android/iOS.
+
+```bash
+cd mobile
+
+# 1. Cài dependencies
+npm install
+
+# 2. Đổi IP backend trong services/api.ts
+#    BASE_URL = 'http://<IP-máy-tính>:5000/api'
+#    Lấy IP: ipconfig (Windows) | ifconfig (macOS/Linux)
+#    Điện thoại và PC phải cùng mạng WiFi
+
+# 3. Chạy
+npx expo start
+# → Quét QR bằng Expo Go
+```
+
+#### 4 màn hình mobile
+
+| Tab | Chức năng | API được gọi |
+|-----|-----------|-------------|
+| Tổng quan | Sensor, thiết bị, log | _(static/polling)_ |
+| Khuôn mặt | Đăng ký + nhận diện → mở cửa | `POST /api/ai/face-recognition` |
+| Giọng nói | Nhận lệnh nói → thực thi | `POST /api/ai/voice-recognition` |
+| Cảnh báo | Gas gauge, người lạ, lịch sử | _(static/polling)_ |
+
+---
+
 ## 6. Biến môi trường
 
 ### `backend/.env`
@@ -136,7 +181,24 @@ npm run dev
 
 ---
 
-## 7. Kiến trúc hệ thống
+## 7. Chạy toàn bộ hệ thống
+
+Mở **3 terminal** riêng tại thư mục `Yolo-home/`:
+
+```bash
+# Terminal 1 — Backend
+cd backend && venv\Scripts\activate && python app.py
+
+# Terminal 2 — Frontend Web
+cd frontend && npm run dev
+
+# Terminal 3 — Mobile
+cd mobile && npx expo start
+```
+
+---
+
+## 8. Kiến trúc hệ thống
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -157,7 +219,7 @@ npm run dev
 
 ---
 
-## 8. Đội ngũ thực hiện
+## 9. Đội ngũ thực hiện
 
 | Vai trò | Trách nhiệm |
 |---------|-------------|
