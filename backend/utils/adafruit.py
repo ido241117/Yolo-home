@@ -1,14 +1,18 @@
 import os
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 AIO_USERNAME = os.getenv("ADAFRUIT_USERNAME", "Bong_Bong")
-AIO_KEY = os.getenv("ADAFRUIT_API_KEY", "<ADAFRUIT_API_KEY>")
+AIO_KEY = os.getenv("ADAFRUIT_API_KEY", "")
+DASHBOARD_KEY = os.getenv("ADAFRUIT_DASHBOARD_KEY", "nothing")
 BASE_URL = f"https://io.adafruit.com/api/v2/{AIO_USERNAME}"
 
 HEADERS = {"X-AIO-Key": AIO_KEY}
 
 
-def get_feeds_from_blocks(dashboard_key: str = "nothing"):
+def get_feeds_from_blocks(dashboard_key: str = DASHBOARD_KEY):
     """Extract feed last_value from dashboard blocks (only accessible API for Bong_Bong)."""
     blocks = get_dashboard_blocks(dashboard_key)
     if not isinstance(blocks, list):
@@ -36,7 +40,7 @@ def send_feed_data(feed_key: str, value: str):
     return r.json()
 
 
-def get_dashboard_blocks(dashboard_key: str = "nothing"):
+def get_dashboard_blocks(dashboard_key: str = DASHBOARD_KEY):
     r = requests.get(f"{BASE_URL}/dashboards/{dashboard_key}/blocks", headers=HEADERS)
     r.raise_for_status()
     return r.json()

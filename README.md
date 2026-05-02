@@ -15,49 +15,140 @@
 
 ## 2. Các tính năng cốt lõi (User Requirements)
 
-Dựa trên yêu cầu hệ thống, dự án hiện thực **5 module chức năng chính**:
-
 | # | Tính năng | Mô tả |
 |---|-----------|-------|
 | 🌡️ | **Giám sát môi trường** | Tự động đo lường nhiệt độ, độ ẩm không khí (cảm biến DHT20) và cường độ ánh sáng theo thời gian thực. |
 | 🔐 | **Cửa mật mã bảo mật** | Hệ thống khóa cửa sử dụng mật mã nhập từ Remote hồng ngoại, hỗ trợ thay đổi mật mã và quản lý trạng thái máy (biến `STATUS`). |
 | 🤖 | **Nhận diện khuôn mặt (FaceAI)** | Sử dụng mô hình Machine Learning để nhận dạng chủ nhà và tự động kích hoạt lệnh mở cửa. |
 | 🎙️ | **Trợ lý ảo giọng nói** | Điều khiển thiết bị rảnh tay bằng các khẩu lệnh tiếng Việt thông qua bộ lọc từ khóa thông minh. |
-| 🔔 | **Cảnh báo & Tự động hóa** | Tự động bật đèn khi phát hiện chuyển động (cảm biến PIR) và gửi thông báo khẩn cấp qua Telegram. |
+| 🔔 | **Cảnh báo & Tự động hóa** | Tự động bật đèn khi phát hiện chuyển động (cảm biến PIR) và gửi thông báo khẩn cấp. |
 
 ---
 
-## 3. Tech Stack (Danh sách công nghệ)
+## 3. Tech Stack
 
 ### 🔧 Phần cứng (Hardware)
-
 - **Bộ xử lý trung tâm:** Mạch lập trình Yolo:Bit (Nền tảng chip ESP32).
-- **Thiết bị ngoại vi:** Mạch mở rộng, cảm biến DHT20, cảm biến PIR, cảm biến ánh sáng, màn hình LCD 1602 (I2C), động cơ RC Servo, quạt mini và LED RGB.
+- **Thiết bị ngoại vi:** Cảm biến DHT20, PIR, ánh sáng, màn hình LCD 1602 (I2C), động cơ RC Servo, quạt mini, LED RGB.
 
-### 💻 Phần mềm & Hệ thống (Software & System)
-
-- **Ngôn ngữ lập trình:** Blockly (OhStem App), MicroPython và Python (cho IoT Gateway).
-- **Giao thức kết nối:** MQTT (Publish/Subscribe) để đồng bộ hóa dữ liệu giữa thiết bị và server.
-- **Hạ tầng Cloud:** OhStem Server (hoặc Adafruit IO) kết hợp Cơ sở dữ liệu lưu trữ lịch sử.
-- **Trí tuệ nhân tạo:** Google Teachable Machine tích hợp nhận diện hình ảnh và giọng nói.
+### 💻 Phần mềm & Hệ thống
+- **Frontend:** React 19 + Vite + Recharts
+- **Backend:** Python Flask + Flask-CORS + python-dotenv
+- **Cloud/IoT:** Adafruit IO (MQTT / REST API)
+- **AI:** Google Teachable Machine (khuôn mặt & giọng nói)
 
 ---
 
-## 4. Kiến trúc hệ thống (System Architecture)
+## 4. Cấu trúc thư mục
 
-Hệ thống được tổ chức theo cấu trúc **3 lớp**:
+```
+Yolo-home/
+├── backend/
+│   ├── .env                 # ← tạo từ .env.example (không commit)
+│   ├── .env.example
+│   ├── app.py
+│   ├── requirements.txt
+│   ├── routes/
+│   └── utils/
+├── frontend/
+│   ├── .env                 # ← tạo từ .env.example (không commit)
+│   ├── .env.example
+│   ├── src/
+│   └── package.json
+└── mockup/
+```
+
+---
+
+## 5. Hướng dẫn cài đặt & chạy
+
+### Yêu cầu
+- Python 3.10+
+- Node.js 18+
+
+---
+
+### Backend (Flask)
+
+```bash
+cd backend
+
+# 1. Tạo và kích hoạt virtual environment
+python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # macOS/Linux
+
+# 2. Cài dependencies
+pip install -r requirements.txt
+
+# 3. Tạo file .env
+copy .env.example .env       # Windows
+# cp .env.example .env       # macOS/Linux
+
+# 4. Điền thông tin Adafruit vào .env (xem mục 6)
+
+# 5. Chạy server
+python app.py
+# → http://localhost:5000
+```
+
+---
+
+### Frontend (React/Vite)
+
+```bash
+cd frontend
+
+# 1. Cài dependencies
+npm install
+
+# 2. Tạo file .env
+copy .env.example .env       # Windows
+# cp .env.example .env       # macOS/Linux
+
+# 3. Chạy dev server
+npm run dev
+# → http://localhost:5173
+```
+
+> **Lưu ý:** Frontend tự proxy `/api/*` sang `http://localhost:5000` — chỉ cần chạy cả hai cùng lúc.
+
+---
+
+## 6. Biến môi trường
+
+### `backend/.env`
+
+| Biến | Mô tả | Ví dụ |
+|------|-------|-------|
+| `ADAFRUIT_USERNAME` | Username Adafruit IO | `Bong_Bong` |
+| `ADAFRUIT_API_KEY` | API Key Adafruit IO | `aio_xxxx...` |
+| `ADAFRUIT_DASHBOARD_KEY` | Key của dashboard | `nothing` |
+| `FLASK_PORT` | Port Flask server | `5000` |
+
+### `frontend/.env`
+
+| Biến | Mô tả | Mặc định |
+|------|-------|---------|
+| `VITE_API_BASE_URL` | URL backend (dùng cho proxy) | `http://localhost:5000` |
+
+> API Key Adafruit lấy tại: **io.adafruit.com → My Key** (góc phải trên).
+
+---
+
+## 7. Kiến trúc hệ thống
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │         ☁️  Lớp ứng dụng (Cloud & App Layer)            │
-│   OhStem Dashboard · Biểu đồ lịch sử · Điều khiển xa   │
+│   Adafruit IO · React Frontend · Flask Backend          │
 └──────────────────────────┬──────────────────────────────┘
-                           │ MQTT (WiFi)
+                           │ MQTT / REST
 ┌──────────────────────────▼──────────────────────────────┐
 │          🖥️  Lớp trung gian (Gateway Layer)              │
-│   Script Python · Xử lý AI (Inference) · Serial → MQTT  │
+│   Flask · AI Inference · Adafruit API                   │
 └──────────────────────────┬──────────────────────────────┘
-                           │ Serial (USB)
+                           │ WiFi (MQTT)
 ┌──────────────────────────▼──────────────────────────────┐
 │            📡  Lớp thiết bị (Edge Layer)                 │
 │   Yolo:Bit · Cảm biến · Động cơ · Đèn · Servo           │
@@ -66,51 +157,17 @@ Hệ thống được tổ chức theo cấu trúc **3 lớp**:
 
 ---
 
-## 5. Cấu hình kênh thông tin (MQTT Topics)
-
-Để hệ thống vận hành đồng bộ, các kênh dữ liệu được phân bổ như sau:
-
-| Kênh | Loại | Mô tả |
-|------|------|-------|
-| `V1` | Cảm biến | Nhiệt độ |
-| `V2` | Cảm biến | Độ ẩm |
-| `V3` | Cảm biến | Ánh sáng |
-| `V10` | Điều khiển | Đèn |
-| `V11` | Điều khiển | Quạt |
-| `V12` | Điều khiển | Servo (khóa cửa) |
-| `V13` | Phản hồi | Kênh phản hồi của Trợ lý ảo |
-| `V14` | AI | Kết quả nhận diện FaceAI |
-
----
-
-## 6. Hướng dẫn cài đặt nhanh
-
-1. **Phần cứng:** Kết nối các thiết bị vào mạch mở rộng theo đúng sơ đồ Pinout:
-   - `P0`: LED | `P1`: IR Remote | `P2`: Cảm biến ánh sáng
-   - `P3`: PIR | `P4`: Servo | `I2C`: LCD 1602 & DHT20
-
-2. **Firmware:** Nạp chương trình khung AIoT vào Yolo:Bit thông qua trang [app.ohstem.vn](https://app.ohstem.vn).
-
-3. **Gateway:** Chạy script `gateway.py` trên máy tính để kết nối cổng USB và đăng nhập MQTT Broker:
-   ```bash
-   python gateway.py
-   ```
-
-4. **AI:** Huấn luyện mô hình tại mục **"Mô hình AI"** và liên kết với Username hệ thống.
-
----
-
-## 7. Đội ngũ thực hiện
+## 8. Đội ngũ thực hiện
 
 | Vai trò | Trách nhiệm |
 |---------|-------------|
 | 🔧 **Hardware Lead** | Kết nối mạch, sensor và logic nhúng. |
 | 🤖 **AI & Gateway Expert** | Script Python, xử lý Serial và huấn luyện mô hình ML. |
-| ☁️ **Backend Developer** | Quản trị Cloud Server, MQTT và thiết kế Database. |
-| 🎨 **Frontend Developer** | Thiết kế Dashboard UI/UX và ứng dụng giám sát. |
+| ☁️ **Backend Developer** | Flask API, Adafruit IO integration. |
+| 🎨 **Frontend Developer** | React Dashboard UI/UX. |
 
 ---
 
 <div align="center">
-  <sub>© 2024 Yolo:Home Project – Powered by OhStem & ESP32</sub>
+  <sub>© 2026 Yolo:Home Project – Powered by OhStem & ESP32</sub>
 </div>
