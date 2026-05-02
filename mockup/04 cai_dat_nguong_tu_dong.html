@@ -197,40 +197,6 @@ input[type=range]{width:100%;accent-color:var(--color-text-info)}
       </div>
     </div>
 
-    <div class="tcard">
-      <div class="tcard-header">
-        <div class="tcard-left">
-          <div class="ticon ti-red">
-            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          </div>
-          <div>
-            <div class="tcard-name">Cảnh báo khí gas — ngưỡng MQ135</div>
-            <div class="tcard-uc">UC02 · Cảm biến MQ135 · Phát hiện trong 3 giây</div>
-          </div>
-        </div>
-        <span class="badge bd"><span class="dot"></span>Đang cảnh báo — 420 ppm</span>
-      </div>
-
-      <div class="slider-block">
-        <div class="slider-top">
-          <span class="slider-lbl">Kích hoạt cảnh báo khi vượt</span>
-          <span><span class="slider-val" id="gas-val">400</span><span class="slider-unit">ppm</span></span>
-        </div>
-        <input type="range" min="100" max="1000" step="10" value="400" id="gas-slider">
-        <div class="track-labels"><span class="track-lbl">100 (nhạy)</span><span class="track-lbl">400 (mặc định)</span><span class="track-lbl">1000 (thấp)</span></div>
-      </div>
-
-      <div class="divider"></div>
-      <div class="status-row"><span class="status-key">Nồng độ hiện tại</span><span class="status-val" style="color:var(--color-text-danger)">420 ppm — vượt ngưỡng</span></div>
-      <div class="status-row"><span class="status-key">Buzzer</span><span class="badge bd"><span class="dot"></span>Đang kêu</span></div>
-      <div class="status-row"><span class="status-key">LED RGB</span><span class="badge bd"><span class="dot"></span>Đỏ nhấp nháy</span></div>
-      <div class="preview-box">
-        <div class="preview-title">Logic tự động</div>
-        <div class="preview-row"><span class="preview-cond">Gas &gt; <b id="gp-on">400</b> ppm (trong 3s)</span><span class="badge bd">Buzzer + LED đỏ</span></div>
-        <div class="preview-row"><span class="preview-cond">Gas ≤ <b id="gp-off">400</b> ppm</span><span class="badge bg">Tắt cảnh báo</span></div>
-      </div>
-    </div>
-
     <div class="save-bar">
       <button class="btn">Đặt lại mặc định</button>
       <button class="btn btn-primary">Lưu thay đổi</button>
@@ -254,7 +220,6 @@ function wire(sliderId, valId, previewOnId, previewOffId) {
 }
 wire('temp-slider','temp-val','tp-on','tp-off');
 wire('lux-slider','lux-val','lp-on','lp-off');
-wire('gas-slider','gas-val','gp-on','gp-off');
 </script>
 
 </body>
