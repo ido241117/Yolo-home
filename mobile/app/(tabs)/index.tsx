@@ -72,14 +72,13 @@ export default function DashboardScreen() {
         {/* Alert Banner */}
         <View style={s.alertBanner}>
           <Ionicons name="warning" size={16} color={Colors.danger} />
-          <Text style={s.alertText}>2 cảnh báo đang hoạt động · MQ135 + Người lạ</Text>
+          <Text style={s.alertText}>1 cảnh báo đang hoạt động · Người lạ</Text>
           <Ionicons name="chevron-forward" size={14} color={Colors.danger} />
         </View>
 
         {/* Section: Cảm biến */}
         <Text style={s.sectionLabel}>Cảm biến</Text>
         <View style={s.sensorGrid}>
-          <SensorCard label="MQ135 Khí" value="820" unit="ppm" status="danger" />
           <SensorCard label="DHT20 Nhiệt" value="32" unit="°C" status="normal" />
           <SensorCard label="DHT20 Ẩm" value="65" unit="%" status="normal" />
           <SensorCard label="PIR Cửa" value="Phát hiện" unit="" status="warning" />
@@ -119,7 +118,6 @@ export default function DashboardScreen() {
         <Text style={s.sectionLabel}>Nhật ký gần đây</Text>
         <View style={s.logWrap}>
           {[
-            { time: '14:10', desc: 'Khí gas vượt ngưỡng — 820 ppm', type: 'danger' },
             { time: '14:10', desc: 'Người lạ tại cửa — 34% tin cậy', type: 'warning' },
             { time: '13:55', desc: 'Thiên Nguyễn mở cửa — giọng nói', type: 'success' },
             { time: '13:40', desc: 'An Nguyễn mở cửa — khuôn mặt 93%', type: 'success' },

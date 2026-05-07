@@ -19,3 +19,8 @@ mobile/ios/
 
 # Doc (internal only)
 ../doc/
+adafruitdashboard.md
+
+# Logs
+backend/backend.log
+backend/backend_err.log

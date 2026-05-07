@@ -1,4 +1,5 @@
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Animated, useRef, useEffect } from 'react-native';
+import { useRef, useEffect } from 'react';
+import { ScrollView, View, Text, StyleSheet, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
@@ -27,53 +28,10 @@ export default function AlertsScreen() {
 
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
 
-        {/* ── Active Gas Alert Banner ── */}
-        <View style={s.alertBanner}>
-          <View style={s.alertBannerTop}>
-            <View style={s.alertIconLg}>
-              <Ionicons name="warning-outline" size={26} color={Colors.danger} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.alertTitle}>Phát hiện khí nguy hiểm!</Text>
-              <Text style={s.alertSub}>MQ135 — Nồng độ vượt ngưỡng an toàn</Text>
-              <Text style={s.alertTime}>14:10:03 · Buzzer đang kích hoạt · LED đỏ nhấp nháy</Text>
-            </View>
-          </View>
-
-          {/* Gas Gauge */}
-          <View style={s.gaugeWrap}>
-            <View style={s.gaugeLabelRow}>
-              <Text style={s.gaugeLabel}>Nồng độ khí (MQ135)</Text>
-              <Text style={s.gaugeValue}>820 <Text style={s.gaugeUnit}>ppm</Text></Text>
-            </View>
-            <View style={s.gaugeBarBg}>
-              <View style={[s.gaugeBarFill, { width: '82%' }]} />
-            </View>
-            <View style={s.gaugeZones}>
-              <Text style={s.gaugeZone}>0</Text>
-              <Text style={s.gaugeZone}>An toàn &lt;400</Text>
-              <Text style={s.gaugeZone}>Ngưỡng 500</Text>
-              <Text style={s.gaugeZone}>1000</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={s.actionRow}>
-          <TouchableOpacity style={s.btnDanger} activeOpacity={0.8}>
-            <Ionicons name="call-outline" size={16} color={Colors.white} />
-            <Text style={s.btnDangerText}>Khẩn cấp</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.btnDismiss} activeOpacity={0.8}>
-            <Text style={s.btnDismissText}>Đã xử lý</Text>
-          </TouchableOpacity>
-        </View>
-
         {/* Sensor Status Grid */}
         <Text style={s.sectionLabel}>Trạng thái cảm biến</Text>
         <View style={s.sensorGrid}>
           {[
-            { name: 'MQ135 Khí', val: '820', unit: 'ppm', status: 'danger' as const },
             { name: 'DHT20 Nhiệt', val: '32', unit: '°C', status: 'normal' as const },
             { name: 'DHT20 Ẩm', val: '65', unit: '%', status: 'normal' as const },
             { name: 'PIR Cửa', val: 'Phát hiện', unit: '', status: 'warning' as const },
@@ -110,11 +68,8 @@ export default function AlertsScreen() {
         <Text style={s.sectionLabel}>Lịch sử cảnh báo hôm nay</Text>
         <View style={s.logWrap}>
           {[
-            { time: '14:10', desc: 'Khí gas vượt ngưỡng — 820 ppm', type: 'danger', badge: 'Khẩn' },
             { time: '14:10', desc: 'Người lạ tại cửa — nhận diện thất bại 34%', type: 'warning', badge: 'Cảnh báo' },
             { time: '13:40', desc: 'Người lạ tại cửa — nhận diện thất bại 41%', type: 'warning', badge: 'Cảnh báo' },
-            { time: '11:00', desc: 'Khí gas trở về bình thường — 210 ppm', type: 'success', badge: 'Tự động tắt' },
-            { time: '10:55', desc: 'Khí gas vượt ngưỡng — 640 ppm', type: 'danger', badge: 'Khẩn' },
             { time: '09:00', desc: 'PIR báo động giả — không phát hiện khuôn mặt', type: 'neutral', badge: 'Auto reset' },
           ].map((log, i) => {
             const c = log.type === 'danger' ? Colors.danger : log.type === 'warning' ? Colors.warning : log.type === 'success' ? Colors.success : Colors.textTertiary;
@@ -147,42 +102,6 @@ const s = StyleSheet.create({
   barTitle: { fontSize: 16, fontWeight: '500', color: Colors.textPrimary },
   blinkDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.danger },
   content: { paddingBottom: 32 },
-
-  alertBanner: { backgroundColor: Colors.bgDanger, padding: 20, gap: 12 },
-  alertBannerTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  alertIconLg: {
-    width: 52, height: 52, borderRadius: 14,
-    backgroundColor: 'rgba(239,68,68,0.2)', borderWidth: 1.5, borderColor: Colors.borderDanger,
-    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-  },
-  alertTitle: { fontSize: 18, fontWeight: '700', color: Colors.danger },
-  alertSub: { fontSize: 13, color: Colors.danger, opacity: 0.8, marginTop: 3 },
-  alertTime: { fontSize: 11, color: Colors.danger, opacity: 0.7, marginTop: 2 },
-
-  gaugeWrap: {
-    backgroundColor: 'rgba(239,68,68,0.12)', borderWidth: 0.5, borderColor: Colors.borderDanger,
-    borderRadius: 14, padding: 14,
-  },
-  gaugeLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 8 },
-  gaugeLabel: { fontSize: 12, color: Colors.danger, fontWeight: '500' },
-  gaugeValue: { fontSize: 22, fontWeight: '700', color: Colors.danger },
-  gaugeUnit: { fontSize: 13, fontWeight: '400' },
-  gaugeBarBg: { height: 8, borderRadius: 4, backgroundColor: 'rgba(239,68,68,0.2)', overflow: 'hidden' },
-  gaugeBarFill: { height: '100%', borderRadius: 4, backgroundColor: Colors.danger },
-  gaugeZones: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 5 },
-  gaugeZone: { fontSize: 10, color: Colors.danger, opacity: 0.7 },
-
-  actionRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, paddingVertical: 16 },
-  btnDanger: {
-    flex: 1, padding: 14, borderRadius: 14, backgroundColor: Colors.danger,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-  },
-  btnDangerText: { color: Colors.white, fontSize: 14, fontWeight: '600' },
-  btnDismiss: {
-    flex: 1, padding: 14, borderRadius: 14, backgroundColor: Colors.bgSecondary,
-    borderWidth: 0.5, borderColor: Colors.borderSecondary, alignItems: 'center', justifyContent: 'center',
-  },
-  btnDismissText: { color: Colors.textSecondary, fontSize: 14, fontWeight: '500' },
 
   sectionLabel: {
     fontSize: 11, fontWeight: '500', color: Colors.textTertiary,
