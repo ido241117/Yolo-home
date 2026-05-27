@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+	<title>Rental Smart Room - Rooms Management</title>
+	<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<style>
+		body {
+			font-family: 'Inter', sans-serif;
+			background-color: #0b1326;
+			color: #dae2fd;
+		}
+
+		.material-symbols-outlined {
+			font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+			vertical-align: middle;
+		}
+
+		::-webkit-scrollbar {
+			width: 8px;
+		}
+
+		::-webkit-scrollbar-track {
+			background: #060e20;
+		}
+
+		::-webkit-scrollbar-thumb {
+			background: #2d3449;
+			border-radius: 4px;
+		}
+
+		::-webkit-scrollbar-thumb:hover {
+			background: #334155;
+		}
+
+		.custom-glass {
+			background: rgba(30, 41, 59, 0.7);
+			backdrop-filter: blur(12px);
+			border: 1px solid #334155;
+		}
+	</style>
+	<script id="tailwind-config">
+		tailwind.config = {
+			darkMode: "class",
+			theme: {
+				extend: {
+					"colors": {
+						"secondary": "#b9c7e0",
+						"on-secondary-fixed": "#0d1c2f",
+						"on-tertiary": "#571f00",
+						"primary-fixed-dim": "#c3c0ff",
+						"surface-container-lowest": "#060e20",
+						"surface-variant": "#2d3449",
+						"error-container": "#93000a",
+						"on-tertiary-container": "#ffd2be",
+						"primary": "#c3c0ff",
+						"outline-variant": "#464555",
+						"on-background": "#dae2fd",
+						"on-tertiary-fixed-variant": "#7b2f00",
+						"tertiary-fixed-dim": "#ffb695",
+						"secondary-fixed-dim": "#b9c7e0",
+						"secondary-fixed": "#d5e3fd",
+						"surface-container": "#171f33",
+						"surface-container-low": "#131b2e",
+						"inverse-surface": "#dae2fd",
+						"surface-container-high": "#222a3d",
+						"secondary-container": "#3c4a5e",
+						"on-tertiary-fixed": "#351000",
+						"surface-bright": "#31394d",
+						"surface": "#0b1326",
+						"on-primary-fixed": "#0f0069",
+						"on-primary-container": "#dad7ff",
+						"tertiary-container": "#a44100",
+						"on-error": "#690005",
+						"primary-container": "#4f46e5",
+						"inverse-primary": "#4d44e3",
+						"on-surface-variant": "#c7c4d8",
+						"surface-tint": "#c3c0ff",
+						"surface-dim": "#0b1326",
+						"on-secondary-fixed-variant": "#3a485c",
+						"on-primary-fixed-variant": "#3323cc",
+						"on-secondary": "#233144",
+						"error": "#ffb4ab",
+						"on-secondary-container": "#abb9d2",
+						"surface-container-highest": "#2d3449",
+						"background": "#0b1326",
+						"tertiary": "#ffb695",
+						"on-surface": "#dae2fd",
+						"on-error-container": "#ffdad6",
+						"primary-fixed": "#e2dfff",
+						"on-primary": "#1d00a5",
+						"outline": "#918fa1",
+						"tertiary-fixed": "#ffdbcc",
+						"inverse-on-surface": "#283044"
+					},
+					"borderRadius": {
+						"DEFAULT": "0.125rem",
+						"lg": "0.25rem",
+						"xl": "0.5rem",
+						"full": "0.75rem"
+					},
+					"spacing": {
+						"stack_gap_md": "16px",
+						"stack_gap_lg": "24px",
+						"stack_gap_sm": "8px",
+						"container_gutter": "24px",
+						"unit": "4px",
+						"card_padding": "16px",
+						"sidebar_width": "240px"
+					},
+					"fontFamily": {
+						"headline-lg": ["Inter"],
+						"display": ["Inter"],
+						"headline-md": ["Inter"],
+						"body-lg": ["Inter"],
+						"body-md": ["Inter"],
+						"headline-sm": ["Inter"],
+						"label-sm": ["Inter"],
+						"label-md": ["Inter"]
+					},
+					"fontSize": {
+						"headline-lg": ["24px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+						"display": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+						"headline-md": ["20px", { "lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+						"body-lg": ["16px", { "lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400" }],
+						"body-md": ["14px", { "lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400" }],
+						"headline-sm": ["16px", { "lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "500" }],
+						"label-sm": ["11px", { "lineHeight": "1", "letterSpacing": "0", "fontWeight": "400" }],
+						"label-md": ["12px", { "lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500" }]
+					}
+				}
+			}
+		}
+	</script>
+</head>
+
+<body class="bg-surface dark:bg-surface-dim selection:bg-primary selection:text-on-primary">
+	<!-- Sidebar Navigation -->
+	<aside
+		class="fixed h-full w-[240px] left-0 top-0 border-r border-outline-variant dark:border-outline-variant bg-surface dark:bg-surface-dim z-50 flex flex-col py-stack_gap_lg">
+		<div class="px-6 mb-10">
+			<h1 class="text-headline-md font-headline-md font-black text-primary dark:text-primary-fixed-dim">Rental
+				Smart Room</h1>
+			<p class="text-label-sm font-label-sm text-on-surface-variant opacity-70">IoT Management</p>
+		</div>
+		<nav class="flex-1 space-y-1">
+			<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-low transition-colors"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+				<span class="text-label-md font-label-md">Dashboard</span>
+			</a>
+			<a class="flex items-center gap-3 px-4 py-3 text-primary dark:text-primary-fixed-dim border-l-4 border-primary dark:border-primary-fixed-dim bg-surface-container-high dark:bg-surface-container-highest"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="door_front">door_front</span>
+				<span class="text-label-md font-label-md">Rooms</span>
+			</a>
+			<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-low transition-colors"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="group">group</span>
+				<span class="text-label-md font-label-md">Accounts</span>
+			</a>
+			<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-low transition-colors"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="notifications_active">notifications_active</span>
+				<span class="text-label-md font-label-md">Alerts</span>
+			</a>
+		</nav>
+		<div class="px-4 mb-4">
+			<button
+				class="w-full bg-primary-container text-on-primary-container py-3 px-4 rounded font-label-md flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+				onclick="toggleModal()">
+				<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+				Add Room
+			</button>
+		</div>
+		<div class="border-t border-outline-variant pt-4">
+			<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container transition-colors"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="settings">settings</span>
+				<span class="text-label-md font-label-md">Settings</span>
+			</a>
+			<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container transition-colors"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+				<span class="text-label-md font-label-md">Support</span>
+			</a>
+		</div>
+	</aside>
+	<!-- Top Navbar -->
+	<header
+		class="flex justify-between items-center h-16 px-container_gutter ml-[240px] w-[calc(100%-240px)] sticky top-0 bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline-variant z-40">
+		<div
+			class="flex items-center bg-surface-container-low border border-outline-variant rounded-full px-4 py-1 w-96">
+			<span class="material-symbols-outlined text-on-surface-variant text-lg" data-icon="search">search</span>
+			<input class="bg-transparent border-none focus:ring-0 text-body-md text-on-surface w-full"
+				placeholder="Search rooms, tenants, or devices..." type="text" />
+		</div>
+		<div class="flex items-center gap-6">
+			<button class="relative p-2 text-on-surface-variant hover:text-primary transition-colors">
+				<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+				<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+			</button>
+			<div class="flex items-center gap-3 pl-4 border-l border-outline-variant">
+				<div class="text-right">
+					<p class="text-label-md font-bold text-on-surface leading-tight">Admin System</p>
+					<p class="text-label-sm text-on-surface-variant opacity-70">Super User</p>
+				</div>
+				<img class="w-10 h-10 rounded-full border border-outline-variant object-cover"
+					data-alt="Close-up portrait of a high-tech professional male administrator in a dimly lit office environment. The lighting is dominated by cool blue and purple hues from multiple computer monitors, creating a modern and focused atmosphere. His expression is calm and confident, reflecting his role in managing complex IoT systems. The visual style is crisp, clean, and futuristic."
+					src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQ6FILKdDYJBQmSrBwlSdovBjYseCxPT5D2kyY-nESS-6Zbc8Ntg5ddTYIf0Xm9SudelYq0BLutZ60-v3UTEhVFEFBQlyU-rLSOAH_yded9TwuwLMvG6F6na6jnSBY9b_MpNuD28F6PV5Y67YMHN4j0znXYcqZaXqmO78Y_MvvDNL8FJ0D00HPIUQN54R3GLCyHfclJsb4hrRox8JVSXY1t9nxLG8_p-HIyk_5FMezghFRZ_xH0YyFdB3QWcirfzw9aK8dr1Nupb1W" />
+			</div>
+		</div>
+	</header>
+	<!-- Main Content Area -->
+	<main class="ml-[240px] p-container_gutter min-h-[calc(100vh-64px)]">
+		<!-- Page Header -->
+		<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-stack_gap_lg">
+			<div>
+				<h2 class="text-headline-lg font-headline-lg text-on-surface">Rooms Inventory</h2>
+				<p class="text-body-md text-on-surface-variant">Manage physical units, monitor real-time occupation, and
+					track sensor health.</p>
+			</div>
+			<!-- Filter Bar -->
+			<div class="flex items-center gap-2 bg-surface-container p-1 rounded-lg border border-outline-variant">
+				<button
+					class="px-4 py-1.5 rounded-md text-label-md font-label-md bg-primary-container text-on-primary-container transition-all">All</button>
+				<button
+					class="px-4 py-1.5 rounded-md text-label-md font-label-md text-on-surface-variant hover:bg-surface-container-high transition-all">Occupied</button>
+				<button
+					class="px-4 py-1.5 rounded-md text-label-md font-label-md text-on-surface-variant hover:bg-surface-container-high transition-all">Vacant</button>
+				<button
+					class="px-4 py-1.5 rounded-md text-label-md font-label-md text-on-surface-variant hover:bg-surface-container-high transition-all">Maintenance</button>
+			</div>
+		</div>
+		<!-- Table Container -->
+		<div class="bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+			<table class="w-full text-left border-collapse">
+				<thead>
+					<tr class="border-b border-outline-variant bg-surface-container-high/50">
+						<th class="px-6 py-4 text-label-md font-bold text-on-surface-variant tracking-wider uppercase">
+							Room Name</th>
+						<th class="px-6 py-4 text-label-md font-bold text-on-surface-variant tracking-wider uppercase">
+							Status</th>
+						<th class="px-6 py-4 text-label-md font-bold text-on-surface-variant tracking-wider uppercase">
+							Tenant Count</th>
+						<th class="px-6 py-4 text-label-md font-bold text-on-surface-variant tracking-wider uppercase">
+							Adafruit Account</th>
+						<th class="px-6 py-4 text-label-md font-bold text-on-surface-variant tracking-wider uppercase">
+							Last Activity</th>
+						<th
+							class="px-6 py-4 text-label-md font-bold text-on-surface-variant tracking-wider uppercase text-right">
+							Actions</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-outline-variant/30">
+					<!-- Row 1 -->
+					<tr class="hover:bg-surface-container-high transition-colors group">
+						<td class="px-6 py-5">
+							<div class="flex items-center gap-3">
+								<div
+									class="w-10 h-10 rounded bg-primary/10 flex items-center justify-center text-primary">
+									<span class="material-symbols-outlined" data-icon="meeting_room">meeting_room</span>
+								</div>
+								<div>
+									<p class="text-body-md font-bold text-on-surface">Unit 101 - Master Suite</p>
+									<p class="text-label-sm text-on-surface-variant">North Wing, Floor 1</p>
+								</div>
+							</div>
+						</td>
+						<td class="px-6 py-5">
+							<span
+								class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-sm font-label-md bg-[#3B82F6] bg-opacity-15 text-[#3B82F6]">
+								<span class="w-1.5 h-1.5 rounded-full bg-[#3B82F6] mr-2"></span>
+								Occupied
+							</span>
+						</td>
+						<td class="px-6 py-5">
+							<div class="flex -space-x-2">
+								<img class="w-7 h-7 rounded-full border-2 border-surface-container-low"
+									data-alt="Professional headshot of a diverse young professional tenant in a brightly lit modern office environment with soft focus greenery in the background."
+									src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuGbsOqO7gJdKvvAsb4e2uxCCM-dH9YjuemPEdXYospPfh5E1i4A7E41sqkKNYZeHgUdFT0r1dIkpLak5b_FNuKECJgzN-w61ddFVWOi1Rd1D0HTbyqSmXQGb1HjF7U5mxmF84Fhsv4wIqBK2o7L7cWAb9i7bkZzDdFxG_fByZJvfjT_1229aogmvPUtnGSqJdineFnom-DEVUjhYMBvMzKTHyWSZvK-58dI-euV_MroIBE8lO4lnZrBSqP51mog6d84Dgx7iqIQiW" />
+								<img class="w-7 h-7 rounded-full border-2 border-surface-container-low"
+									data-alt="Close-up portrait of a woman with a friendly expression in a modern, high-key studio setting."
+									src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1os_PV5XnBUvC1XiXK8Y18m3LRev-zD5e4Hq-KClAMxEzNaYUf0svI1dEc9TfeQCwhKdtSA-TUxuNKXGeG33GVUJ3e0OKlxUbwmtzKdR0WNzBeZ-Uf5urrikHLnyuf1avObhGrrNxjLx0jJcpXozFzyRQ6ToA-XjnsKONWnWH3UreMfpm_RRY00t48EPOvNNe0l-rhkdJoqTj-fKrZzcovh0_NQ3NkVCR-6gGPrCvOuYENgbR79JZvzCQ0fGEImoN_oiH-2xd5Rov" />
+								<div
+									class="w-7 h-7 rounded-full bg-surface-container-highest border-2 border-surface-container-low flex items-center justify-center text-[10px] text-on-surface-variant font-bold">
+									+1</div>
+							</div>
+						</td>
+						<td class="px-6 py-5">
+							<code
+								class="text-label-md text-tertiary bg-tertiary/10 px-2 py-1 rounded">ada_suite_101</code>
+						</td>
+						<td class="px-6 py-5">
+							<p class="text-body-md text-on-surface-variant">2 mins ago</p>
+							<p class="text-label-sm text-on-surface-variant/50">Temp: 22.4°C</p>
+						</td>
+						<td class="px-6 py-5 text-right">
+							<button class="text-on-surface-variant hover:text-primary p-1">
+								<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+							</button>
+						</td>
+					</tr>
+					<!-- Row 2 -->
+					<tr class="hover:bg-surface-container-high transition-colors group">
+						<td class="px-6 py-5">
+							<div class="flex items-center gap-3">
+								<div
+									class="w-10 h-10 rounded bg-primary/10 flex items-center justify-center text-primary">
+									<span class="material-symbols-outlined" data-icon="meeting_room">meeting_room</span>
+								</div>
+								<div>
+									<p class="text-body-md font-bold text-on-surface">Unit 204 - Studio A</p>
+									<p class="text-label-sm text-on-surface-variant">East Wing, Floor 2</p>
+								</div>
+							</div>
+						</td>
+						<td class="px-6 py-5">
+							<span
+								class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-sm font-label-md bg-[#22C55E] bg-opacity-15 text-[#22C55E]">
+								<span class="w-1.5 h-1.5 rounded-full bg-[#22C55E] mr-2"></span>
+								Vacant
+							</span>
+						</td>
+						<td class="px-6 py-5">
+							<p class="text-label-md text-on-surface-variant opacity-50">—</p>
+						</td>
+						<td class="px-6 py-5">
+							<code
+								class="text-label-md text-tertiary bg-tertiary/10 px-2 py-1 rounded">ada_studio_204</code>
+						</td>
+						<td class="px-6 py-5">
+							<p class="text-body-md text-on-surface-variant">15 mins ago</p>
+							<p class="text-label-sm text-on-surface-variant/50">Motion: None</p>
+						</td>
+						<td class="px-6 py-5 text-right">
+							<button class="text-on-surface-variant hover:text-primary p-1">
+								<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+							</button>
+						</td>
+					</tr>
+					<!-- Row 3 -->
+					<tr class="hover:bg-surface-container-high transition-colors group">
+						<td class="px-6 py-5">
+							<div class="flex items-center gap-3">
+								<div
+									class="w-10 h-10 rounded bg-primary/10 flex items-center justify-center text-primary">
+									<span class="material-symbols-outlined" data-icon="meeting_room">meeting_room</span>
+								</div>
+								<div>
+									<p class="text-body-md font-bold text-on-surface">Unit 305 - Penthouse</p>
+									<p class="text-label-sm text-on-surface-variant">Top Floor</p>
+								</div>
+							</div>
+						</td>
+						<td class="px-6 py-5">
+							<span
+								class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-sm font-label-md bg-[#F59E0B] bg-opacity-15 text-[#F59E0B]">
+								<span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B] mr-2"></span>
+								Maintenance
+							</span>
+						</td>
+						<td class="px-6 py-5 text-label-md text-on-surface-variant opacity-50">
+							<div class="flex -space-x-2">
+								<div
+									class="w-7 h-7 rounded-full bg-surface-container-highest border-2 border-surface-container-low flex items-center justify-center text-[10px] text-on-surface-variant font-bold">
+									<span class="material-symbols-outlined text-[14px]"
+										data-icon="engineering">engineering</span></div>
+							</div>
+						</td>
+						<td class="px-6 py-5">
+							<code
+								class="text-label-md text-tertiary bg-tertiary/10 px-2 py-1 rounded">ada_penth_305</code>
+						</td>
+						<td class="px-6 py-5">
+							<p class="text-body-md text-on-surface-variant">Just now</p>
+							<p class="text-label-sm text-on-surface-variant/50">Fault: Smart Lock</p>
+						</td>
+						<td class="px-6 py-5 text-right">
+							<button class="text-on-surface-variant hover:text-primary p-1">
+								<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+							</button>
+						</td>
+					</tr>
+					<!-- Row 4 -->
+					<tr class="hover:bg-surface-container-high transition-colors group">
+						<td class="px-6 py-5">
+							<div class="flex items-center gap-3">
+								<div
+									class="w-10 h-10 rounded bg-primary/10 flex items-center justify-center text-primary">
+									<span class="material-symbols-outlined" data-icon="meeting_room">meeting_room</span>
+								</div>
+								<div>
+									<p class="text-body-md font-bold text-on-surface">Unit 105 - Standard</p>
+									<p class="text-label-sm text-on-surface-variant">North Wing, Floor 1</p>
+								</div>
+							</div>
+						</td>
+						<td class="px-6 py-5">
+							<span
+								class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-sm font-label-md bg-[#3B82F6] bg-opacity-15 text-[#3B82F6]">
+								<span class="w-1.5 h-1.5 rounded-full bg-[#3B82F6] mr-2"></span>
+								Occupied
+							</span>
+						</td>
+						<td class="px-6 py-5">
+							<div class="flex -space-x-2">
+								<img class="w-7 h-7 rounded-full border-2 border-surface-container-low"
+									data-alt="A focused young man in a smart casual outfit, possibly a tenant or tech professional, shown in a modern urban workspace with industrial design elements and soft, warm ambient lighting."
+									src="https://lh3.googleusercontent.com/aida-public/AB6AXuCz-aFnpsASnLsIA7yNIHW3GneMQgumR_GW3yykMQc6C1tn7CRu7zOARlG52FIN6RaLKQJ1m4pQJGp0aW65iJ4Duta6MTvlqGYQneTpmTshIyJcbRU-G8qrcORSRWZvxDsSM8SX89YXzhZ-FziY9sO7CVZ0LvbmwYGfDtMaZchtTgkSK-iL0iDSATKQof_sL1I87yXQ8x0kf_GKQY1C9Z_XbiWaBn7tgxZETwu5W797wsdq5LMPyANn56qXTuTd0wny2z4KRuLeo3xU" />
+							</div>
+						</td>
+						<td class="px-6 py-5">
+							<code
+								class="text-label-md text-tertiary bg-tertiary/10 px-2 py-1 rounded">ada_std_105</code>
+						</td>
+						<td class="px-6 py-5">
+							<p class="text-body-md text-on-surface-variant">1h ago</p>
+							<p class="text-label-sm text-on-surface-variant/50">Humidity: 45%</p>
+						</td>
+						<td class="px-6 py-5 text-right">
+							<button class="text-on-surface-variant hover:text-primary p-1">
+								<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+							</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<!-- Pagination-like Footer -->
+			<div
+				class="flex items-center justify-between px-6 py-4 bg-surface-container-low border-t border-outline-variant">
+				<span class="text-label-sm text-on-surface-variant">Showing 4 of 28 rooms</span>
+				<div class="flex gap-2">
+					<button
+						class="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-container-high disabled:opacity-30"
+						disabled="">
+						<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+					</button>
+					<button
+						class="p-1.5 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-container-high">
+						<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+					</button>
+				</div>
+			</div>
+		</div>
+	</main>
+	<!-- Add Room Modal -->
+	<div class="fixed inset-0 z-[100] hidden items-center justify-center p-4" id="addRoomModal">
+		<!-- Backdrop -->
+		<div class="absolute inset-0 bg-background/80 backdrop-blur-sm" onclick="toggleModal()"></div>
+		<!-- Modal Content -->
+		<div
+			class="relative w-full max-w-md bg-surface-container-low border border-outline-variant rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+			<div
+				class="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container">
+				<h3 class="text-headline-sm font-headline-sm text-on-surface">Provision New Room</h3>
+				<button class="text-on-surface-variant hover:text-on-surface" onclick="toggleModal()">
+					<span class="material-symbols-outlined" data-icon="close">close</span>
+				</button>
+			</div>
+			<form class="p-6 space-y-4">
+				<div class="space-y-1.5">
+					<label class="text-label-md text-on-surface-variant font-bold uppercase tracking-wider">Room
+						Designation</label>
+					<input
+						class="w-full bg-surface-dim border border-outline-variant rounded px-4 py-2.5 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-on-surface-variant/30"
+						placeholder="e.g. Unit 402 - Studio" type="text" />
+				</div>
+				<div class="grid grid-cols-2 gap-4">
+					<div class="space-y-1.5">
+						<label class="text-label-md text-on-surface-variant font-bold uppercase tracking-wider">Wing /
+							Zone</label>
+						<select
+							class="w-full bg-surface-dim border border-outline-variant rounded px-4 py-2.5 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-on-surface">
+							<option>North Wing</option>
+							<option>East Wing</option>
+							<option>South Wing</option>
+							<option>West Wing</option>
+						</select>
+					</div>
+					<div class="space-y-1.5">
+						<label class="text-label-md text-on-surface-variant font-bold uppercase tracking-wider">Floor
+							Level</label>
+						<input
+							class="w-full bg-surface-dim border border-outline-variant rounded px-4 py-2.5 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-on-surface"
+							placeholder="0" type="number" />
+					</div>
+				</div>
+				<div class="space-y-1.5">
+					<label class="text-label-md text-on-surface-variant font-bold uppercase tracking-wider">Adafruit IO
+						Key</label>
+					<div class="relative">
+						<input
+							class="w-full bg-surface-dim border border-outline-variant rounded px-4 py-2.5 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-tertiary"
+							type="password" value="************************" />
+						<span
+							class="absolute right-3 top-2.5 material-symbols-outlined text-on-surface-variant cursor-pointer"
+							data-icon="visibility">visibility</span>
+					</div>
+					<p class="text-[10px] text-on-surface-variant italic">Required for sensor data telemetry
+						synchronization.</p>
+				</div>
+				<div class="pt-4 flex gap-3">
+					<button
+						class="flex-1 px-4 py-2.5 border border-outline-variant rounded text-on-surface-variant font-label-md hover:bg-surface-container-high transition-colors"
+						onclick="toggleModal()" type="button">Cancel</button>
+					<button
+						class="flex-1 px-4 py-2.5 bg-primary-container text-on-primary-container rounded font-label-md hover:opacity-90 transition-opacity"
+						type="submit">Deploy Room</button>
+				</div>
+			</form>
+		</div>
+	</div>
+	<script>
+		function toggleModal() {
+			const modal = document.getElementById('addRoomModal');
+			if (modal.classList.contains('hidden')) {
+				modal.classList.remove('hidden');
+				modal.classList.add('flex');
+			} else {
+				modal.classList.add('hidden');
+				modal.classList.remove('flex');
+			}
+		}
+
+		// Handle micro-interactions
+		document.querySelectorAll('nav a').forEach(link => {
+			link.addEventListener('mousedown', () => {
+				link.classList.add('scale-95');
+			});
+			link.addEventListener('mouseup', () => {
+				link.classList.remove('scale-95');
+			});
+		});
+
+		// Close modal on Esc key
+		window.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape') {
+				const modal = document.getElementById('addRoomModal');
+				if (modal.classList.contains('flex')) {
+					toggleModal();
+				}
+			}
+		});
+	</script>
+</body>
+
+</html>

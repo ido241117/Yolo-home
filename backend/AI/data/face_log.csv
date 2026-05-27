@@ -1,0 +1,71 @@
+timestamp,event,label,confidence,action,message
+2026-05-27 20:58:36.228381,face_register,t,,REGISTER,Saved sample 1779890316227.jpg
+2026-05-27 20:58:36.287409,face_retrain,t,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 20:58:36.393859,face_retrain,t,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 20:58:51.520106,face_insufficient_samples,t,0.0,DENY,"Chưa đủ mẫu cho t: 1/3, không mở cửa"
+2026-05-27 20:59:01.808993,face_recognition_failed,,,DENY,Không phát hiện khuôn mặt trong ảnh
+2026-05-27 20:59:11.204137,face_insufficient_samples,t,0.0,DENY,"Chưa đủ mẫu cho t: 1/3, không mở cửa"
+2026-05-27 21:00:06.382271,face_delete,t,,DELETE,Deleted 1 sample(s); removed empty model
+2026-05-27 21:00:21.277650,face_register,t,,REGISTER,Saved sample 1779890421277.jpg
+2026-05-27 21:00:21.328826,face_retrain,t,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:00:21.451824,face_retrain,t,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:00:30.551372,face_recognition_failed,,,DENY,Khuôn mặt chưa nằm đủ trong khung
+2026-05-27 21:00:41.200768,face_insufficient_samples,t,0.0,DENY,"Chưa đủ mẫu cho t: 1/3, không mở cửa"
+2026-05-27 21:03:15.586337,face_delete,t,,DELETE,Deleted 1 sample(s); removed empty model
+2026-05-27 21:04:47.972241,face_register,thien,,REGISTER,Saved sample 1779890687971.jpg
+2026-05-27 21:04:48.023106,face_retrain,thien,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:04:48.122907,face_retrain,thien,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:05:00.848855,face_insufficient_samples,thien,0.0,DENY,"Chưa đủ mẫu cho thien: 1/3, không mở cửa"
+2026-05-27 21:05:11.445417,face_insufficient_samples,thien,0.0,DENY,"Chưa đủ mẫu cho thien: 1/3, không mở cửa"
+2026-05-27 21:07:35.486373,face_register,obama_test,,REGISTER,Saved sample 1779890855485.jpg
+2026-05-27 21:07:35.513644,face_retrain,obama_test,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:07:37.620490,face_register,obama_test,,REGISTER,Saved sample 1779890857619.jpg
+2026-05-27 21:07:37.673288,face_retrain,obama_test,,TRAIN,Trained FaceAI with 2 sample(s)
+2026-05-27 21:07:39.786995,face_register,obama_test,,REGISTER,Saved sample 1779890859786.jpg
+2026-05-27 21:07:39.866890,face_retrain,obama_test,,TRAIN,Trained FaceAI with 3 sample(s)
+2026-05-27 21:07:42.039334,face_retrain,obama_test,,TRAIN,Trained FaceAI with 3 sample(s)
+2026-05-27 21:07:44.175753,face_recognized,obama_test,1.0,ALLOW,Recognized obama_test
+2026-05-27 21:07:46.315733,face_low_confidence,obama_test,0.0,DENY,"Độ tin cậy thấp, không mở cửa; distance=0.6399; max=0.1800; sample_distance=0.6399; sample_max=0.5000"
+2026-05-27 21:08:04.259802,face_recognized,obama_test,1.0,ALLOW,Recognized obama_test
+2026-05-27 21:08:06.400017,face_low_confidence,obama_test,0.0,DENY,"Độ tin cậy thấp, không mở cửa; distance=0.6399; max=0.1800; sample_distance=0.6399; sample_max=0.5000"
+2026-05-27 21:15:00.845828,face_delete,thien,,DELETE,Deleted 1 sample(s); removed empty model
+2026-05-27 21:15:24.651076,face_register,a,,REGISTER,Saved sample 1779891324650.jpg
+2026-05-27 21:15:24.705098,face_retrain,a,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:15:24.799452,face_retrain,a,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:15:37.800058,face_insufficient_samples,a,0.0,DENY,"Chưa đủ mẫu cho a: 1/3, không mở cửa"
+2026-05-27 21:16:40.074056,face_delete,a,,DELETE,Deleted 1 sample(s); removed empty model
+2026-05-27 21:16:53.224279,face_register,t,,REGISTER,Saved sample 1779891413223.jpg
+2026-05-27 21:16:53.261904,face_retrain,t,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:16:53.347217,face_retrain,t,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:16:58.489672,face_insufficient_samples,t,0.0,DENY,"Chưa đủ mẫu cho t: 1/3, không mở cửa"
+2026-05-27 21:17:04.313406,face_insufficient_samples,t,0.0,DENY,"Chưa đủ mẫu cho t: 1/3, không mở cửa"
+2026-05-27 21:17:17.232855,face_insufficient_samples,t,0.0,DENY,"Chưa đủ mẫu cho t: 1/3, không mở cửa"
+2026-05-27 21:17:43.103210,face_register,asd,,REGISTER,Saved sample 1779891463102.jpg
+2026-05-27 21:17:43.191664,face_retrain,"asd,t",,TRAIN,Trained FaceAI with 2 sample(s)
+2026-05-27 21:17:43.339968,face_retrain,"asd,t",,TRAIN,Trained FaceAI with 2 sample(s)
+2026-05-27 21:17:55.988499,face_insufficient_samples,asd,0.0,DENY,"Chưa đủ mẫu cho asd: 1/3, không mở cửa"
+2026-05-27 21:19:35.349043,face_insufficient_samples,t,0.0,DENY,"Chưa đủ mẫu cho t: 1/3, không mở cửa"
+2026-05-27 21:19:38.175808,face_retrain,t,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:19:38.176057,face_delete,asd,,DELETE,Deleted 1 sample(s) and retrained FaceAI
+2026-05-27 21:19:38.267849,face_retrain,t,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:19:38.803995,face_delete,t,,DELETE,Deleted 1 sample(s); removed empty model
+2026-05-27 21:19:50.369563,face_register,abc,,REGISTER,Saved sample 1779891590369.jpg
+2026-05-27 21:19:50.407086,face_retrain,abc,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:19:50.488188,face_retrain,abc,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:19:56.610231,face_insufficient_samples,abc,0.0,DENY,"Chưa đủ mẫu cho abc: 1/3, không mở cửa"
+2026-05-27 21:22:01.061208,face_recognized,abc,1.0,ALLOW,Recognized abc
+2026-05-27 21:22:14.093706,face_recognized,abc,1.0,ALLOW,Recognized abc
+2026-05-27 21:23:01.628642,face_delete,abc,,DELETE,Deleted 1 sample(s); removed empty model
+2026-05-27 21:23:08.866571,face_register,test,,REGISTER,Saved sample 1779891788865.jpg
+2026-05-27 21:23:08.903704,face_retrain,test,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:23:09.052884,face_retrain,test,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:23:12.987846,face_low_confidence,test,0.0,DENY,"Độ tin cậy thấp, không mở cửa; distance=0.6841; max=0.1800; sample_distance=0.6841; sample_max=0.5000"
+2026-05-27 21:23:20.572602,face_low_confidence,test,0.0,DENY,"Độ tin cậy thấp, không mở cửa; distance=0.6897; max=0.1800; sample_distance=0.6897; sample_max=0.5000"
+2026-05-27 21:23:58.739843,face_recognized,test,1.0,ALLOW,Recognized test
+2026-05-27 21:24:05.970215,face_recognized,test,1.0,ALLOW,Recognized test
+2026-05-27 21:24:12.372525,face_low_confidence,test,0.0,DENY,"Độ tin cậy thấp, không mở cửa; distance=0.6841; max=0.1800; sample_distance=0.6841; sample_max=0.5000"
+2026-05-27 21:24:13.795232,face_delete,test,,DELETE,Deleted 1 sample(s); removed empty model
+2026-05-27 21:24:29.485275,face_register,test,,REGISTER,Saved sample 1779891869484.jpg
+2026-05-27 21:24:29.538173,face_retrain,test,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:24:29.627710,face_retrain,test,,TRAIN,Trained FaceAI with 1 sample(s)
+2026-05-27 21:24:40.996980,face_low_confidence,test,0.122,DENY,"Độ tin cậy thấp, không mở cửa; distance=0.3356; max=0.1800; sample_distance=0.3356; sample_max=0.5000"

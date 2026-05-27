@@ -1,0 +1,57 @@
+# Agent-only docs
+docs/
+
+# Environment and logs
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+*.log
+*.log.*
+logs/
+**/logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev.*.log
+
+# Backend
+backend/node_modules/
+backend/dist/
+backend/coverage/
+backend/AI/.venv/
+backend/AI/__pycache__/
+backend/AI/**/__pycache__/
+backend/AI/models/*.pkl
+backend/AI/data/user_log.csv
+backend/*.yml
+backend/*.yaml
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Mobile / Expo
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+mobile/expo-env.d.ts
+mobile/.kotlin/
+mobile/.metro-health-check*
+mobile/ios/
+mobile/android/
+mobile/*.orig.*
+mobile/*.jks
+mobile/*.p8
+mobile/*.p12
+mobile/*.key
+mobile/*.mobileprovision
+mobile/*.pem
+mobile/*.tsbuildinfo
+
+# OS / editor noise
+.DS_Store
+Thumbs.db

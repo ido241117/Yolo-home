@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+	<title>Alerts &amp; History</title>
+	<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<style>
+		.material-symbols-outlined {
+			font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+		}
+
+		.pull-indicator {
+			transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+		}
+
+		.glass-card {
+			background: rgba(255, 255, 255, 0.8);
+			backdrop-filter: blur(8px);
+			-webkit-backdrop-filter: blur(8px);
+		}
+
+		body {
+			-webkit-tap-highlight-color: transparent;
+			overscroll-behavior-y: contain;
+		}
+	</style>
+	<script id="tailwind-config">
+		tailwind.config = {
+			darkMode: "class",
+			theme: {
+				extend: {
+					"colors": {
+						"on-tertiary": "#ffffff",
+						"secondary-fixed-dim": "#4ae176",
+						"primary-fixed-dim": "#c3c0ff",
+						"on-primary": "#ffffff",
+						"tertiary-fixed": "#ffddb8",
+						"primary-fixed": "#e2dfff",
+						"on-secondary-fixed-variant": "#005321",
+						"on-secondary-fixed": "#002109",
+						"error-container": "#ffdad6",
+						"on-error": "#ffffff",
+						"background": "#f8f9ff",
+						"on-secondary-container": "#007432",
+						"surface-container-lowest": "#ffffff",
+						"on-background": "#0b1c30",
+						"surface-dim": "#cbdbf5",
+						"surface-container-low": "#eff4ff",
+						"on-surface-variant": "#464555",
+						"outline-variant": "#c7c4d8",
+						"tertiary-fixed-dim": "#ffb95f",
+						"surface-container-highest": "#d3e4fe",
+						"on-tertiary-container": "#ffd4a4",
+						"inverse-on-surface": "#eaf1ff",
+						"inverse-surface": "#213145",
+						"on-error-container": "#93000a",
+						"error": "#ba1a1a",
+						"surface-bright": "#f8f9ff",
+						"on-surface": "#0b1c30",
+						"on-tertiary-fixed-variant": "#653e00",
+						"tertiary": "#684000",
+						"primary": "#3525cd",
+						"primary-container": "#4f46e5",
+						"outline": "#777587",
+						"tertiary-container": "#885500",
+						"inverse-primary": "#c3c0ff",
+						"secondary-fixed": "#6bff8f",
+						"surface-tint": "#4d44e3",
+						"on-primary-container": "#dad7ff",
+						"secondary": "#006e2f",
+						"surface-container-high": "#dce9ff",
+						"on-secondary": "#ffffff",
+						"surface-container": "#e5eeff",
+						"surface-variant": "#d3e4fe",
+						"on-primary-fixed": "#0f0069",
+						"surface": "#f8f9ff",
+						"secondary-container": "#6bff8f",
+						"on-primary-fixed-variant": "#3323cc",
+						"on-tertiary-fixed": "#2a1700"
+					},
+					"borderRadius": {
+						"DEFAULT": "0.25rem",
+						"lg": "0.5rem",
+						"xl": "0.75rem",
+						"full": "9999px"
+					},
+					"spacing": {
+						"margin-mobile": "20px",
+						"xs": "4px",
+						"xl": "32px",
+						"md": "16px",
+						"sm": "8px",
+						"unit": "4px",
+						"lg": "24px",
+						"gutter": "16px"
+					},
+					"fontFamily": {
+						"display-lg": ["Inter"],
+						"sensor-value": ["Inter"],
+						"body-lg": ["Inter"],
+						"headline-md": ["Inter"],
+						"headline-lg": ["Inter"],
+						"body-md": ["Inter"],
+						"label-md": ["Inter"]
+					},
+					"fontSize": {
+						"display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+						"sensor-value": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+						"body-lg": ["17px", { "lineHeight": "24px", "fontWeight": "400" }],
+						"headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+						"headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+						"body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+						"label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }]
+					}
+				},
+			},
+		}
+	</script>
+	<style>
+		body {
+			min-height: max(884px, 100dvh);
+		}
+	</style>
+</head>
+
+<body class="bg-background text-on-surface font-body-md selection:bg-primary-fixed-dim">
+	<!-- Top App Bar -->
+	<header class="bg-surface dark:bg-surface w-full top-0 sticky z-40 transition-opacity duration-200">
+		<div class="flex justify-between items-center px-margin-mobile py-md w-full">
+			<div class="flex items-center gap-md">
+				<div
+					class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden border border-outline-variant">
+					<img alt="User Profile" class="w-full h-full object-cover"
+						src="https://lh3.googleusercontent.com/aida-public/AB6AXuABniwA5xeTNpqHfTgxZtm1h5ueesm_dcaVfvxp-QETeI2UW5qZxI3JNnUkpkzFTtaqxNdvSZPlRV9chvez5f9QBrp4w226xvLFehIu_FBBJPwxznwn34GoYF7rJSgRRnjjzGFtm4ACYvgQH1p8vhZ50RUN89BubKqPolQ9iVSIf4diRh6ScZhaEJo4T2mosuwhGGXJXO-v7PkokL6qK2qFWT7Jf-FEm8fdQ3u9Jbyk82mNDumaM9LZmnKDQ1P3-IM3yiEjKJfMmnc" />
+				</div>
+				<h1 class="font-headline-lg text-headline-lg text-primary dark:text-primary-fixed-dim font-bold">Alerts
+				</h1>
+			</div>
+			<button class="text-primary dark:text-primary-fixed-dim hover:opacity-80 transition-opacity duration-200">
+				<span class="material-symbols-outlined text-[28px]">notifications</span>
+			</button>
+		</div>
+	</header>
+	<!-- Main Content Canvas -->
+	<main class="min-h-screen pb-32">
+		<!-- Pull to Refresh Visual Cue -->
+		<div class="flex justify-center items-center py-sm opacity-60" id="pull-refresh">
+			<div class="flex items-center gap-xs text-on-surface-variant">
+				<span class="material-symbols-outlined animate-bounce text-[20px]">keyboard_double_arrow_down</span>
+				<span class="font-label-md text-label-md">Last updated 1m ago</span>
+			</div>
+		</div>
+		<!-- Segmented Tabs -->
+		<section class="px-margin-mobile mb-lg">
+			<div class="bg-surface-container-low p-1 rounded-xl flex items-center gap-1">
+				<button
+					class="flex-1 py-2 px-1 text-center rounded-lg font-label-md text-label-md bg-white shadow-sm text-primary transition-all duration-200"
+					onclick="switchTab(this, 'all')">
+					Device Events
+				</button>
+				<button
+					class="flex-1 py-2 px-1 text-center rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container transition-all duration-200"
+					onclick="switchTab(this, 'door')">
+					Door Access
+				</button>
+				<button
+					class="flex-1 py-2 px-1 text-center rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container transition-all duration-200"
+					onclick="switchTab(this, 'sensor')">
+					Sensor Alerts
+				</button>
+			</div>
+		</section>
+		<!-- History List -->
+		<section class="px-margin-mobile space-y-md">
+			<!-- Group Header -->
+			<h2 class="font-label-md text-label-md text-on-surface-variant px-1">TODAY</h2>
+			<!-- Event Card: Door Unlocked -->
+			<div
+				class="glass-card p-md rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] flex items-center gap-md border border-white active:scale-95 transition-transform duration-150">
+				<div class="w-12 h-12 rounded-full bg-primary-fixed text-primary flex items-center justify-center">
+					<span class="material-symbols-outlined">face</span>
+				</div>
+				<div class="flex-1">
+					<div class="flex justify-between items-start">
+						<h3 class="font-headline-md text-body-lg font-semibold">Door Unlocked via Face</h3>
+						<span class="font-label-md text-label-md text-outline">10:45 AM</span>
+					</div>
+					<p class="font-body-md text-on-surface-variant">Entry granted for Main User</p>
+				</div>
+			</div>
+			<!-- Event Card: Temp Warning -->
+			<div
+				class="glass-card p-md rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] flex items-center gap-md border border-white active:scale-95 transition-transform duration-150">
+				<div class="w-12 h-12 rounded-full bg-tertiary-fixed text-tertiary flex items-center justify-center">
+					<span class="material-symbols-outlined">thermostat</span>
+				</div>
+				<div class="flex-1">
+					<div class="flex justify-between items-start">
+						<h3 class="font-headline-md text-body-lg font-semibold text-tertiary">Temp high (32°C)</h3>
+						<span class="font-label-md text-label-md text-outline">09:30 AM</span>
+					</div>
+					<p class="font-body-md text-on-surface-variant">Living room thermostat exceeded limit</p>
+					<div
+						class="mt-xs inline-flex items-center gap-xs px-2 py-0.5 bg-tertiary-fixed-dim/20 rounded-full">
+						<div class="w-1.5 h-1.5 bg-tertiary rounded-full animate-pulse"></div>
+						<span class="text-[11px] font-bold text-tertiary uppercase tracking-wider">Amber Warning</span>
+					</div>
+				</div>
+			</div>
+			<!-- Event Card: Light ON -->
+			<div
+				class="glass-card p-md rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] flex items-center gap-md border border-white active:scale-95 transition-transform duration-150">
+				<div class="w-12 h-12 rounded-full bg-secondary-fixed text-secondary flex items-center justify-center">
+					<span class="material-symbols-outlined">lightbulb</span>
+				</div>
+				<div class="flex-1">
+					<div class="flex justify-between items-start">
+						<h3 class="font-headline-md text-body-lg font-semibold">Light turned ON</h3>
+						<span class="font-label-md text-label-md text-outline">08:15 AM</span>
+					</div>
+					<p class="font-body-md text-on-surface-variant">Entrance Hallway • Motion Trigger</p>
+				</div>
+			</div>
+			<!-- Group Header -->
+			<h2 class="font-label-md text-label-md text-on-surface-variant px-1 pt-4">YESTERDAY</h2>
+			<!-- Event Card: Security System -->
+			<div
+				class="glass-card p-md rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] flex items-center gap-md border border-white opacity-80">
+				<div
+					class="w-12 h-12 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center">
+					<span class="material-symbols-outlined">shield</span>
+				</div>
+				<div class="flex-1">
+					<div class="flex justify-between items-start">
+						<h3 class="font-headline-md text-body-lg font-semibold">Security Armed</h3>
+						<span class="font-label-md text-label-md text-outline">11:00 PM</span>
+					</div>
+					<p class="font-body-md text-on-surface-variant">System set to 'Away' mode</p>
+				</div>
+			</div>
+		</section>
+	</main>
+	<!-- Bottom Navigation Bar -->
+	<nav
+		class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 pb-8 pt-2 bg-surface/85 dark:bg-surface/85 backdrop-blur-md shadow-md rounded-t-xl">
+		<!-- Home -->
+		<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:scale-90 transition-transform duration-150"
+			href="#">
+			<span class="material-symbols-outlined">home</span>
+			<span class="font-label-md text-label-md">Home</span>
+		</a>
+		<!-- Identity -->
+		<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:scale-90 transition-transform duration-150"
+			href="#">
+			<span class="material-symbols-outlined">face</span>
+			<span class="font-label-md text-label-md">Identity</span>
+		</a>
+		<!-- Alerts (Active) -->
+		<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-1.5 scale-95 active:scale-90 transition-transform duration-150"
+			href="#">
+			<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">notifications</span>
+			<span class="font-label-md text-label-md">Alerts</span>
+		</a>
+		<!-- Profile -->
+		<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors scale-95 active:scale-90 transition-transform duration-150"
+			href="#">
+			<span class="material-symbols-outlined">person</span>
+			<span class="font-label-md text-label-md">Profile</span>
+		</a>
+	</nav>
+	<script>
+		function switchTab(el, type) {
+			const buttons = el.parentElement.querySelectorAll('button');
+			buttons.forEach(btn => {
+				btn.classList.remove('bg-white', 'shadow-sm', 'text-primary');
+				btn.classList.add('text-on-surface-variant');
+			});
+			el.classList.add('bg-white', 'shadow-sm', 'text-primary');
+			el.classList.remove('text-on-surface-variant');
+
+			// Haptic-like feedback
+			if (window.navigator.vibrate) {
+				window.navigator.vibrate(5);
+			}
+		}
+
+		// Simple pull-to-refresh simulation logic
+		let startY = 0;
+		const refreshElem = document.getElementById('pull-refresh');
+
+		document.addEventListener('touchstart', e => {
+			startY = e.touches[0].pageY;
+		});
+
+		document.addEventListener('touchmove', e => {
+			const y = e.touches[0].pageY;
+			if (window.scrollY === 0 && y > startY) {
+				const diff = (y - startY) / 3;
+				refreshElem.style.transform = `translateY(${Math.min(diff, 40)}px)`;
+			}
+		});
+
+		document.addEventListener('touchend', () => {
+			refreshElem.style.transform = 'translateY(0px)';
+		});
+	</script>
+</body>
+
+</html>

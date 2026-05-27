@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+	<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<style>
+		body {
+			font-family: 'Inter', sans-serif;
+			background-color: #0b1326;
+		}
+
+		.material-symbols-outlined {
+			font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+		}
+
+		.custom-scrollbar::-webkit-scrollbar {
+			width: 6px;
+		}
+
+		.custom-scrollbar::-webkit-scrollbar-track {
+			background: #0b1326;
+		}
+
+		.custom-scrollbar::-webkit-scrollbar-thumb {
+			background: #334155;
+			border-radius: 10px;
+		}
+	</style>
+	<script id="tailwind-config">
+		tailwind.config = {
+			darkMode: "class",
+			theme: {
+				extend: {
+					"colors": {
+						"secondary": "#b9c7e0",
+						"on-secondary-fixed": "#0d1c2f",
+						"on-tertiary": "#571f00",
+						"primary-fixed-dim": "#c3c0ff",
+						"surface-container-lowest": "#060e20",
+						"surface-variant": "#2d3449",
+						"error-container": "#93000a",
+						"on-tertiary-container": "#ffd2be",
+						"primary": "#c3c0ff",
+						"outline-variant": "#464555",
+						"on-background": "#dae2fd",
+						"on-tertiary-fixed-variant": "#7b2f00",
+						"tertiary-fixed-dim": "#ffb695",
+						"secondary-fixed-dim": "#b9c7e0",
+						"secondary-fixed": "#d5e3fd",
+						"surface-container": "#171f33",
+						"surface-container-low": "#131b2e",
+						"inverse-surface": "#dae2fd",
+						"surface-container-high": "#222a3d",
+						"secondary-container": "#3c4a5e",
+						"on-tertiary-fixed": "#351000",
+						"surface-bright": "#31394d",
+						"surface": "#0b1326",
+						"on-primary-fixed": "#0f0069",
+						"on-primary-container": "#dad7ff",
+						"tertiary-container": "#a44100",
+						"on-error": "#690005",
+						"primary-container": "#4f46e5",
+						"inverse-primary": "#4d44e3",
+						"on-surface-variant": "#c7c4d8",
+						"surface-tint": "#c3c0ff",
+						"surface-dim": "#0b1326",
+						"on-secondary-fixed-variant": "#3a485c",
+						"on-primary-fixed-variant": "#3323cc",
+						"on-secondary": "#233144",
+						"error": "#ffb4ab",
+						"on-secondary-container": "#abb9d2",
+						"surface-container-highest": "#2d3449",
+						"background": "#0b1326",
+						"tertiary": "#ffb695",
+						"on-surface": "#dae2fd",
+						"on-error-container": "#ffdad6",
+						"primary-fixed": "#e2dfff",
+						"on-primary": "#1d00a5",
+						"outline": "#918fa1",
+						"tertiary-fixed": "#ffdbcc",
+						"inverse-on-surface": "#283044"
+					},
+					"borderRadius": {
+						"DEFAULT": "0.125rem",
+						"lg": "0.25rem",
+						"xl": "0.5rem",
+						"full": "0.75rem"
+					},
+					"spacing": {
+						"stack_gap_md": "16px",
+						"stack_gap_lg": "24px",
+						"stack_gap_sm": "8px",
+						"container_gutter": "24px",
+						"unit": "4px",
+						"card_padding": "16px",
+						"sidebar_width": "240px"
+					},
+					"fontFamily": {
+						"headline-lg": ["Inter"],
+						"display": ["Inter"],
+						"headline-md": ["Inter"],
+						"body-lg": ["Inter"],
+						"body-md": ["Inter"],
+						"headline-sm": ["Inter"],
+						"label-sm": ["Inter"],
+						"label-md": ["Inter"]
+					},
+					"fontSize": {
+						"headline-lg": ["24px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+						"display": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+						"headline-md": ["20px", { "lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+						"body-lg": ["16px", { "lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400" }],
+						"body-md": ["14px", { "lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400" }],
+						"headline-sm": ["16px", { "lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "500" }],
+						"label-sm": ["11px", { "lineHeight": "1", "letterSpacing": "0", "fontWeight": "400" }],
+						"label-md": ["12px", { "lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500" }],
+					}
+				},
+			},
+		}
+	</script>
+</head>
+
+<body class="bg-background text-on-background min-h-screen">
+	<!-- SideNavBar Anchor -->
+	<aside
+		class="fixed h-full w-[240px] left-0 top-0 border-r border-outline-variant bg-surface flex flex-col py-stack_gap_lg z-50">
+		<div class="px-6 mb-8">
+			<h1 class="text-headline-md font-headline-md font-black text-primary">Rental Smart Room</h1>
+			<p class="text-label-sm font-label-sm text-on-surface-variant opacity-70">IoT Management</p>
+		</div>
+		<nav class="flex-1 space-y-1">
+			<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+				<span class="text-label-md font-label-md">Dashboard</span>
+			</a>
+			<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="door_front">door_front</span>
+				<span class="text-label-md font-label-md">Rooms</span>
+			</a>
+			<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="group">group</span>
+				<span class="text-label-md font-label-md">Accounts</span>
+			</a>
+			<!-- ACTIVE: Alerts -->
+			<a class="flex items-center gap-3 px-4 py-3 text-primary border-l-4 border-primary bg-surface-container-high transition-opacity opacity-90"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="notifications_active"
+					style="font-variation-settings: 'FILL' 1;">notifications_active</span>
+				<span class="text-label-md font-label-md">Alerts</span>
+			</a>
+		</nav>
+		<div class="mt-auto px-4 space-y-1">
+			<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="settings">settings</span>
+				<span class="text-label-md font-label-md">Settings</span>
+			</a>
+			<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+				<span class="text-label-md font-label-md">Support</span>
+			</a>
+			<div class="pt-6 px-4">
+				<div class="flex items-center gap-3">
+					<div
+						class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant">
+						<img alt="User profile picture" class="w-full h-full object-cover"
+							src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtY6mhtgD-E4L48EQlGoUe5fw8nzcCHA0uOl0-R9LXgVLB_6_TiJBCXKq7G_BvpKeref9iJb6yUogVqUckgHagJHAMe0Z20A8_kMO8BwPOTj-_A5FOnmZuBZD7VV6Rn65qfaJ_SmwUPKV-YRy9BTRyQU_lCQlepQVsUdCgbuszJ1MnpDVGlXYuGgQonKWGy6TXwhACNvGHkNgv552uaAOosW4YfvY53sOZizad-Nky-YrVV6USMJSBVFWxw1NuQGKbFAhdQ7UXrKng" />
+					</div>
+					<div class="overflow-hidden">
+						<p class="text-label-md font-label-md truncate">Admin User</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</aside>
+	<!-- Main Canvas -->
+	<main class="ml-[240px] w-[calc(100%-240px)] min-h-screen flex flex-col">
+		<!-- TopNavBar Anchor -->
+		<header
+			class="sticky top-0 z-40 bg-surface border-b border-outline-variant flex justify-between items-center h-16 px-container_gutter">
+			<div class="flex items-center gap-6">
+				<div class="relative">
+					<span
+						class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]"
+						data-icon="search">search</span>
+					<input
+						class="bg-surface-container-low border border-outline-variant rounded-lg pl-10 pr-4 py-1.5 text-body-md focus:outline-none focus:border-primary w-64 transition-all"
+						placeholder="Search alerts..." type="text" />
+				</div>
+			</div>
+			<div class="flex items-center gap-4">
+				<button
+					class="bg-primary-container text-on-primary-container px-4 py-2 rounded font-label-md hover:opacity-90 active:scale-95 transition-all">
+					Add New
+				</button>
+				<div class="flex items-center gap-2 border-l border-outline-variant pl-4">
+					<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+						<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+					</button>
+					<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+						<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+					</button>
+				</div>
+			</div>
+		</header>
+		<!-- Content Area -->
+		<div class="p-stack_gap_lg flex flex-col gap-stack_gap_lg flex-1">
+			<!-- Page Header & Stats -->
+			<div class="flex justify-between items-end">
+				<div>
+					<h2 class="text-headline-lg font-headline-lg text-on-surface mb-1">Alerts History</h2>
+					<p class="text-body-md text-on-surface-variant">Review and manage recent sensor triggers and system
+						warnings.</p>
+				</div>
+				<div class="flex gap-4">
+					<div
+						class="bg-surface-container border border-outline-variant px-4 py-2 rounded-lg flex items-center gap-3">
+						<span class="material-symbols-outlined text-error" data-icon="warning">warning</span>
+						<div>
+							<p class="text-label-sm text-on-surface-variant">Unresolved</p>
+							<p class="text-headline-sm font-headline-sm text-error">12</p>
+						</div>
+					</div>
+					<div
+						class="bg-surface-container border border-outline-variant px-4 py-2 rounded-lg flex items-center gap-3">
+						<span class="material-symbols-outlined text-green-400"
+							data-icon="check_circle">check_circle</span>
+						<div>
+							<p class="text-label-sm text-on-surface-variant">Acknowledged</p>
+							<p class="text-headline-sm font-headline-sm text-on-surface">148</p>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Filter Bar -->
+			<div
+				class="bg-surface-container-low border border-outline-variant p-4 rounded-xl flex flex-wrap items-center gap-4">
+				<div class="flex items-center gap-2">
+					<span class="text-label-md text-on-surface-variant uppercase tracking-wider">Filter by:</span>
+				</div>
+				<div class="flex items-center gap-3">
+					<!-- Room Selector -->
+					<div class="relative group">
+						<select
+							class="appearance-none bg-surface-container border border-outline-variant text-on-surface text-body-md rounded-lg px-4 py-2 pr-10 focus:outline-none focus:border-primary cursor-pointer w-48">
+							<option>All Rooms</option>
+							<option>Master Suite 101</option>
+							<option>Deluxe Room 204</option>
+							<option>Lounge North</option>
+							<option>Storage 02</option>
+						</select>
+						<span
+							class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant"
+							data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+					</div>
+					<!-- Time Range Picker -->
+					<div class="relative group">
+						<select
+							class="appearance-none bg-surface-container border border-outline-variant text-on-surface text-body-md rounded-lg px-4 py-2 pr-10 focus:outline-none focus:border-primary cursor-pointer w-48">
+							<option>Last 24 Hours</option>
+							<option>Last 7 Days</option>
+							<option>Last 30 Days</option>
+							<option>Custom Range</option>
+						</select>
+						<span
+							class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant"
+							data-icon="calendar_month">calendar_month</span>
+					</div>
+				</div>
+				<div class="flex-1"></div>
+				<button class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors">
+					<span class="material-symbols-outlined text-[20px]" data-icon="filter_list">filter_list</span>
+					<span class="text-label-md">Clear Filters</span>
+				</button>
+			</div>
+			<!-- Alert List Table -->
+			<div
+				class="bg-surface-container border border-outline-variant rounded-xl overflow-hidden flex-1 flex flex-col">
+				<div class="overflow-x-auto custom-scrollbar">
+					<table class="w-full text-left border-collapse">
+						<thead>
+							<tr class="bg-surface-container-high border-b border-outline-variant">
+								<th
+									class="px-6 py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">
+									Timestamp</th>
+								<th
+									class="px-6 py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">
+									Room</th>
+								<th
+									class="px-6 py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">
+									Sensor Type</th>
+								<th
+									class="px-6 py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-center">
+									Value</th>
+								<th
+									class="px-6 py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">
+									Status</th>
+								<th
+									class="px-6 py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">
+									Action</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-outline-variant/30">
+							<!-- High Visibility Alert Row -->
+							<tr class="hover:bg-surface-container-high transition-colors group">
+								<td class="px-6 py-4">
+									<div class="flex flex-col">
+										<span class="text-body-md font-medium text-on-surface">Oct 24, 2023</span>
+										<span class="text-label-sm text-on-surface-variant">14:32:05</span>
+									</div>
+								</td>
+								<td class="px-6 py-4">
+									<div class="flex items-center gap-2">
+										<span class="w-2 h-2 rounded-full bg-error"></span>
+										<span class="text-body-md text-on-surface">Master Suite 101</span>
+									</div>
+								</td>
+								<td class="px-6 py-4">
+									<div class="flex items-center gap-2 text-on-surface">
+										<span class="material-symbols-outlined text-[18px]"
+											data-icon="person">person</span>
+										<span class="text-body-md">Human Motion</span>
+									</div>
+								</td>
+								<td class="px-6 py-4 text-center">
+									<span
+										class="bg-green-500/15 text-green-400 text-label-md px-2 py-0.5 rounded border border-green-500/30">1</span>
+								</td>
+								<td class="px-6 py-4">
+									<span
+										class="inline-flex items-center px-2 py-1 rounded-full text-label-sm bg-error/10 text-error border border-error/20 font-medium">
+										Unresolved
+									</span>
+								</td>
+								<td class="px-6 py-4 text-right">
+									<button
+										class="text-primary hover:bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-lg text-label-md transition-all active:scale-95"
+										onclick="this.closest('tr').classList.add('opacity-40'); this.disabled=true; this.innerHTML='Acknowledged'">
+										Mark as Acknowledged
+									</button>
+								</td>
+							</tr>
+							<!-- Row 2 -->
+							<tr class="hover:bg-surface-container-high transition-colors group">
+								<td class="px-6 py-4">
+									<div class="flex flex-col">
+										<span class="text-body-md font-medium text-on-surface">Oct 24, 2023</span>
+										<span class="text-label-sm text-on-surface-variant">14:15:12</span>
+									</div>
+								</td>
+								<td class="px-6 py-4">
+									<div class="flex items-center gap-2">
+										<span class="w-2 h-2 rounded-full bg-error"></span>
+										<span class="text-body-md text-on-surface">Lounge North</span>
+									</div>
+								</td>
+								<td class="px-6 py-4">
+									<div class="flex items-center gap-2 text-on-surface">
+										<span class="material-symbols-outlined text-[18px]"
+											data-icon="person">person</span>
+										<span class="text-body-md">Human Presence</span>
+									</div>
+								</td>
+								<td class="px-6 py-4 text-center">
+									<span
+										class="bg-green-500/15 text-green-400 text-label-md px-2 py-0.5 rounded border border-green-500/30">1</span>
+								</td>
+								<td class="px-6 py-4">
+									<span
+										class="inline-flex items-center px-2 py-1 rounded-full text-label-sm bg-error/10 text-error border border-error/20 font-medium">
+										Unresolved
+									</span>
+								</td>
+								<td class="px-6 py-4 text-right">
+									<button
+										class="text-primary hover:bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-lg text-label-md transition-all active:scale-95">
+										Mark as Acknowledged
+									</button>
+								</td>
+							</tr>
+							<!-- Acknowledged Row -->
+							<tr class="hover:bg-surface-container-high transition-colors group">
+								<td class="px-6 py-4 opacity-60">
+									<div class="flex flex-col">
+										<span class="text-body-md font-medium text-on-surface">Oct 24, 2023</span>
+										<span class="text-label-sm text-on-surface-variant">12:10:44</span>
+									</div>
+								</td>
+								<td class="px-6 py-4 opacity-60">
+									<div class="flex items-center gap-2">
+										<span class="w-2 h-2 rounded-full bg-green-500"></span>
+										<span class="text-body-md text-on-surface">Deluxe Room 204</span>
+									</div>
+								</td>
+								<td class="px-6 py-4 opacity-60">
+									<div class="flex items-center gap-2 text-on-surface">
+										<span class="material-symbols-outlined text-[18px]"
+											data-icon="person">person</span>
+										<span class="text-body-md">Human Motion</span>
+									</div>
+								</td>
+								<td class="px-6 py-4 text-center opacity-60">
+									<span
+										class="bg-slate-500/15 text-slate-400 text-label-md px-2 py-0.5 rounded border border-slate-500/30">0</span>
+								</td>
+								<td class="px-6 py-4">
+									<span
+										class="inline-flex items-center px-2 py-1 rounded-full text-label-sm bg-green-500/10 text-green-400 border border-green-500/20 font-medium">
+										Acknowledged
+									</span>
+								</td>
+								<td class="px-6 py-4 text-right">
+									<div class="text-on-surface-variant text-label-sm italic">Resolved by Admin</div>
+								</td>
+							</tr>
+							<!-- Row 4 -->
+							<tr class="hover:bg-surface-container-high transition-colors group">
+								<td class="px-6 py-4">
+									<div class="flex flex-col">
+										<span class="text-body-md font-medium text-on-surface">Oct 24, 2023</span>
+										<span class="text-label-sm text-on-surface-variant">11:55:01</span>
+									</div>
+								</td>
+								<td class="px-6 py-4">
+									<div class="flex items-center gap-2">
+										<span class="w-2 h-2 rounded-full bg-error"></span>
+										<span class="text-body-md text-on-surface">Storage 02</span>
+									</div>
+								</td>
+								<td class="px-6 py-4">
+									<div class="flex items-center gap-2 text-on-surface">
+										<span class="material-symbols-outlined text-[18px]"
+											data-icon="person">person</span>
+										<span class="text-body-md">Unauthorized Entry</span>
+									</div>
+								</td>
+								<td class="px-6 py-4 text-center">
+									<span
+										class="bg-green-500/15 text-green-400 text-label-md px-2 py-0.5 rounded border border-green-500/30">1</span>
+								</td>
+								<td class="px-6 py-4">
+									<span
+										class="inline-flex items-center px-2 py-1 rounded-full text-label-sm bg-error/10 text-error border border-error/20 font-medium">
+										Unresolved
+									</span>
+								</td>
+								<td class="px-6 py-4 text-right">
+									<button
+										class="text-primary hover:bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-lg text-label-md transition-all active:scale-95">
+										Mark as Acknowledged
+									</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<!-- Table Footer / Pagination -->
+				<div
+					class="mt-auto border-t border-outline-variant px-6 py-4 flex items-center justify-between bg-surface-container-low">
+					<span class="text-label-sm text-on-surface-variant">Showing 1 to 15 of 160 alerts</span>
+					<div class="flex items-center gap-2">
+						<button
+							class="p-2 border border-outline-variant rounded hover:bg-surface-container-high disabled:opacity-30"
+							disabled="">
+							<span class="material-symbols-outlined text-[18px]"
+								data-icon="chevron_left">chevron_left</span>
+						</button>
+						<button class="w-8 h-8 rounded bg-primary text-on-primary text-label-md font-bold">1</button>
+						<button
+							class="w-8 h-8 rounded border border-outline-variant text-on-surface text-label-md hover:bg-surface-container-high transition-colors">2</button>
+						<button
+							class="w-8 h-8 rounded border border-outline-variant text-on-surface text-label-md hover:bg-surface-container-high transition-colors">3</button>
+						<span class="text-on-surface-variant mx-1">...</span>
+						<button
+							class="w-8 h-8 rounded border border-outline-variant text-on-surface text-label-md hover:bg-surface-container-high transition-colors">11</button>
+						<button
+							class="p-2 border border-outline-variant rounded hover:bg-surface-container-high transition-colors">
+							<span class="material-symbols-outlined text-[18px]"
+								data-icon="chevron_right">chevron_right</span>
+						</button>
+					</div>
+				</div>
+			</div>
+			<!-- Contextual Insights Bento Section -->
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-stack_gap_lg">
+				<div
+					class="bg-surface-container-high border border-outline-variant p-card_padding rounded-xl col-span-2 relative overflow-hidden group">
+					<div class="relative z-10">
+						<h4 class="text-headline-sm font-headline-sm text-on-surface mb-2">Peak Activity Insight</h4>
+						<p class="text-body-md text-on-surface-variant mb-4">Most alerts originate from <span
+								class="text-primary font-bold">Lounge North</span> between 18:00 and 20:00. Consider
+							reviewing automation schedules for this zone.</p>
+						<div class="flex gap-2">
+							<button
+								class="bg-surface-container border border-outline-variant px-4 py-1.5 rounded-lg text-label-md text-on-surface hover:border-primary transition-colors">View
+								Schedule</button>
+							<button
+								class="bg-surface-container border border-outline-variant px-4 py-1.5 rounded-lg text-label-md text-on-surface hover:border-primary transition-colors">Optimize
+								Rules</button>
+						</div>
+					</div>
+					<!-- Decorative background glow -->
+					<div
+						class="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all duration-700">
+					</div>
+				</div>
+				<div
+					class="bg-surface-container border border-outline-variant p-card_padding rounded-xl flex flex-col justify-center items-center text-center">
+					<div class="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center text-error mb-3">
+						<span class="material-symbols-outlined text-[28px]" data-icon="crisis_alert">crisis_alert</span>
+					</div>
+					<h4 class="text-label-md font-label-md uppercase tracking-widest text-on-surface-variant">System
+						Health</h4>
+					<p class="text-headline-md font-headline-md text-on-surface">Stable</p>
+					<p class="text-label-sm text-green-400 mt-1">99.9% Sensor Uptime</p>
+				</div>
+			</div>
+		</div>
+	</main>
+	<script>
+		// Micro-interactions for hover effects and dynamic UI updates
+		document.querySelectorAll('tr').forEach(row => {
+			row.addEventListener('mouseenter', () => {
+				row.querySelector('button')?.classList.add('scale-105');
+			});
+			row.addEventListener('mouseleave', () => {
+				row.querySelector('button')?.classList.remove('scale-105');
+			});
+		});
+
+		// Simple tab/filter active state simulator
+		const selectFilters = document.querySelectorAll('select');
+		selectFilters.forEach(select => {
+			select.addEventListener('change', () => {
+				select.classList.add('border-primary');
+				setTimeout(() => select.classList.remove('border-primary'), 2000);
+			});
+		});
+	</script>
+</body>
+
+</html>

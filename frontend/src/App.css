@@ -1,0 +1,6 @@
+/*
+  App.css — kỹ thuật app-wide, không thuộc design token.
+  Màu / layout shell đã nằm trong styles/theme.css.
+  Tailwind + token import qua styles/global.css.
+*/
+@import "./styles/global.css";

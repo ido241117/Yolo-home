@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+	<title>Face Identity Capture</title>
+	<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<style>
+		.material-symbols-outlined {
+			font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+		}
+
+		/* Oval Face Guide Mask */
+		.face-mask {
+			mask: radial-gradient(ellipse 60% 75% at 50% 45%, transparent 95%, black 100%);
+			-webkit-mask: radial-gradient(ellipse 45% 60% at 50% 45%, transparent 95%, black 100%);
+		}
+
+		/* Scanline Animation */
+		@keyframes scan {
+			0% {
+				top: 15%;
+				opacity: 0;
+			}
+
+			50% {
+				opacity: 0.8;
+			}
+
+			100% {
+				top: 75%;
+				opacity: 0;
+			}
+		}
+
+		.scanline {
+			animation: scan 3s linear infinite;
+		}
+
+		/* Pulse for instructions */
+		@keyframes soft-pulse {
+
+			0%,
+			100% {
+				opacity: 1;
+				transform: scale(1);
+			}
+
+			50% {
+				opacity: 0.8;
+				transform: scale(0.98);
+			}
+		}
+
+		.animate-soft-pulse {
+			animation: soft-pulse 2s ease-in-out infinite;
+		}
+
+		/* Spinner Rotation */
+		@keyframes spin-custom {
+			to {
+				transform: rotate(360deg);
+			}
+		}
+
+		.animate-spin-custom {
+			animation: spin-custom 1s linear infinite;
+		}
+
+		/* Shimmer effect for progress bar */
+		@keyframes shimmer {
+			0% {
+				background-position: -200% 0;
+			}
+
+			100% {
+				background-position: 200% 0;
+			}
+		}
+
+		.shimmer-bar {
+			background: linear-gradient(90deg, #4f46e5 0%, #c3c0ff 50%, #4f46e5 100%);
+			background-size: 200% 100%;
+			animation: shimmer 1.5s infinite;
+		}
+	</style>
+	<script id="tailwind-config">
+		tailwind.config = {
+			darkMode: "class",
+			theme: {
+				extend: {
+					"colors": {
+						"on-tertiary": "#ffffff",
+						"secondary-fixed-dim": "#4ae176",
+						"primary-fixed-dim": "#c3c0ff",
+						"on-primary": "#ffffff",
+						"tertiary-fixed": "#ffddb8",
+						"primary-fixed": "#e2dfff",
+						"on-secondary-fixed-variant": "#005321",
+						"on-secondary-fixed": "#002109",
+						"error-container": "#ffdad6",
+						"on-error": "#ffffff",
+						"background": "#f8f9ff",
+						"on-secondary-container": "#007432",
+						"surface-container-lowest": "#ffffff",
+						"on-background": "#0b1c30",
+						"surface-dim": "#cbdbf5",
+						"surface-container-low": "#eff4ff",
+						"on-surface-variant": "#464555",
+						"outline-variant": "#c7c4d8",
+						"tertiary-fixed-dim": "#ffb95f",
+						"surface-container-highest": "#d3e4fe",
+						"on-tertiary-container": "#ffd4a4",
+						"inverse-on-surface": "#eaf1ff",
+						"inverse-surface": "#213145",
+						"on-error-container": "#93000a",
+						"error": "#ba1a1a",
+						"surface-bright": "#f8f9ff",
+						"on-surface": "#0b1c30",
+						"on-tertiary-fixed-variant": "#653e00",
+						"tertiary": "#684000",
+						"primary": "#3525cd",
+						"primary-container": "#4f46e5",
+						"outline": "#777587",
+						"tertiary-container": "#885500",
+						"inverse-primary": "#c3c0ff",
+						"secondary-fixed": "#6bff8f",
+						"surface-tint": "#4d44e3",
+						"on-primary-container": "#dad7ff",
+						"secondary": "#006e2f",
+						"surface-container-high": "#dce9ff",
+						"on-secondary": "#ffffff",
+						"surface-container": "#e5eeff",
+						"surface-variant": "#d3e4fe",
+						"on-primary-fixed": "#0f0069",
+						"surface": "#f8f9ff",
+						"secondary-container": "#6bff8f",
+						"on-primary-fixed-variant": "#3323cc",
+						"on-tertiary-fixed": "#2a1700"
+					},
+					"borderRadius": {
+						"DEFAULT": "0.25rem",
+						"lg": "0.5rem",
+						"xl": "0.75rem",
+						"full": "9999px"
+					},
+					"spacing": {
+						"margin-mobile": "20px",
+						"xs": "4px",
+						"xl": "32px",
+						"md": "16px",
+						"sm": "8px",
+						"unit": "4px",
+						"lg": "24px",
+						"gutter": "16px"
+					},
+					"fontFamily": {
+						"display-lg": ["Inter"],
+						"sensor-value": ["Inter"],
+						"body-lg": ["Inter"],
+						"headline-md": ["Inter"],
+						"headline-lg": ["Inter"],
+						"body-md": ["Inter"],
+						"label-md": ["Inter"]
+					},
+					"fontSize": {
+						"display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+						"sensor-value": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+						"body-lg": ["17px", { "lineHeight": "24px", "fontWeight": "400" }],
+						"headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+						"headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+						"body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+						"label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }]
+					}
+				},
+			},
+		}
+	</script>
+	<style>
+		body {
+			min-height: max(884px, 100dvh);
+		}
+	</style>
+</head>
+
+<body class="bg-black overflow-hidden select-none">
+	<!-- TASK HEADER (Contextual suppression of global nav as per instructions) -->
+	<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile py-md">
+		<button
+			class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all"
+			onclick="window.history.back()">
+			<span class="material-symbols-outlined">close</span>
+		</button>
+		<div class="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md">
+			<span class="w-2 h-2 rounded-full bg-secondary-container animate-pulse"></span>
+			<span class="font-label-md text-label-md text-white uppercase tracking-widest">Live</span>
+		</div>
+		<button class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md text-white">
+			<span class="material-symbols-outlined">flip_camera_ios</span>
+		</button>
+	</header>
+	<!-- FULL SCREEN VIEWFINDER -->
+	<main class="relative h-screen w-full flex flex-col items-center justify-center overflow-hidden">
+		<!-- Mock Viewfinder Stream -->
+		<div class="absolute inset-0 z-0">
+			<img alt="Camera Viewfinder" class="w-full h-full object-cover opacity-90 scale-105"
+				data-alt="A POV shot of a front-facing smartphone camera viewfinder showing a medium close-up of a diverse man's face. The setting is a bright, modern interior with soft, natural lighting that emphasizes high-legibility and a clean light-mode aesthetic. The image has a subtle digital grain and shallow depth of field, focusing strictly on the facial features to imply a secure biometric authentication process."
+				src="https://lh3.googleusercontent.com/aida-public/AB6AXuCl7bxsg9ARqkYSzoLrlLXk4mNYKJZvARu5yYmtO1EwRmBIUa-i1vEZuMegAtXOjtLkLgJ8LhgubvsVlaEZV_XIfDquLOBLbkgrf0f62iMJGTDQ6ROFBdRReptZKhci7sdiD2RsC6bKZr_W1y5RB8FuSvgouCkqeaGcm8gp-hCXvkAeQANfRpLnOVzua2dhBcVPxXQOARdsvg-NcmU7lkbQTv5UifTj1IWqep-wVrZS78UfA8RSU8g9b2jz60Sy8GOymnM_ZBT3e2Y" />
+		</div>
+		<!-- TRANSLUCENT OVAL GUIDE -->
+		<div class="absolute inset-0 z-10 face-mask bg-black/60 pointer-events-none"></div>
+		<!-- VISUAL GUIDE OVERLAY -->
+		<div class="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+			<!-- The Oval Border -->
+			<div
+				class="relative w-[280px] h-[380px] md:w-[320px] md:h-[420px] border-2 border-white/40 rounded-[100%] mt-[-5%]">
+				<!-- Corner Indicators for better alignment perception -->
+				<div
+					class="absolute -top-1 -left-1 w-8 h-8 border-t-2 border-l-2 border-primary-fixed-dim rounded-tl-3xl opacity-80">
+				</div>
+				<div
+					class="absolute -top-1 -right-1 w-8 h-8 border-t-2 border-r-2 border-primary-fixed-dim rounded-tr-3xl opacity-80">
+				</div>
+				<div
+					class="absolute -bottom-1 -left-1 w-8 h-8 border-b-2 border-l-2 border-primary-fixed-dim rounded-bl-3xl opacity-80">
+				</div>
+				<div
+					class="absolute -bottom-1 -right-1 w-8 h-8 border-b-2 border-r-2 border-primary-fixed-dim rounded-br-3xl opacity-80">
+				</div>
+				<!-- Animated Scanline -->
+				<div
+					class="absolute left-1/2 -translate-x-1/2 w-[90%] h-[2px] bg-gradient-to-r from-transparent via-primary-fixed-dim to-transparent scanline">
+				</div>
+			</div>
+		</div>
+		<!-- OVERLAY INSTRUCTIONS -->
+		<div
+			class="absolute bottom-[20%] left-0 w-full z-30 flex flex-col items-center px-xl text-center pointer-events-none">
+			<div class="bg-black/40 backdrop-blur-md px-6 py-3 rounded-full border border-white/10 animate-soft-pulse"
+				id="instruction-pill">
+				<p class="font-headline-md text-headline-md text-white">Align your face within the frame</p>
+				<p class="font-label-md text-label-md text-white/60 mt-1">Keep a neutral expression and good lighting
+				</p>
+			</div>
+		</div>
+		<!-- CAPTURE ACTION AREA -->
+		<div class="absolute bottom-0 left-0 w-full z-40 pb-xl flex flex-col items-center gap-6">
+			<!-- Uploading/Processing State (Hidden by default) -->
+			<div class="hidden flex-col items-center gap-4 animate-in fade-in duration-500" id="processing-overlay">
+				<div class="flex items-center gap-3 bg-white/95 px-8 py-4 rounded-xl shadow-xl">
+					<span class="material-symbols-outlined text-primary animate-spin-custom">progress_activity</span>
+					<div class="flex flex-col">
+						<span
+							class="font-headline-md text-headline-md text-on-surface leading-tight">Processing...</span>
+						<span class="font-label-md text-label-md text-outline">Verifying biometric data</span>
+					</div>
+				</div>
+				<!-- Shimmering Progress Bar -->
+				<div class="w-64 h-1.5 bg-white/20 rounded-full overflow-hidden">
+					<div class="h-full shimmer-bar w-2/3 rounded-full"></div>
+				</div>
+			</div>
+			<!-- CAPTURE BUTTON -->
+			<div class="flex items-center justify-center" id="capture-container">
+				<button class="relative group" id="capture-btn">
+					<!-- Outer Ring -->
+					<div
+						class="absolute inset-0 -m-3 border-2 border-white/20 rounded-full transition-all group-active:scale-95">
+					</div>
+					<!-- Interaction Ring (Loading Ring Logic) -->
+					<svg class="absolute inset-0 -m-3 -rotate-90 pointer-events-none opacity-0 group-active:opacity-100 transition-opacity"
+						viewbox="0 0 100 100">
+						<circle class="group-active:animate-[dash_1s_ease-out_forwards]" cx="50" cy="50" fill="none"
+							r="48" stroke="#e2dfff" stroke-dasharray="301.59" stroke-dashoffset="301.59"
+							stroke-width="4"></circle>
+					</svg>
+					<!-- Main Button -->
+					<div
+						class="w-20 h-20 rounded-full bg-primary-container text-on-primary-container shadow-2xl flex items-center justify-center transition-transform duration-150 active:scale-90 group-hover:bg-primary">
+						<span class="material-symbols-outlined text-[32px]">face</span>
+					</div>
+				</button>
+			</div>
+			<!-- Helper Text -->
+			<div class="pb-4" id="helper-footer">
+				<p class="font-label-md text-label-md text-white/40 tracking-wider">SECURE IDENTITY SCAN</p>
+			</div>
+		</div>
+	</main>
+	<script>
+		const captureBtn = document.getElementById('capture-btn');
+		const instructionPill = document.getElementById('instruction-pill');
+		const processingOverlay = document.getElementById('processing-overlay');
+		const captureContainer = document.getElementById('capture-container');
+		const helperFooter = document.getElementById('helper-footer');
+
+		captureBtn.addEventListener('click', () => {
+			// Start Capture Sequence
+			captureBtn.disabled = true;
+
+			// Visual feedback
+			instructionPill.classList.add('opacity-0', 'scale-95');
+			captureContainer.classList.add('opacity-0', 'scale-75', 'pointer-events-none');
+			helperFooter.classList.add('opacity-0');
+
+			setTimeout(() => {
+				instructionPill.classList.add('hidden');
+				captureContainer.classList.add('hidden');
+				helperFooter.classList.add('hidden');
+
+				// Show Processing
+				processingOverlay.classList.remove('hidden');
+				processingOverlay.classList.add('flex');
+			}, 300);
+
+			// Mock completion after 3 seconds
+			setTimeout(() => {
+				const text = processingOverlay.querySelector('.font-headline-md');
+				const subtext = processingOverlay.querySelector('.font-label-md');
+				const icon = processingOverlay.querySelector('.material-symbols-outlined');
+
+				text.textContent = 'Success';
+				subtext.textContent = 'Identity verified';
+				icon.textContent = 'check_circle';
+				icon.classList.remove('animate-spin-custom', 'text-primary');
+				icon.classList.add('text-secondary');
+
+				// Final success interaction
+				setTimeout(() => {
+					document.body.classList.add('opacity-0', 'transition-opacity', 'duration-1000');
+					setTimeout(() => window.history.back(), 1000);
+				}, 1500);
+			}, 3500);
+		});
+
+		// Add custom keyframes to Tailwind dynamically for the loading ring
+		const style = document.createElement('style');
+		style.innerHTML = `
+            @keyframes dash {
+                to {
+                    stroke-dashoffset: 0;
+                }
+            }
+        `;
+		document.head.appendChild(style);
+	</script>
+</body>
+
+</html>

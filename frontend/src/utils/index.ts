@@ -1,0 +1,1 @@
+export { formatTemperature } from './format';

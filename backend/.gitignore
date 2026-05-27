@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+.env
+.env.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev.*.log
+logs/
+AI/.venv
+AI/__pycache__
+AI/**/__pycache__
+AI/models/*.pkl
+AI/data/user_log.csv

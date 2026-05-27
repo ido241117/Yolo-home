@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Adafruit IO — Kiểm tra Feed & Pin</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding: 24px; }
+    h1 { font-size: 1.4rem; color: #38bdf8; margin-bottom: 4px; }
+    .sub { font-size: 0.85rem; color: #64748b; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+    .card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+      padding: 16px; transition: border-color .2s;
+    }
+    .card:hover { border-color: #38bdf8; }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .feed-name { font-weight: 600; font-size: 1rem; color: #f1f5f9; }
+    .feed-key { font-size: 0.75rem; color: #94a3b8; font-family: monospace; margin-top: 2px; }
+    .badge {
+      font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; font-weight: 600;
+    }
+    .badge.online  { background: #052e16; color: #4ade80; border: 1px solid #16a34a; }
+    .badge.offline { background: #2d1515; color: #f87171; border: 1px solid #dc2626; }
+    .badge.unknown { background: #1e293b; color: #94a3b8; border: 1px solid #475569; }
+    .value-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+    .value { font-size: 1.6rem; font-weight: 700; color: #38bdf8; }
+    .value-label { font-size: 0.8rem; color: #64748b; }
+    .meta { font-size: 0.75rem; color: #475569; border-top: 1px solid #334155; padding-top: 8px; margin-top: 8px; }
+    .meta span { display: block; margin-top: 2px; }
+    .pin-row { margin-top: 6px; font-size: 0.8rem; }
+    .pin-tag {
+      display: inline-block; background: #0c4a6e; color: #7dd3fc;
+      border: 1px solid #0369a1; border-radius: 4px; padding: 1px 6px;
+      font-family: monospace; font-size: 0.75rem;
+    }
+    .no-pin { color: #475569; font-style: italic; }
+    .sensor-badge { font-size: 0.7rem; color: #94a3b8; background: #1e3a4a; border: 1px solid #334155; border-radius: 4px; padding: 1px 7px; margin-left: 6px; }
+    .readonly-note { font-size: 0.75rem; color: #475569; margin-top: 10px; font-style: italic; }
+    .binary-state { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .binary-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .binary-dot.on  { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+    .binary-dot.off { background: #334155; }
+    .binary-label { font-size: 0.85rem; font-weight: 600; }
+    .binary-label.on  { color: #4ade80; }
+    .binary-label.off { color: #475569; }
+    #status { margin-bottom: 16px; font-size: 0.85rem; color: #94a3b8; }
+    .refresh-btn {
+      background: #0369a1; color: #fff; border: none; border-radius: 6px;
+      padding: 6px 14px; cursor: pointer; font-size: 0.85rem; margin-bottom: 20px;
+    }
+    .refresh-btn:hover { background: #0284c7; }
+    .error-msg { color: #f87171; font-size: 0.9rem; margin: 12px 0; }
+
+    /* Toggle switch */
+    .toggle-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .toggle-label { font-size: 0.8rem; color: #94a3b8; }
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider-track {
+      position: absolute; cursor: pointer; inset: 0;
+      background: #334155; border-radius: 999px; transition: .2s;
+    }
+    .slider-track:before {
+      content: ''; position: absolute; height: 18px; width: 18px;
+      left: 3px; bottom: 3px; background: #94a3b8;
+      border-radius: 50%; transition: .2s;
+    }
+    .switch input:checked + .slider-track { background: #0284c7; }
+    .switch input:checked + .slider-track:before { transform: translateX(20px); background: #fff; }
+    .switch.sending .slider-track { opacity: 0.5; cursor: wait; }
+    .toggle-val { font-size: 0.75rem; font-family: monospace; color: #64748b; min-width: 36px; }
+  </style>
+</head>
+<body>
+  <h1>Adafruit IO — Feed & Pin Viewer</h1>
+  <p class="sub">User: <strong>thienphan2411</strong> &nbsp;|&nbsp; Tự động làm mới mỗi 30 giây</p>
+
+  <button class="refresh-btn" onclick="loadFeeds()">↻ Làm mới ngay</button>
+  <div id="status">Đang tải...</div>
+  <div id="error" class="error-msg" style="display:none"></div>
+  <div class="grid" id="grid"></div>
+
+  <script>
+    const READ_ONLY  = new Set(['temp', 'humi', 'human']);
+    const BINARY     = new Set(['human']);
+    const USERNAME = 'thienphan2411';
+    const AIO_KEY  = 'YOUR_ADAFRUIT_IO_KEY';
+    const BASE     = `https://io.adafruit.com/api/v2/${USERNAME}`;
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+    }
+
+    function statusBadge(status) {
+      const s = (status || 'unknown').toLowerCase();
+      return `<span class="badge ${s}">${s.toUpperCase()}</span>`;
+    }
+
+    function pinInfo(feed) {
+      if (feed.wipper_pin_info) {
+        const p = feed.wipper_pin_info;
+        return `<span class="pin-tag">${p.pin_name || p.pin_type || JSON.stringify(p)}</span>`;
+      }
+      return `<span class="no-pin">Không có thông tin chân</span>`;
+    }
+
+    function isOnValue(v) {
+      if (v === null || v === '') return false;
+      const s = String(v).toUpperCase();
+      if (s === 'ON' || s === '1' || s === 'TRUE' || s === 'UNLOCKED') return true;
+      const n = parseFloat(v);
+      if (!isNaN(n)) return n > 0;
+      return false;
+    }
+
+    function toggleOffValue(currentVal) {
+      const s = String(currentVal).toUpperCase();
+      if (s === 'ON')       return 'OFF';
+      if (s === 'OFF')      return 'ON';
+      if (s === 'UNLOCKED') return 'LOCKED';
+      if (s === 'LOCKED')   return 'UNLOCKED';
+      if (s === '1')        return '0';
+      if (s === '0')        return '1';
+      const n = parseFloat(currentVal);
+      if (!isNaN(n))        return n > 0 ? '0' : '1';
+      return 'OFF';
+    }
+
+    async function sendToggle(key, originalVal, switchEl) {
+      const wrap = switchEl.closest('.switch');
+      wrap.classList.add('sending');
+      switchEl.disabled = true;
+
+      // Dùng trạng thái checkbox mới làm chuẩn, không flip giá trị cũ
+      const s = String(originalVal || '').toUpperCase();
+      let newVal;
+      if (s === 'LOCKED' || s === 'UNLOCKED') {
+        newVal = switchEl.checked ? 'UNLOCKED' : 'LOCKED';
+      } else if (s === '1' || s === '0') {
+        newVal = switchEl.checked ? '1' : '0';
+      } else {
+        newVal = switchEl.checked ? 'ON' : 'OFF';
+      }
+
+      try {
+        const res = await fetch(`${BASE}/feeds/${key}/data`, {
+          method: 'POST',
+          headers: { 'X-AIO-Key': AIO_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: newVal })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const row = wrap.closest('.toggle-row');
+        row.querySelector('.toggle-val').textContent = newVal;
+        switchEl.dataset.current = newVal;
+        wrap.closest('.card').querySelector('.value').textContent = newVal;
+      } catch(e) {
+        alert('Gửi thất bại: ' + e.message);
+        switchEl.checked = !switchEl.checked;
+      } finally {
+        wrap.classList.remove('sending');
+        switchEl.disabled = false;
+      }
+    }
+
+    async function loadFeeds() {
+      const statusEl = document.getElementById('status');
+      const errorEl  = document.getElementById('error');
+      const grid     = document.getElementById('grid');
+
+      statusEl.textContent = 'Đang tải...';
+      errorEl.style.display = 'none';
+
+      try {
+        const res = await fetch(`${BASE}/feeds`, {
+          headers: { 'X-AIO-Key': AIO_KEY }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+        const feeds = await res.json();
+
+        statusEl.textContent = `Tổng cộng ${feeds.length} feed — cập nhật lúc ${formatDate(new Date().toISOString())}`;
+        grid.innerHTML = feeds.map(f => `
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="feed-name">${f.name || '(unnamed)'}</div>
+                <div class="feed-key">${f.key}</div>
+              </div>
+              ${statusBadge(f.status)}
+            </div>
+
+            ${BINARY.has(f.key) ? (() => {
+                const on = f.last_value === '1';
+                const empty = f.last_value === null || f.last_value === '';
+                return `<div class="binary-state">
+                  <div class="binary-dot ${empty ? 'off' : on ? 'on' : 'off'}"></div>
+                  <span class="binary-label ${empty ? 'off' : on ? 'on' : 'off'}">
+                    ${empty ? '—' : on ? 'Phát hiện' : 'Không phát hiện'}
+                  </span>
+                </div>`;
+              })() : `<div class="value-row">
+              <span class="value">${f.last_value !== null && f.last_value !== '' ? f.last_value : '—'}</span>
+              <span class="value-label">${f.unit_symbol || ''}</span>
+            </div>`}
+
+            <div class="pin-row">
+              🔌 Pin: ${pinInfo(f)}
+            </div>
+
+            ${READ_ONLY.has(f.key)
+              ? `<div class="readonly-note">📡 Sensor — chỉ đọc</div>`
+              : `<div class="toggle-row">
+              <label class="switch">
+                <input type="checkbox"
+                  ${isOnValue(f.last_value) ? 'checked' : ''}
+                  data-current="${f.last_value ?? ''}"
+                  onchange="sendToggle('${f.key}', this.dataset.current, this)"
+                />
+                <span class="slider-track"></span>
+              </label>
+              <span class="toggle-label">Ghi giá trị</span>
+              <span class="toggle-val">${f.last_value ?? '—'}</span>
+            </div>`
+            }
+
+            <div class="meta">
+              <span>Feed ID: ${f.id}</span>
+              <span>Hiển thị: ${f.visibility || '—'}</span>
+              <span>Cập nhật: ${formatDate(f.updated_at)}</span>
+              <span>Nhóm: ${(f.groups || []).map(g => g.name).join(', ') || 'Default'}</span>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        statusEl.textContent = 'Lỗi tải dữ liệu';
+        errorEl.style.display = 'block';
+        errorEl.textContent = '⚠ ' + err.message;
+      }
+    }
+
+    loadFeeds();
+    setInterval(loadFeeds, 30000);
+  </script>
+</body>
+</html>

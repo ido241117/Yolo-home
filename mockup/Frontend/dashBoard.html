@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+	<title>Rental Smart Room - Dashboard</title>
+	<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<style>
+		body {
+			font-family: 'Inter', sans-serif;
+			background-color: #0b1326;
+		}
+
+		.material-symbols-outlined {
+			font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+		}
+
+		.custom-scrollbar::-webkit-scrollbar {
+			width: 4px;
+		}
+
+		.custom-scrollbar::-webkit-scrollbar-track {
+			background: #0b1326;
+		}
+
+		.custom-scrollbar::-webkit-scrollbar-thumb {
+			background: #334155;
+			border-radius: 10px;
+		}
+	</style>
+	<script id="tailwind-config">
+		tailwind.config = {
+			darkMode: "class",
+			theme: {
+				extend: {
+					"colors": {
+						"secondary": "#b9c7e0",
+						"on-secondary-fixed": "#0d1c2f",
+						"on-tertiary": "#571f00",
+						"primary-fixed-dim": "#c3c0ff",
+						"surface-container-lowest": "#060e20",
+						"surface-variant": "#2d3449",
+						"error-container": "#93000a",
+						"on-tertiary-container": "#ffd2be",
+						"primary": "#c3c0ff",
+						"outline-variant": "#464555",
+						"on-background": "#dae2fd",
+						"on-tertiary-fixed-variant": "#7b2f00",
+						"tertiary-fixed-dim": "#ffb695",
+						"secondary-fixed-dim": "#b9c7e0",
+						"secondary-fixed": "#d5e3fd",
+						"surface-container": "#171f33",
+						"surface-container-low": "#131b2e",
+						"inverse-surface": "#dae2fd",
+						"surface-container-high": "#222a3d",
+						"secondary-container": "#3c4a5e",
+						"on-tertiary-fixed": "#351000",
+						"surface-bright": "#31394d",
+						"surface": "#0b1326",
+						"on-primary-fixed": "#0f0069",
+						"on-primary-container": "#dad7ff",
+						"tertiary-container": "#a44100",
+						"on-error": "#690005",
+						"primary-container": "#4f46e5",
+						"inverse-primary": "#4d44e3",
+						"on-surface-variant": "#c7c4d8",
+						"surface-tint": "#c3c0ff",
+						"surface-dim": "#0b1326",
+						"on-secondary-fixed-variant": "#3a485c",
+						"on-primary-fixed-variant": "#3323cc",
+						"on-secondary": "#233144",
+						"error": "#ffb4ab",
+						"on-secondary-container": "#abb9d2",
+						"surface-container-highest": "#2d3449",
+						"background": "#0b1326",
+						"tertiary": "#ffb695",
+						"on-surface": "#dae2fd",
+						"on-error-container": "#ffdad6",
+						"primary-fixed": "#e2dfff",
+						"on-primary": "#1d00a5",
+						"outline": "#918fa1",
+						"tertiary-fixed": "#ffdbcc",
+						"inverse-on-surface": "#283044"
+					},
+					"borderRadius": {
+						"DEFAULT": "0.125rem",
+						"lg": "0.25rem",
+						"xl": "0.5rem",
+						"full": "0.75rem"
+					},
+					"spacing": {
+						"stack_gap_md": "16px",
+						"stack_gap_lg": "24px",
+						"stack_gap_sm": "8px",
+						"container_gutter": "24px",
+						"unit": "4px",
+						"card_padding": "16px",
+						"sidebar_width": "240px"
+					},
+					"fontFamily": {
+						"headline-lg": ["Inter"],
+						"display": ["Inter"],
+						"headline-md": ["Inter"],
+						"body-lg": ["Inter"],
+						"body-md": ["Inter"],
+						"headline-sm": ["Inter"],
+						"label-sm": ["Inter"],
+						"label-md": ["Inter"]
+					},
+					"fontSize": {
+						"headline-lg": ["24px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+						"display": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+						"headline-md": ["20px", { "lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+						"body-lg": ["16px", { "lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400" }],
+						"body-md": ["14px", { "lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400" }],
+						"headline-sm": ["16px", { "lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "500" }],
+						"label-sm": ["11px", { "lineHeight": "1", "letterSpacing": "0", "fontWeight": "400" }],
+						"label-md": ["12px", { "lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500" }]
+					}
+				},
+			},
+		}
+	</script>
+</head>
+
+<body class="text-on-surface selection:bg-primary selection:text-on-primary">
+	<!-- Side Navigation Shell -->
+	<aside
+		class="fixed h-full w-[240px] left-0 top-0 border-r border-outline-variant bg-surface flex flex-col py-6 z-50">
+		<div class="px-6 mb-10">
+			<h1 class="text-headline-md font-black text-primary tracking-tight">Rental Smart Room</h1>
+			<p class="text-label-sm text-on-surface-variant uppercase tracking-widest mt-1">IoT Management</p>
+		</div>
+		<nav class="flex-1 px-4 space-y-2">
+			<!-- Dashboard Active -->
+			<a class="flex items-center gap-3 px-4 py-3 text-primary bg-surface-container-high border-l-4 border-primary transition-all duration-200"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+				<span class="text-label-md font-label-md">Dashboard</span>
+			</a>
+			<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="door_front">door_front</span>
+				<span class="text-label-md font-label-md">Rooms</span>
+			</a>
+			<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="group">group</span>
+				<span class="text-label-md font-label-md">Accounts</span>
+			</a>
+			<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors relative"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="notifications_active">notifications_active</span>
+				<span class="text-label-md font-label-md">Alerts</span>
+				<span class="absolute right-4 w-2 h-2 bg-error rounded-full"></span>
+			</a>
+		</nav>
+		<div class="px-4 py-4 mb-4">
+			<button
+				class="w-full flex items-center justify-center gap-2 bg-primary-container text-on-primary-container py-3 rounded-lg font-bold hover:opacity-90 transition-opacity">
+				<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+				Add Room
+			</button>
+		</div>
+		<div class="px-4 border-t border-outline-variant pt-4 space-y-2">
+			<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container transition-colors"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="settings">settings</span>
+				<span class="text-label-md font-label-md">Settings</span>
+			</a>
+			<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container transition-colors"
+				href="#">
+				<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+				<span class="text-label-md font-label-md">Support</span>
+			</a>
+		</div>
+	</aside>
+	<!-- Top Navigation Shell -->
+	<header
+		class="fixed top-0 right-0 left-0 ml-[240px] h-16 bg-surface border-b border-outline-variant flex justify-between items-center px-6 z-40">
+		<div class="flex items-center gap-4 flex-1">
+			<div class="relative w-full max-w-md">
+				<span
+					class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm"
+					data-icon="search">search</span>
+				<input
+					class="w-full bg-surface-container-low border border-outline-variant rounded-md py-1.5 pl-10 pr-4 text-body-md focus:outline-none focus:border-primary"
+					placeholder="Search rooms, tenants, or events..." type="text" />
+			</div>
+		</div>
+		<div class="flex items-center gap-6">
+			<button
+				class="bg-primary text-on-primary-fixed px-4 py-1.5 rounded text-label-md font-bold hover:scale-95 transition-transform active:scale-90">
+				Add New
+			</button>
+			<div class="flex items-center gap-4">
+				<span
+					class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors"
+					data-icon="notifications">notifications</span>
+				<div class="flex items-center gap-2 cursor-pointer group">
+					<img alt="Admin" class="w-8 h-8 rounded-full border border-outline-variant"
+						data-alt="Close-up professional portrait of a tech administrator in a modern dark office environment. The lighting is low-key with cool blue ambient tones, highlighting a sharp, minimalist aesthetic. He wears high-quality dark clothing, reflecting a sophisticated, high-performance professional persona within a sleek, futuristic smart building management context."
+						src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3Yu8xEq2J7NzI-QdlCmkpDalorAe2uXT4XT_EnW8B3BWBacyHPgPgJDNdAXb26FS-hW-jAdUQtCCfp-di_wBxn2xFMWbscJVD9SmEbS-YTiKR3T5VfVwkzqwdQrbFag_4BSvLyB6IZ7G_fzQlaeD6MZWPYU_M1Ocfgk3MiKAwKRZywvLaGHYHsYtgdLElTbnVbvQL0_rCITFSgCsmdiImsO8vZgzciqA422VQrZDq8qgvz7q4v0G90quwTf-e18y4VsQD-c371Wtz" />
+					<span
+						class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors"
+						data-icon="account_circle">account_circle</span>
+				</div>
+			</div>
+		</div>
+	</header>
+	<!-- Main Content Area -->
+	<main class="ml-[240px] mt-16 p-6 min-h-screen">
+		<!-- Alert Banner -->
+		<div class="mb-8 animate-pulse">
+			<div
+				class="bg-error-container/20 border border-error text-error p-4 rounded-xl flex items-center justify-between">
+				<div class="flex items-center gap-4">
+					<span class="material-symbols-outlined text-2xl" data-icon="warning"
+						style="font-variation-settings: 'FILL' 1;">warning</span>
+					<div>
+						<p class="font-bold text-body-lg">CRITICAL: Human movement detected in Room 101 at 02:00 AM</p>
+						<p class="text-label-sm opacity-80">Immediate attention required. Security protocols initiated.
+						</p>
+					</div>
+				</div>
+				<button
+					class="bg-error text-on-error px-4 py-2 rounded font-bold text-label-md hover:brightness-110">VIEW
+					CAMERA</button>
+			</div>
+		</div>
+		<!-- Dashboard Stat Cards - Bento Style -->
+		<div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+			<div
+				class="bg-surface-container border border-outline-variant p-5 rounded-xl flex flex-col justify-between">
+				<div class="flex justify-between items-start">
+					<span class="text-on-surface-variant text-label-md uppercase font-bold">Total Rooms</span>
+					<span class="material-symbols-outlined text-primary" data-icon="meeting_room">meeting_room</span>
+				</div>
+				<h2 class="text-display font-display mt-4">12</h2>
+			</div>
+			<div
+				class="bg-surface-container border border-outline-variant p-5 rounded-xl flex flex-col justify-between">
+				<div class="flex justify-between items-start">
+					<span class="text-on-surface-variant text-label-md uppercase font-bold">Occupied</span>
+					<span class="material-symbols-outlined text-blue-400" data-icon="person_pin">person_pin</span>
+				</div>
+				<h2 class="text-display font-display mt-4">08</h2>
+				<div class="w-full bg-surface-container-lowest h-1 rounded-full mt-2">
+					<div class="bg-blue-400 h-1 rounded-full w-[66%]"></div>
+				</div>
+			</div>
+			<div
+				class="bg-surface-container border border-outline-variant p-5 rounded-xl flex flex-col justify-between">
+				<div class="flex justify-between items-start">
+					<span class="text-on-surface-variant text-label-md uppercase font-bold">Vacant</span>
+					<span class="material-symbols-outlined text-green-400" data-icon="check_circle">check_circle</span>
+				</div>
+				<h2 class="text-display font-display mt-4">04</h2>
+			</div>
+			<div
+				class="bg-surface-container border border-outline-variant p-5 rounded-xl flex flex-col justify-between">
+				<div class="flex justify-between items-start">
+					<span class="text-on-surface-variant text-label-md uppercase font-bold">Tenants</span>
+					<span class="material-symbols-outlined text-tertiary" data-icon="group">group</span>
+				</div>
+				<h2 class="text-display font-display mt-4">15</h2>
+			</div>
+			<div class="bg-surface-container border border-outline-variant p-5 rounded-xl border-l-4 border-l-error">
+				<div class="flex justify-between items-start">
+					<span class="text-error text-label-md uppercase font-bold">Active Alerts</span>
+					<span class="material-symbols-outlined text-error"
+						data-icon="notification_important">notification_important</span>
+				</div>
+				<h2 class="text-display font-display mt-4 text-error">01</h2>
+			</div>
+		</div>
+		<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+			<!-- Left 2 Columns: Room Status Grid -->
+			<div class="lg:col-span-2 space-y-6">
+				<div class="flex items-center justify-between">
+					<h3 class="text-headline-lg text-on-surface">Room Status Grid</h3>
+					<div class="flex gap-2">
+						<button class="p-2 border border-outline-variant rounded hover:bg-surface-container"><span
+								class="material-symbols-outlined text-sm"
+								data-icon="filter_list">filter_list</span></button>
+						<button class="p-2 border border-outline-variant rounded hover:bg-surface-container"><span
+								class="material-symbols-outlined text-sm"
+								data-icon="grid_view">grid_view</span></button>
+					</div>
+				</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<!-- Room 101 Card -->
+					<div class="bg-surface-container border-2 border-error p-4 rounded-xl relative group">
+						<div class="flex justify-between items-start mb-4">
+							<div>
+								<h4 class="text-headline-sm font-headline-sm">Room 101</h4>
+								<span
+									class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-medium bg-blue-500/15 text-blue-400 mt-1">Occupied</span>
+							</div>
+							<div class="flex gap-2">
+								<span class="material-symbols-outlined text-error animate-pulse" data-icon="warning"
+									style="font-variation-settings: 'FILL' 1;">warning</span>
+								<span class="material-symbols-outlined text-on-surface-variant cursor-pointer"
+									data-icon="more_vert">more_vert</span>
+							</div>
+						</div>
+						<div class="grid grid-cols-3 gap-3 mb-6">
+							<div
+								class="flex flex-col items-center p-2 rounded bg-surface-container-low border border-outline-variant">
+								<span class="material-symbols-outlined text-green-500 mb-1" data-icon="lightbulb"
+									style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+								<span class="text-label-sm font-bold text-green-500 uppercase">ON</span>
+							</div>
+							<div
+								class="flex flex-col items-center p-2 rounded bg-surface-container-low border border-outline-variant opacity-50">
+								<span class="material-symbols-outlined text-on-surface-variant mb-1"
+									data-icon="cyclone">cyclone</span>
+								<span class="text-label-sm font-bold uppercase">OFF</span>
+							</div>
+							<div
+								class="flex flex-col items-center p-2 rounded bg-surface-container-low border border-outline-variant">
+								<span class="material-symbols-outlined text-green-500 mb-1" data-icon="lock"
+									style="font-variation-settings: 'FILL' 1;">lock</span>
+								<span class="text-label-sm font-bold text-green-500 uppercase">LOCKED</span>
+							</div>
+						</div>
+						<div class="flex items-center justify-between border-t border-outline-variant pt-4">
+							<div class="flex items-center gap-2">
+								<span class="material-symbols-outlined text-on-surface-variant text-sm"
+									data-icon="thermostat">thermostat</span>
+								<span class="text-headline-sm">28°C</span>
+							</div>
+							<div class="flex items-center gap-2">
+								<span class="material-symbols-outlined text-on-surface-variant text-sm"
+									data-icon="humidity_percentage">humidity_percentage</span>
+								<span class="text-headline-sm">65%</span>
+							</div>
+						</div>
+					</div>
+					<!-- Room 102 Card -->
+					<div
+						class="bg-surface-container border border-outline-variant p-4 rounded-xl hover:border-primary transition-colors cursor-pointer">
+						<div class="flex justify-between items-start mb-4">
+							<div>
+								<h4 class="text-headline-sm font-headline-sm">Room 102</h4>
+								<span
+									class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-medium bg-blue-500/15 text-blue-400 mt-1">Occupied</span>
+							</div>
+							<span class="material-symbols-outlined text-on-surface-variant"
+								data-icon="more_vert">more_vert</span>
+						</div>
+						<div class="grid grid-cols-3 gap-3 mb-6">
+							<div
+								class="flex flex-col items-center p-2 rounded bg-surface-container-low border border-outline-variant">
+								<span class="material-symbols-outlined text-on-surface-variant mb-1"
+									data-icon="lightbulb">lightbulb</span>
+								<span class="text-label-sm font-bold uppercase">OFF</span>
+							</div>
+							<div
+								class="flex flex-col items-center p-2 rounded bg-surface-container-low border border-outline-variant">
+								<span class="material-symbols-outlined text-green-500 mb-1"
+									data-icon="cyclone">cyclone</span>
+								<span class="text-label-sm font-bold text-green-500 uppercase">ON</span>
+							</div>
+							<div
+								class="flex flex-col items-center p-2 rounded bg-surface-container-low border border-outline-variant">
+								<span class="material-symbols-outlined text-green-500 mb-1" data-icon="lock"
+									style="font-variation-settings: 'FILL' 1;">lock</span>
+								<span class="text-label-sm font-bold text-green-500 uppercase">LOCKED</span>
+							</div>
+						</div>
+						<div class="flex items-center justify-between border-t border-outline-variant pt-4">
+							<div class="flex items-center gap-2"><span
+									class="material-symbols-outlined text-on-surface-variant text-sm"
+									data-icon="thermostat">thermostat</span><span class="text-headline-sm">24°C</span>
+							</div>
+							<div class="flex items-center gap-2"><span
+									class="material-symbols-outlined text-on-surface-variant text-sm"
+									data-icon="humidity_percentage">humidity_percentage</span><span
+									class="text-headline-sm">50%</span></div>
+						</div>
+					</div>
+					<!-- Room 201 Card -->
+					<div class="bg-surface-container border border-outline-variant p-4 rounded-xl opacity-80">
+						<div class="flex justify-between items-start mb-4">
+							<div>
+								<h4 class="text-headline-sm font-headline-sm">Room 201</h4>
+								<span
+									class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-medium bg-green-500/15 text-green-400 mt-1">Vacant</span>
+							</div>
+							<span class="material-symbols-outlined text-on-surface-variant"
+								data-icon="more_vert">more_vert</span>
+						</div>
+						<div class="grid grid-cols-3 gap-3 mb-6">
+							<div
+								class="flex flex-col items-center p-2 rounded bg-surface-container-low border border-outline-variant">
+								<span class="material-symbols-outlined text-on-surface-variant mb-1"
+									data-icon="lightbulb">lightbulb</span><span
+									class="text-label-sm font-bold uppercase">OFF</span></div>
+							<div
+								class="flex flex-col items-center p-2 rounded bg-surface-container-low border border-outline-variant">
+								<span class="material-symbols-outlined text-on-surface-variant mb-1"
+									data-icon="cyclone">cyclone</span><span
+									class="text-label-sm font-bold uppercase">OFF</span></div>
+							<div
+								class="flex flex-col items-center p-2 rounded bg-surface-container-low border border-outline-variant">
+								<span class="material-symbols-outlined text-green-500 mb-1" data-icon="lock"
+									style="font-variation-settings: 'FILL' 1;">lock</span><span
+									class="text-label-sm font-bold text-green-500 uppercase">LOCKED</span></div>
+						</div>
+						<div class="flex items-center justify-between border-t border-outline-variant pt-4">
+							<div class="flex items-center gap-2"><span
+									class="material-symbols-outlined text-on-surface-variant text-sm"
+									data-icon="thermostat">thermostat</span><span class="text-headline-sm">22°C</span>
+							</div>
+							<div class="flex items-center gap-2"><span
+									class="material-symbols-outlined text-on-surface-variant text-sm"
+									data-icon="humidity_percentage">humidity_percentage</span><span
+									class="text-headline-sm">45%</span></div>
+						</div>
+					</div>
+					<!-- Room 202 Card -->
+					<div class="bg-surface-container border border-outline-variant p-4 rounded-xl">
+						<div class="flex justify-between items-start mb-4">
+							<div>
+								<h4 class="text-headline-sm font-headline-sm">Room 202</h4>
+								<span
+									class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-medium bg-blue-500/15 text-blue-400 mt-1">Occupied</span>
+							</div>
+							<span class="material-symbols-outlined text-on-surface-variant"
+								data-icon="more_vert">more_vert</span>
+						</div>
+						<div class="grid grid-cols-3 gap-3 mb-6">
+							<div
+								class="flex flex-col items-center p-2 rounded bg-surface-container-low border border-outline-variant">
+								<span class="material-symbols-outlined text-green-500 mb-1" data-icon="lightbulb"
+									style="font-variation-settings: 'FILL' 1;">lightbulb</span><span
+									class="text-label-sm font-bold text-green-500 uppercase">ON</span></div>
+							<div
+								class="flex flex-col items-center p-2 rounded bg-surface-container-low border border-outline-variant">
+								<span class="material-symbols-outlined text-on-surface-variant mb-1"
+									data-icon="cyclone">cyclone</span><span
+									class="text-label-sm font-bold uppercase">OFF</span></div>
+							<div
+								class="flex flex-col items-center p-2 rounded bg-surface-container-low border border-outline-variant">
+								<span class="material-symbols-outlined text-on-surface-variant mb-1"
+									data-icon="lock_open">lock_open</span><span
+									class="text-label-sm font-bold uppercase">UNLOCKED</span></div>
+						</div>
+						<div class="flex items-center justify-between border-t border-outline-variant pt-4">
+							<div class="flex items-center gap-2"><span
+									class="material-symbols-outlined text-on-surface-variant text-sm"
+									data-icon="thermostat">thermostat</span><span class="text-headline-sm">26°C</span>
+							</div>
+							<div class="flex items-center gap-2"><span
+									class="material-symbols-outlined text-on-surface-variant text-sm"
+									data-icon="humidity_percentage">humidity_percentage</span><span
+									class="text-headline-sm">60%</span></div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Right Column: Controls & Events -->
+			<div class="space-y-8">
+				<!-- Global Device Panel -->
+				<section class="bg-surface-container border border-outline-variant rounded-xl p-6">
+					<h3 class="text-headline-sm font-bold mb-6 flex items-center gap-2">
+						<span class="material-symbols-outlined text-primary"
+							data-icon="settings_input_component">settings_input_component</span>
+						Global Device Panel
+					</h3>
+					<div class="space-y-4">
+						<div
+							class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg border border-outline-variant">
+							<div class="flex items-center gap-3">
+								<span class="material-symbols-outlined text-primary"
+									data-icon="lightbulb">lightbulb</span>
+								<span class="text-body-md font-medium">Global LED Toggle</span>
+							</div>
+							<label class="relative inline-flex items-center cursor-pointer">
+								<input class="sr-only peer" type="checkbox" value="" />
+								<div
+									class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+								</div>
+							</label>
+						</div>
+						<div
+							class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg border border-outline-variant">
+							<div class="flex items-center gap-3">
+								<span class="material-symbols-outlined text-primary" data-icon="cyclone">cyclone</span>
+								<span class="text-body-md font-medium">Global Fan Toggle</span>
+							</div>
+							<label class="relative inline-flex items-center cursor-pointer">
+								<input checked="" class="sr-only peer" type="checkbox" value="" />
+								<div
+									class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+								</div>
+							</label>
+						</div>
+					</div>
+				</section>
+				<!-- Recent Event Log -->
+				<section class="bg-surface-container border border-outline-variant rounded-xl overflow-hidden">
+					<div
+						class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-high">
+						<h3 class="text-headline-sm font-bold">Recent Events</h3>
+						<span class="text-label-sm text-primary cursor-pointer hover:underline">View All</span>
+					</div>
+					<div class="overflow-x-auto custom-scrollbar">
+						<table class="w-full text-left">
+							<thead
+								class="bg-surface-container-low text-label-sm text-on-surface-variant uppercase font-bold">
+								<tr>
+									<th class="px-4 py-3">Time</th>
+									<th class="px-4 py-3">Room</th>
+									<th class="px-4 py-3">Action</th>
+									<th class="px-4 py-3">Actor</th>
+								</tr>
+							</thead>
+							<tbody class="text-body-md divide-y divide-outline-variant/30">
+								<tr class="hover:bg-surface-container-high transition-colors">
+									<td class="px-4 py-3 whitespace-nowrap text-label-md">02:00 AM</td>
+									<td class="px-4 py-3">101</td>
+									<td class="px-4 py-3"><span class="text-error font-bold">Intrusion</span></td>
+									<td class="px-4 py-3 text-label-sm">Motion Sensor</td>
+								</tr>
+								<tr class="hover:bg-surface-container-high transition-colors">
+									<td class="px-4 py-3 whitespace-nowrap text-label-md">01:45 AM</td>
+									<td class="px-4 py-3">102</td>
+									<td class="px-4 py-3">Light OFF</td>
+									<td class="px-4 py-3 text-label-sm">Auto-timer</td>
+								</tr>
+								<tr class="hover:bg-surface-container-high transition-colors">
+									<td class="px-4 py-3 whitespace-nowrap text-label-md">11:30 PM</td>
+									<td class="px-4 py-3">202</td>
+									<td class="px-4 py-3 text-blue-400">Unlocked</td>
+									<td class="px-4 py-3 text-label-sm">Face: Nguyen Van A</td>
+								</tr>
+								<tr class="hover:bg-surface-container-high transition-colors">
+									<td class="px-4 py-3 whitespace-nowrap text-label-md">11:00 PM</td>
+									<td class="px-4 py-3">101</td>
+									<td class="px-4 py-3">Fan OFF</td>
+									<td class="px-4 py-3 text-label-sm">Tenant App</td>
+								</tr>
+								<tr class="hover:bg-surface-container-high transition-colors">
+									<td class="px-4 py-3 whitespace-nowrap text-label-md">09:15 PM</td>
+									<td class="px-4 py-3">201</td>
+									<td class="px-4 py-3">Check-out</td>
+									<td class="px-4 py-3 text-label-sm">Admin Panel</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</section>
+			</div>
+		</div>
+	</main>
+	<script>
+		// Simple micro-interactions
+		document.querySelectorAll('.group').forEach(el => {
+			el.addEventListener('mousedown', () => el.classList.add('scale-95'));
+			el.addEventListener('mouseup', () => el.classList.remove('scale-95'));
+		});
+
+		// Simulating real-time updates
+		setInterval(() => {
+			const temps = document.querySelectorAll('.text-headline-sm');
+			temps.forEach(t => {
+				if (t.innerText.includes('°C') && Math.random() > 0.8) {
+					const current = parseInt(t.innerText);
+					const diff = Math.random() > 0.5 ? 1 : -1;
+					t.innerText = (current + diff) + '°C';
+					t.classList.add('text-primary');
+					setTimeout(() => t.classList.remove('text-primary'), 1000);
+				}
+			});
+		}, 5000);
+	</script>
+</body>
+
+</html>
