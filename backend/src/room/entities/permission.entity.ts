@@ -1,12 +1,11 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { Column, Entity, ManyToOne, Unique } from 'typeorm';
+import { BaseCustomEntity } from '../../common/entities/base-custom.entity';
 import { User } from '../../user/entities/user.entity';
 import { Room } from './room.entity';
 
 @Entity('permissions')
 @Unique(['room', 'user'])
-export class Permission {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+export class Permission extends BaseCustomEntity {
 
   @ManyToOne(() => Room, (room) => room.permissions, { onDelete: 'CASCADE' })
   room: Room;

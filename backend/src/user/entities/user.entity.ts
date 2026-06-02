@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
+import { BaseCustomEntity } from '../../common/entities/base-custom.entity';
 import { Permission } from '../../room/entities/permission.entity';
 
 export enum UserRole {
@@ -8,9 +9,7 @@ export enum UserRole {
 }
 
 @Entity('users')
-export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+export class User extends BaseCustomEntity {
 
   @Column()
   name: string;
@@ -41,10 +40,4 @@ export class User {
 
   @OneToMany(() => Permission, (permission) => permission.user)
   permissions: Permission[];
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

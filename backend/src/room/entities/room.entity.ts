@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
+import { BaseCustomEntity } from '../../common/entities/base-custom.entity';
 import { EventLog } from './event-log.entity';
 import { FaceLabel } from './face-label.entity';
 import { HardwareConfig } from './hardware-config.entity';
@@ -12,9 +13,7 @@ export enum RoomStatus {
 }
 
 @Entity('rooms')
-export class Room {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+export class Room extends BaseCustomEntity {
 
   @Column()
   name: string;
@@ -39,10 +38,4 @@ export class Room {
 
   @OneToMany(() => FaceLabel, (faceLabel) => faceLabel.room)
   faceLabels: FaceLabel[];
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

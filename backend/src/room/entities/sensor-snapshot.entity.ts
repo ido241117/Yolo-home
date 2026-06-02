@@ -1,10 +1,9 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne } from 'typeorm';
+import { BaseCustomEntity } from '../../common/entities/base-custom.entity';
 import { Room } from './room.entity';
 
 @Entity('sensor_snapshots')
-export class SensorSnapshot {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+export class SensorSnapshot extends BaseCustomEntity {
 
   @ManyToOne(() => Room, (room) => room.sensorSnapshots, { onDelete: 'CASCADE' })
   room: Room;
@@ -14,7 +13,4 @@ export class SensorSnapshot {
 
   @Column()
   value: string;
-
-  @CreateDateColumn()
-  createdAt: Date;
 }

@@ -1,11 +1,10 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne } from 'typeorm';
+import { BaseCustomEntity } from '../../common/entities/base-custom.entity';
 import { User } from '../../user/entities/user.entity';
 import { Room } from './room.entity';
 
 @Entity('event_logs')
-export class EventLog {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+export class EventLog extends BaseCustomEntity {
 
   @ManyToOne(() => Room, (room) => room.eventLogs, { nullable: true, onDelete: 'SET NULL' })
   room?: Room;
@@ -18,7 +17,4 @@ export class EventLog {
 
   @Column({ type: 'jsonb', default: () => "'{}'" })
   payload: Record<string, unknown>;
-
-  @CreateDateColumn()
-  createdAt: Date;
 }

@@ -1,11 +1,10 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { Column, Entity, ManyToOne, Unique } from 'typeorm';
+import { BaseCustomEntity } from '../../common/entities/base-custom.entity';
 import { Room } from './room.entity';
 
 @Entity('face_labels')
 @Unique(['room', 'label'])
-export class FaceLabel {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+export class FaceLabel extends BaseCustomEntity {
 
   @ManyToOne(() => Room, (room) => room.faceLabels, { onDelete: 'CASCADE' })
   room: Room;
@@ -15,7 +14,4 @@ export class FaceLabel {
 
   @Column({ nullable: true })
   displayName?: string;
-
-  @CreateDateColumn()
-  createdAt: Date;
 }
