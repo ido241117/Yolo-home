@@ -15,6 +15,10 @@ import { useRoomOverview } from '../../hooks';
 import { theme } from '../../styles';
 import type { FaceSummary, RoomEventSummary } from '../../types';
 
+const REGISTER_MIN_IMAGES = 3;
+const REGISTER_CAMERA_TARGET_IMAGES = 5;
+const REGISTER_MAX_IMAGES = 7;
+
 export default function IdentityPage() {
   const { room, refresh } = useRoomOverview();
   const [faces, setFaces] = useState<FaceSummary[]>([]);
@@ -80,6 +84,60 @@ export default function IdentityPage() {
     return result.assets[0].base64;
   }
 
+  async function pickRegisterImagesBase64(source: 'camera' | 'library') {
+    if (source === 'library') {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Photo library permission needed', 'Allow photo access to select several face images.');
+        return null;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
+        selectionLimit: REGISTER_MAX_IMAGES,
+        base64: true,
+        quality: 0.7,
+      });
+
+      if (result.canceled) return null;
+      const images = result.assets.map((asset) => asset.base64).filter((value): value is string => Boolean(value));
+      if (images.length < REGISTER_MIN_IMAGES) {
+        Alert.alert('More samples needed', `Select at least ${REGISTER_MIN_IMAGES} clear face photos.`);
+        return null;
+      }
+      return images.slice(0, REGISTER_MAX_IMAGES);
+    }
+
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Camera permission needed', 'Allow camera access to capture several face images.');
+      return null;
+    }
+
+    const images: string[] = [];
+    const prompts = ['Look straight', 'Turn left slightly', 'Turn right slightly', 'Tilt up or down slightly', 'Hold still for one clear shot'];
+    for (let index = 0; index < REGISTER_CAMERA_TARGET_IMAGES; index += 1) {
+      setStatus(`Capture ${index + 1}/${REGISTER_CAMERA_TARGET_IMAGES}: ${prompts[index]}`);
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        base64: true,
+        quality: 0.65,
+      });
+
+      if (result.canceled) break;
+      const image = result.assets[0]?.base64;
+      if (image) images.push(image);
+    }
+
+    if (images.length < REGISTER_MIN_IMAGES) {
+      Alert.alert('More samples needed', `Capture at least ${REGISTER_MIN_IMAGES} clear face photos.`);
+      return null;
+    }
+    return images;
+  }
+
   async function handleRegisterFace(source: 'camera' | 'library') {
     if (!room?.id || isRegistering) return;
     const cleanLabel = label.trim();
@@ -89,15 +147,18 @@ export default function IdentityPage() {
     }
 
     setIsRegistering(true);
-    setStatus(source === 'camera' ? 'Capturing face image...' : 'Selecting face image...');
+    setStatus(source === 'camera' ? 'Capturing face samples...' : 'Selecting face samples...');
     try {
-      const image = await pickImageBase64(source);
-      if (!image) return;
-      await registerRoomFace(room.id, cleanLabel, image);
-      await retrainRoomFaces(room.id).catch(() => undefined);
+      const images = await pickRegisterImagesBase64(source);
+      if (!images) return;
+      setStatus(`Uploading ${images.length} face samples...`);
+      const result = await registerRoomFace(room.id, cleanLabel, images);
       await loadIdentityData(room.id);
       setLabel('');
-      setStatus('Face registered. You can now try face unlock.');
+      const ai = result as { ai?: { accepted_samples?: number; rejected_samples?: number } };
+      const accepted = ai.ai?.accepted_samples ?? images.length;
+      const rejected = ai.ai?.rejected_samples ?? 0;
+      setStatus(`Face registered with ${accepted} sample(s)${rejected ? `; ${rejected} rejected by quality checks` : ''}.`);
     } catch (err) {
       const detail = err instanceof Error ? err.message : 'Unable to register face';
       setStatus(`Face registration failed: ${detail}`);
@@ -155,7 +216,6 @@ export default function IdentityPage() {
     setFaces((current) => current.filter((face) => face.id !== faceId));
     if (!room?.id) return;
     deleteRoomFace(room.id, faceId)
-      .then(() => retrainRoomFaces(room.id).catch(() => undefined))
       .catch(() => undefined);
   }
 
@@ -174,17 +234,6 @@ export default function IdentityPage() {
           <Text style={pageStyles.cameraKicker}>Live Feed</Text>
           <Text style={pageStyles.cameraTitle}>Secure Entry Cam</Text>
         </View>
-      </View>
-
-      <View style={pageStyles.actionRow}>
-        <Pressable style={pageStyles.primaryAction} onPress={() => handleRegisterFace('library')} disabled={isRegistering}>
-          <UserPlus size={20} color={theme.colors.onPrimary} />
-          <Text style={pageStyles.primaryActionText}>{isRegistering ? 'Registering...' : 'Add From Library'}</Text>
-        </Pressable>
-        <Pressable style={pageStyles.secondaryAction} onPress={() => handleFaceUnlock('library')} disabled={isRecognizing}>
-          <ScanFace size={20} color={theme.colors.primary} />
-          <Text style={pageStyles.secondaryActionText}>{isRecognizing ? 'Checking...' : 'Unlock From Photo'}</Text>
-        </Pressable>
       </View>
 
       <View style={pageStyles.controlCard}>
@@ -245,7 +294,7 @@ export default function IdentityPage() {
         {faces.length === 0 && (
           <View style={pageStyles.emptyCard}>
             <Text style={pageStyles.emptyTitle}>No registered faces</Text>
-            <Text style={pageStyles.emptyText}>Enter a label, tap Add New Face, then capture a clear front-facing image.</Text>
+            <Text style={pageStyles.emptyText}>Enter a label, then capture or select 3-7 clear face samples.</Text>
           </View>
         )}
       </View>
@@ -342,40 +391,6 @@ const pageStyles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     gap: spacing.md,
-  },
-  primaryAction: {
-    flex: 1,
-    minHeight: 56,
-    borderRadius: rounded.lg,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    ...elevation.floating,
-  },
-  secondaryAction: {
-    flex: 1,
-    minHeight: 56,
-    borderRadius: rounded.lg,
-    backgroundColor: colors.surfaceContainerHighest,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    ...elevation.card,
-  },
-  primaryActionText: {
-    color: colors.onPrimary,
-    fontSize: typography.labelMd.fontSize,
-    fontWeight: '800',
-  },
-  secondaryActionText: {
-    color: colors.primary,
-    fontSize: typography.labelMd.fontSize,
-    fontWeight: '800',
   },
   controlCard: {
     borderRadius: rounded.lg,

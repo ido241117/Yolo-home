@@ -1,10 +1,11 @@
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { createMobileSwaggerDocument, createWebappSwaggerDocument } from './docs/swagger-docs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bodyParser: false });
@@ -24,19 +25,19 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('DADN Smart Room API')
-    .setDescription('API quản lý phòng trọ thông minh')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup(`${prefix}/docs`, app, document);
+  const webappDocument = createWebappSwaggerDocument(app, prefix);
+  const mobileDocument = createMobileSwaggerDocument(app, prefix);
+  const docsBasePath = `${prefix}/docs`;
+  const webappDocsPath = `${docsBasePath}/webapp`;
+  const mobileDocsPath = `${docsBasePath}/mobile`;
+  SwaggerModule.setup(webappDocsPath, app, webappDocument);
+  SwaggerModule.setup(mobileDocsPath, app, mobileDocument);
 
   const port = config.get<number>('APP_PORT', 3000);
   await app.listen(port);
   console.log(`Server:  http://localhost:${port}/${prefix}`);
-  console.log(`Swagger: http://localhost:${port}/${prefix}/docs`);
+  console.log(`Swagger webapp: http://localhost:${port}/${webappDocsPath}/`);
+  console.log(`Swagger mobile: http://localhost:${port}/${mobileDocsPath}/`);
 }
 
 void bootstrap();

@@ -109,8 +109,9 @@ export async function getRoomFaces(roomId: string) {
   });
 }
 
-export function registerRoomFace(roomId: string, label: string, image: string) {
-  return apiPost<RawFace>(`/rooms/${roomId}/faces`, { label, image });
+export function registerRoomFace(roomId: string, label: string, images: string | string[]) {
+  const payload = Array.isArray(images) ? { label, images } : { label, image: images };
+  return apiPost<RawFace>(`/rooms/${roomId}/faces`, payload);
 }
 
 export function recognizeRoomFace(roomId: string, image: string) {

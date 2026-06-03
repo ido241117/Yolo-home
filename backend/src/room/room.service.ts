@@ -340,7 +340,9 @@ export class RoomService {
 
   async registerFace(roomId: string, dto: RegisterFaceDto) {
     const room = await this.findOne(roomId);
-    const ai = await this.aiService.registerFace(roomId, dto.label, dto.image);
+    const samples = dto.images?.length ? dto.images : dto.image ? [dto.image] : [];
+    if (samples.length === 0) throw new BadRequestException('Face image is required');
+    const ai = await this.aiService.registerFace(roomId, dto.label, dto.images?.length ? dto.images : dto.image!);
     const label = String(ai?.label ?? dto.label).trim();
     if (!label) throw new BadRequestException('Face label is required');
 

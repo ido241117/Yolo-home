@@ -69,11 +69,27 @@ def confidence_threshold() -> float:
 
 
 def min_samples_per_label() -> int:
-    raw = os.getenv("FACE_MIN_SAMPLES_PER_LABEL", "1").strip()
+    raw = os.getenv("FACE_MIN_SAMPLES_PER_LABEL", "3").strip()
     try:
         return max(1, int(raw))
     except ValueError:
-        return 1
+        return 3
+
+
+def face_register_min_images() -> int:
+    raw = os.getenv("FACE_REGISTER_MIN_IMAGES", "3").strip()
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        return 3
+
+
+def face_register_max_images() -> int:
+    raw = os.getenv("FACE_REGISTER_MAX_IMAGES", "7").strip()
+    try:
+        return max(face_register_min_images(), int(raw))
+    except ValueError:
+        return 7
 
 
 def face_distance_margin() -> float:
@@ -554,6 +570,68 @@ def register_face(label: str, image_data=None, image_file=None, auto_retrain=Tru
         "label": safe_label,
         "sample_path": path,
         "retrained": retrain_result is not None,
+        "retrain": retrain_result,
+    }
+
+
+def register_face_batch(label: str, images=None, room_id: Optional[str] = None) -> dict:
+    safe_label = _safe_label(label)
+    if not safe_label:
+        raise ValueError("missing_label")
+    if not isinstance(images, list):
+        raise ValueError("missing_images")
+
+    max_images = face_register_max_images()
+    min_images = face_register_min_images()
+    candidates = images[:max_images]
+    if len(candidates) < min_images:
+        raise ValueError(f"not_enough_images:{len(candidates)}/{min_images}")
+
+    label_dir = os.path.join(face_data_dir(room_id), safe_label)
+    os.makedirs(label_dir, exist_ok=True)
+
+    accepted = []
+    rejected = []
+    for index, image_data in enumerate(candidates):
+        try:
+            data = _decode_image(image_data=image_data)
+            validate_face_quality(data)
+            ext = _image_ext(data) or ".jpg"
+            filename = f"{int(time.time() * 1000)}_{index + 1}{ext}"
+            path = os.path.join(label_dir, filename)
+            with open(path, "wb") as f:
+                f.write(data)
+            accepted.append({"index": index, "sample_path": path, "filename": filename})
+        except Exception as exc:
+            rejected.append({"index": index, "error": str(exc)})
+
+    if len(accepted) < min_images:
+        for sample in accepted:
+            path = sample.get("sample_path")
+            if path and os.path.isfile(path):
+                os.remove(path)
+        raise ValueError(f"not_enough_valid_images:{len(accepted)}/{min_images}")
+
+    save_face_event(
+        "face_register",
+        label=safe_label,
+        action="REGISTER",
+        message=f"Saved {len(accepted)} sample(s); rejected {len(rejected)}",
+    )
+
+    retrain_result = train_face_model(room_id=room_id)
+
+    return {
+        "success": True,
+        "label": safe_label,
+        "accepted_samples": len(accepted),
+        "rejected_samples": len(rejected),
+        "max_images": max_images,
+        "min_images": min_images,
+        "samples": accepted,
+        "rejected": rejected,
+        "ready": len(accepted) >= min_samples_per_label(),
+        "retrained": True,
         "retrain": retrain_result,
     }
 

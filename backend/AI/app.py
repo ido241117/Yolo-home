@@ -10,6 +10,7 @@ from ai.face_ai import (
     list_registered_faces_for_room,
     recognize_face_image,
     register_face,
+    register_face_batch,
     train_face_model,
 )
 
@@ -76,12 +77,19 @@ def register_face_label():
     body = _body()
     image_file = request.files.get("image") if request.files else None
     try:
-        result = register_face(
-            label=body.get("label"),
-            image_data=body.get("image"),
-            image_file=image_file,
-            room_id=body.get("roomId"),
-        )
+        if isinstance(body.get("images"), list):
+            result = register_face_batch(
+                label=body.get("label"),
+                images=body.get("images"),
+                room_id=body.get("roomId"),
+            )
+        else:
+            result = register_face(
+                label=body.get("label"),
+                image_data=body.get("image"),
+                image_file=image_file,
+                room_id=body.get("roomId"),
+            )
         return jsonify({**result, "roomId": body.get("roomId")})
     except Exception as exc:
         return jsonify({"success": False, "error": str(exc), "roomId": body.get("roomId")}), 400

@@ -30,9 +30,12 @@ export class AiService {
     return response.data;
   }
 
-  async registerFace(roomId: string, label: string, image: string) {
+  async registerFace(roomId: string, label: string, imageOrImages: string | string[]) {
+    const payload = Array.isArray(imageOrImages)
+      ? { roomId, label, images: imageOrImages }
+      : { roomId, label, image: imageOrImages };
     const response = await firstValueFrom(
-      this.http.post(`${this.baseUrl}/face/register`, { roomId, label, image }),
+      this.http.post(`${this.baseUrl}/face/register`, payload),
     );
     return response.data;
   }
