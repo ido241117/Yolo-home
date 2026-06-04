@@ -8,9 +8,6 @@ function AlertsPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-headline-lg text-on-surface">Alerts History</h2>
-        <p className="text-body-md text-on-surface-variant">
-          Review live human detections and security-related event logs from the backend.
-        </p>
       </div>
 
       <AlertStats

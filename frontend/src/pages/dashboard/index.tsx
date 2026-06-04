@@ -3,6 +3,7 @@ import {
   DashboardCards,
   DashboardRoomsGrid,
   GlobalDevicePanel,
+  GlobalEnvironmentLog,
   RecentEventsTable,
 } from '@/components/dashboard';
 import { useDashboardData } from '@/hooks';
@@ -22,6 +23,9 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <div>
+        <h2 className="text-headline-lg text-on-surface">Dashboard</h2>
+      </div>
       {(summaryQuery.isLoading || occupancyQuery.isLoading) && (
         <div className="bg-surface-container border border-outline-variant p-3 rounded-xl text-on-surface-variant">
           Syncing dashboard data...
@@ -47,6 +51,13 @@ export default function DashboardPage() {
           led={globalDevices?.devices.led ?? summary?.globalDevices.led}
           fan={globalDevices?.devices.fan ?? summary?.globalDevices.fan}
           autoModes={globalDevices?.autoModes}
+        />
+        <GlobalEnvironmentLog
+          configured={globalDevices?.configured}
+          temp={globalDevices?.sensors.temp}
+          humi={globalDevices?.sensors.humi}
+          tempHistory={globalDevices?.history.temp}
+          humiHistory={globalDevices?.history.humi}
         />
         <RecentEventsTable events={eventsQuery.data ?? []} />
       </div>

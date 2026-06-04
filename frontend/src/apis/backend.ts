@@ -18,6 +18,11 @@ export interface ValueState {
   updatedAt: string;
 }
 
+export interface HistoryValueState {
+  value: string;
+  createdAt: string;
+}
+
 export interface AutoModeMap {
   led: boolean;
   fan: boolean;
@@ -43,6 +48,8 @@ export interface DashboardSummary {
 export interface GlobalDevicesResponse {
   configured: boolean;
   devices: Record<'led' | 'fan', ValueState | null>;
+  sensors: Record<'temp' | 'humi', ValueState | null>;
+  history: Record<'temp' | 'humi', HistoryValueState[]>;
   autoModes: AutoModeMap;
 }
 

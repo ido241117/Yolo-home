@@ -16,7 +16,8 @@ import { User } from '../user/entities/user.entity';
 
 export const GLOBAL_ROOM_NAME = '__global__';
 const VALID_GLOBAL_DEVICE_KEYS = ['led', 'fan'] as const;
-const GLOBAL_SENSOR_KEYS = ['temp', 'humi', 'light'] as const;
+const GLOBAL_DASHBOARD_SENSOR_KEYS = ['temp', 'humi'] as const;
+const GLOBAL_AUTO_SENSOR_KEYS = ['temp', 'humi', 'light'] as const;
 
 type AutoTrainingContext = {
   temperature: number;
@@ -77,25 +78,66 @@ export class GlobalDevicesService implements OnModuleInit {
 
   async getDevices() {
     const room = await this.getOrCreateGlobalRoom();
-    if (!room.hardwareConfig) return { configured: false, devices: {}, autoModes: await this.getAutoModes(room.id) };
+    if (!room.hardwareConfig) {
+      return {
+        configured: false,
+        devices: {},
+        sensors: { temp: null, humi: null },
+        history: { temp: [], humi: [] },
+        autoModes: await this.getAutoModes(room.id),
+      };
+    }
 
-    const results = await Promise.allSettled(
+    const deviceResults = await Promise.allSettled(
       VALID_GLOBAL_DEVICE_KEYS.map(async (key) => {
         const { value, updatedAt } = await this.adafruitService.getLastValue(room.id, key);
         return { key, value, updatedAt };
       }),
     );
+    const sensorResults = await Promise.allSettled(
+      GLOBAL_DASHBOARD_SENSOR_KEYS.map(async (key) => {
+        const { value, updatedAt } = await this.getGlobalSensorValue(room.id, key);
+        return { key, value, updatedAt };
+      }),
+    );
+    const historyResults = await Promise.allSettled(
+      GLOBAL_DASHBOARD_SENSOR_KEYS.map(async (key) => ({
+        key,
+        history: await this.getGlobalSensorHistory(room.id, key, 50),
+      })),
+    );
 
     const devices: Record<string, { value: string; updatedAt: Date } | null> = {};
-    for (const r of results) {
+    for (const r of deviceResults) {
       if (r.status === 'fulfilled') {
         devices[r.value.key] = { value: r.value.value, updatedAt: r.value.updatedAt };
       } else {
-        const key = VALID_GLOBAL_DEVICE_KEYS[results.indexOf(r)];
+        const key = VALID_GLOBAL_DEVICE_KEYS[deviceResults.indexOf(r)];
         devices[key] = null;
       }
     }
-    return { configured: true, devices, autoModes: await this.getAutoModes(room.id) };
+
+    const sensors: Record<string, { value: string; updatedAt: Date } | null> = {};
+    for (const r of sensorResults) {
+      if (r.status === 'fulfilled') {
+        sensors[r.value.key] = { value: r.value.value, updatedAt: r.value.updatedAt };
+      } else {
+        const key = GLOBAL_DASHBOARD_SENSOR_KEYS[sensorResults.indexOf(r)];
+        sensors[key] = null;
+      }
+    }
+
+    const history: Record<string, Array<{ value: string; createdAt: Date }>> = {};
+    for (const r of historyResults) {
+      if (r.status === 'fulfilled') {
+        history[r.value.key] = r.value.history;
+      } else {
+        const key = GLOBAL_DASHBOARD_SENSOR_KEYS[historyResults.indexOf(r)];
+        history[key] = [];
+      }
+    }
+
+    return { configured: true, devices, sensors, history, autoModes: await this.getAutoModes(room.id) };
   }
 
   async getHardware() {
@@ -321,7 +363,7 @@ export class GlobalDevicesService implements OnModuleInit {
       where: { name: Not(GLOBAL_ROOM_NAME) },
       relations: { hardwareConfig: true },
     });
-    const values: Record<(typeof GLOBAL_SENSOR_KEYS)[number], number[]> = {
+    const values: Record<(typeof GLOBAL_AUTO_SENSOR_KEYS)[number], number[]> = {
       temp: [],
       humi: [],
       light: [],
@@ -331,8 +373,8 @@ export class GlobalDevicesService implements OnModuleInit {
       rooms
         .filter((room) => room.hardwareConfig)
         .flatMap((room) =>
-          GLOBAL_SENSOR_KEYS.map(async (key) => {
-            const { value } = await this.adafruitService.getLastValue(room.id, key);
+          GLOBAL_AUTO_SENSOR_KEYS.map(async (key) => {
+            const { value } = await this.getGlobalSensorValue(room.id, key);
             const numeric = Number(value);
             if (Number.isFinite(numeric)) values[key].push(numeric);
           }),
@@ -358,6 +400,24 @@ export class GlobalDevicesService implements OnModuleInit {
       currentFanState: Number(this.isActiveDeviceValue(devices.devices.fan?.value)),
       currentLightState: Number(this.isActiveDeviceValue(devices.devices.led?.value)),
     };
+  }
+
+  private async getGlobalSensorValue(roomId: string, key: string) {
+    try {
+      return await this.adafruitService.getLastValue(roomId, key);
+    } catch (error) {
+      if (key === 'humi') return this.adafruitService.getLastValue(roomId, 'humid');
+      throw error;
+    }
+  }
+
+  private async getGlobalSensorHistory(roomId: string, key: string, limit: number) {
+    try {
+      return await this.adafruitService.getFeedHistory(roomId, key, limit);
+    } catch (error) {
+      if (key === 'humi') return this.adafruitService.getFeedHistory(roomId, 'humid', limit);
+      throw error;
+    }
   }
 
   private async getAutoModes(roomId: string) {

@@ -18,7 +18,7 @@ const defaultFeedMapping: Record<FeedKey, string> = {
   fan: 'fan',
   door: 'door',
   temp: 'temp',
-  humi: 'humi',
+  humi: 'humid',
   light: 'light',
   human: 'human',
 };

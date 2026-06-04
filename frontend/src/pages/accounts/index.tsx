@@ -48,9 +48,6 @@ function AccountsPage() {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
           <h2 className="text-headline-lg text-on-surface">Account Management</h2>
-          <p className="text-body-md text-on-surface-variant">
-            Manage backend users, room assignments, permissions, and access states.
-          </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <input

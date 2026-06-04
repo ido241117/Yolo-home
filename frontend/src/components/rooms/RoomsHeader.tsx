@@ -14,9 +14,6 @@ export function RoomsHeader({
     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
       <div>
         <h2 className="text-headline-lg text-on-surface">Rooms Inventory</h2>
-        <p className="text-body-md text-on-surface-variant">
-          Manage physical units, monitor real-time occupation, and track sensor health.
-        </p>
       </div>
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1 bg-surface-container p-1 rounded-lg border border-outline-variant">
