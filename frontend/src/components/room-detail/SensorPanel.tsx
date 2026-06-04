@@ -28,7 +28,7 @@ export function SensorPanel({ sensors }: { sensors: SensorMap }) {
           <Icon name="person_search" size={22} className="text-primary" />
         </div>
         <div className="flex items-center gap-2">
-          <div className={`h-3 w-3 rounded-full ${human ? 'bg-green-400' : 'bg-slate-500'}`} />
+          <div className={`h-3 w-3 rounded-full ${human ? 'bg-status-active' : 'bg-slate-500'}`} />
           <div className="text-display text-on-surface-variant font-bold">
             {human === null ? 'N/A' : human ? 'ON' : 'OFF'}
           </div>

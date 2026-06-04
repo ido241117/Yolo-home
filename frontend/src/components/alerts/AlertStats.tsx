@@ -13,22 +13,22 @@ export function AlertStats({
   const unresolved = liveAlerts.length + Math.max(history.length - acknowledgedCount, 0);
 
   return (
-    <div className="flex flex-wrap gap-4">
-      <div className="bg-surface-container border border-outline-variant px-4 py-3 rounded-lg flex items-center gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+      <div className="bg-surface-container border border-outline-variant px-4 py-3 rounded-lg flex items-center gap-3 min-w-0">
         <Icon name="warning" size={24} className="text-error" />
         <div>
           <p className="text-label-sm text-on-surface-variant">Unresolved</p>
           <p className="text-headline-sm text-error">{unresolved}</p>
         </div>
       </div>
-      <div className="bg-surface-container border border-outline-variant px-4 py-3 rounded-lg flex items-center gap-3">
-        <Icon name="check_circle" size={24} className="text-green-400" />
+      <div className="bg-surface-container border border-outline-variant px-4 py-3 rounded-lg flex items-center gap-3 min-w-0">
+        <Icon name="check_circle" size={24} className="text-status-active" />
         <div>
           <p className="text-label-sm text-on-surface-variant">Acknowledged</p>
           <p className="text-headline-sm text-on-surface">{acknowledgedCount}</p>
         </div>
       </div>
-      <div className="bg-surface-container border border-outline-variant px-4 py-3 rounded-lg flex items-center gap-3">
+      <div className="bg-surface-container border border-outline-variant px-4 py-3 rounded-lg flex items-center gap-3 min-w-0">
         <Icon name="sensors" size={24} className="text-primary" />
         <div>
           <p className="text-label-sm text-on-surface-variant">Live Human Feed</p>

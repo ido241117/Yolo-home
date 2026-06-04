@@ -69,3 +69,20 @@ timestamp,event,label,confidence,action,message
 2026-05-27 21:24:29.538173,face_retrain,test,,TRAIN,Trained FaceAI with 1 sample(s)
 2026-05-27 21:24:29.627710,face_retrain,test,,TRAIN,Trained FaceAI with 1 sample(s)
 2026-05-27 21:24:40.996980,face_low_confidence,test,0.122,DENY,"Độ tin cậy thấp, không mở cửa; distance=0.3356; max=0.1800; sample_distance=0.3356; sample_max=0.5000"
+2026-06-03 10:30:32.326376,face_register,obama_test_20260603,,REGISTER,Saved 3 sample(s); rejected 0
+2026-06-03 10:30:32.531807,face_retrain,obama_test_20260603,,TRAIN,Trained FaceAI with 3 sample(s)
+2026-06-03 10:30:32.769336,face_retrain,obama_test_20260603,,TRAIN,Trained FaceAI with 3 sample(s)
+2026-06-03 10:30:32.984438,face_recognized,obama_test_20260603,0.9627,ALLOW,Recognized obama_test_20260603
+2026-06-03 10:30:33.347578,face_recognition_failed,,,DENY,Khuôn mặt quá nhỏ hoặc bị che khuất
+2026-06-03 10:30:43.628001,face_recognition_failed,,,DENY,Khuôn mặt quá nhỏ hoặc bị che khuất
+2026-06-03 10:31:04.559265,face_low_confidence,obama_test_20260603,0.7522,DENY,"Độ tin cậy thấp, không mở cửa; distance=0.6255; max=0.5373; sample_distance=0.5579; sample_max=0.5000"
+2026-06-03 10:31:44.482385,face_recognized,obama_test_20260603,0.9627,ALLOW,Recognized obama_test_20260603
+2026-06-04 10:10:57.147903,face_register,a,,REGISTER,Saved 4 sample(s); rejected 3
+2026-06-04 10:10:57.464728,face_retrain,a,,TRAIN,Trained FaceAI with 4 sample(s)
+2026-06-04 10:11:39.509771,face_recognized,a,0.9684,ALLOW,Recognized a
+2026-06-04 10:22:08.549342,face_recognized,a,0.9614,ALLOW,Recognized a
+2026-06-04 10:44:31.495949,face_recognized,a,0.9702,ALLOW,Recognized a
+2026-06-04 10:58:29.685051,face_delete,a,,DELETE,Deleted 4 sample(s); removed empty model
+2026-06-04 10:58:58.236148,face_register,face_82c37157-5b4f-4526-99c5-4df2b02717fd,,REGISTER,Saved 3 sample(s); rejected 4
+2026-06-04 10:58:58.469227,face_retrain,face_82c37157-5b4f-4526-99c5-4df2b02717fd,,TRAIN,Trained FaceAI with 3 sample(s)
+2026-06-04 10:59:08.998116,face_recognized,face_82c37157-5b4f-4526-99c5-4df2b02717fd,0.9335,ALLOW,Recognized face_82c37157-5b4f-4526-99c5-4df2b02717fd

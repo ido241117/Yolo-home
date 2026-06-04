@@ -158,6 +158,7 @@ async function seed() {
   const globalRoom = await rooms.save(
     rooms.create({
       name: GLOBAL_ROOM_NAME,
+      code: 'global',
       status: RoomStatus.Maintenance,
       description: 'Hidden room used as source of truth for global led/fan devices',
     }),
@@ -166,6 +167,7 @@ async function seed() {
   const room101 = await rooms.save(
     rooms.create({
       name: 'Room 101',
+      code: '101',
       status: RoomStatus.Occupied,
       description: 'Occupied room with two tenants and face management enabled',
     }),
@@ -174,6 +176,7 @@ async function seed() {
   const room102 = await rooms.save(
     rooms.create({
       name: 'Room 102',
+      code: '102',
       status: RoomStatus.Occupied,
       description: 'Occupied room with one tenant and full device access',
     }),
@@ -182,6 +185,7 @@ async function seed() {
   const room201 = await rooms.save(
     rooms.create({
       name: 'Room 201',
+      code: '201',
       status: RoomStatus.Vacant,
       description: 'Vacant room prepared for onboarding',
     }),
@@ -190,6 +194,7 @@ async function seed() {
   const room301 = await rooms.save(
     rooms.create({
       name: 'Room 301',
+      code: '301',
       status: RoomStatus.Maintenance,
       description: 'Maintenance room with sensor alert history',
     }),

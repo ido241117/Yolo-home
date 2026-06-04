@@ -46,8 +46,8 @@ export function DashboardCards({
   return (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
       <StatCard label="Total Rooms" value={totalRooms} icon="meeting_room" />
-      <StatCard label="Occupied" value={occupiedRooms} icon="person_pin" iconColor="text-blue-400" progress={occupiedProgress} progressColor="bg-blue-400" />
-      <StatCard label="Vacant" value={vacantRooms} icon="check_circle" iconColor="text-green-400" />
+      <StatCard label="Occupied" value={occupiedRooms} icon="person_pin" iconColor="text-status-occupied" progress={occupiedProgress} progressColor="bg-status-occupied" />
+      <StatCard label="Vacant" value={vacantRooms} icon="check_circle" iconColor="text-status-active" />
       <StatCard label="Tenants" value={totalTenants} icon="group" iconColor="text-tertiary" />
       <StatCard label="Active Alerts" value={activeAlerts} icon="notification_important" alert />
     </div>

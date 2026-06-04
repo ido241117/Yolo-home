@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  autoControlGlobalDevice,
   commandGlobalDevice,
   getDashboardAlerts,
   getDashboardOccupancy,
@@ -28,6 +29,15 @@ export function useGlobalDeviceCommand() {
   return useMutation({
     mutationFn: ({ deviceKey, value }: { deviceKey: 'led' | 'fan'; value: string }) =>
       commandGlobalDevice(deviceKey, value),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+  });
+}
+
+export function useGlobalDeviceAutoCommand() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ deviceKey }: { deviceKey: 'led' | 'fan' }) =>
+      autoControlGlobalDevice(deviceKey),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
   });
 }

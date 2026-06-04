@@ -51,7 +51,7 @@ export function AccountsTable({ rows, isLoading, isError, onEdit, onRevoke, onRe
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`inline-flex px-2 py-1 rounded border text-[10px] font-bold uppercase tracking-wider ${roleClassNames[account.role]}`}>
+                  <span className={`inline-flex px-2 py-1 rounded badge-pill text-[10px] font-bold uppercase tracking-wider ${roleClassNames[account.role]}`}>
                     {roleLabels[account.role]}
                   </span>
                 </td>
@@ -59,8 +59,8 @@ export function AccountsTable({ rows, isLoading, isError, onEdit, onRevoke, onRe
                   {account.isGlobalAdmin ? 'Global Access' : account.assignedRooms.join(', ') || '-'}
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`inline-flex items-center gap-2 text-label-md font-medium ${account.active ? 'text-green-400' : 'text-error'}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${account.active ? 'bg-green-400' : 'bg-error'}`} />
+                  <span className={`inline-flex items-center gap-2 text-label-md font-medium ${account.active ? 'text-status-active' : 'text-error'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${account.active ? 'bg-status-active' : 'bg-error'}`} />
                     {account.active ? 'Active' : 'Revoked'}
                   </span>
                 </td>

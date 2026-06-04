@@ -21,7 +21,7 @@ export default function DeviceControl({ device, mode, onModeChange }: DeviceCont
         : device.active
           ? 'On'
           : 'Off';
-  const modes: DeviceMode[] = device.key === 'door' ? ['on', 'off'] : ['on', 'off', 'auto'];
+  const modes: DeviceMode[] = device.key === 'door' ? ['off', 'on'] : ['on', 'off', 'auto'];
 
   return (
     <View style={styles.deviceRow}>
@@ -32,7 +32,16 @@ export default function DeviceControl({ device, mode, onModeChange }: DeviceCont
       <View style={styles.segmentedControl}>
         {modes.map((item) => {
           const selected = item === mode;
-          const label = item === 'on' ? 'On' : item === 'off' ? 'Off' : 'Auto';
+          const label =
+            device.key === 'door'
+              ? item === 'on'
+                ? 'Unlock'
+                : 'Lock'
+              : item === 'on'
+                ? 'On'
+                : item === 'off'
+                  ? 'Off'
+                  : 'Auto';
 
           return (
             <Pressable

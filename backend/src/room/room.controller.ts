@@ -207,6 +207,16 @@ export class RoomController {
     return this.roomsService.commandDevice(roomId, deviceKey, dto, user.id);
   }
 
+  @Post(':roomId/devices/:deviceKey/auto')
+  @UseGuards(DevicePermissionGuard)
+  autoControlDevice(
+    @Param('roomId') roomId: string,
+    @Param('deviceKey') deviceKey: string,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.roomsService.autoControlDevice(roomId, deviceKey, user.id);
+  }
+
   // --- Event logs ---
 
   @Get(':roomId/events')

@@ -1,5 +1,6 @@
-import type { RoomDto, RoomStatus } from '@/apis';
+import type { RoomDto } from '@/apis';
 import { Icon } from '@/components';
+import { ROOM_STATUS_CONFIG } from '@/components/rooms/types';
 
 interface DashboardRoom extends RoomDto {
   hasAlert?: boolean;
@@ -12,18 +13,14 @@ interface DashboardRoom extends RoomDto {
   humidity: string;
 }
 
-const STATUS_BADGE: Record<RoomStatus, { bg: string; text: string; label: string }> = {
-  occupied:    { bg: 'bg-blue-500/15',  text: 'text-blue-400',  label: 'Occupied' },
-  vacant:      { bg: 'bg-green-500/15', text: 'text-green-400', label: 'Vacant' },
-  maintenance: { bg: 'bg-amber-500/15', text: 'text-amber-400', label: 'Maintenance' },
-};
+const STATUS_BADGE = ROOM_STATUS_CONFIG;
 
 function DeviceTile({ icon, label, active }: { icon: string; label: string; active: boolean | null }) {
   const offline = active === null;
   return (
     <div className={`flex flex-col items-center p-2 rounded bg-surface-container-low border border-outline-variant ${!active ? 'opacity-50' : ''}`}>
-      <Icon name={icon} filled={Boolean(active)} size={20} className={`mb-1 ${active ? 'text-green-400' : 'text-on-surface-variant'}`} />
-      <span className={`text-label-sm font-bold uppercase ${active ? 'text-green-400' : ''}`}>
+      <Icon name={icon} filled={Boolean(active)} size={20} className={`mb-1 ${active ? 'text-status-active' : 'text-on-surface-variant'}`} />
+      <span className={`text-label-sm font-bold uppercase ${active ? 'text-status-active' : ''}`}>
         {offline ? 'N/A' : label}
       </span>
     </div>
@@ -37,7 +34,7 @@ function RoomCard({ room }: { room: DashboardRoom }) {
       <div className="flex justify-between items-start mb-4">
         <div>
           <h4 className="text-headline-sm text-on-surface">{room.name}</h4>
-          <span className={`inline-flex items-center px-2 py-0.5 rounded text-label-sm font-medium mt-1 ${badge.bg} ${badge.text}`}>
+          <span className={`inline-flex items-center px-2 py-0.5 rounded text-label-sm font-medium mt-1 badge-pill ${badge.badge}`}>
             {badge.label}
           </span>
         </div>
@@ -66,7 +63,7 @@ function RoomCard({ room }: { room: DashboardRoom }) {
 
 export function DashboardRoomsGrid({ rooms }: { rooms: DashboardRoom[] }) {
   return (
-    <div className="lg:col-span-2 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-headline-lg text-on-surface">Room Status Grid</h3>
       </div>

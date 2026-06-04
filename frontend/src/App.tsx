@@ -19,6 +19,8 @@ function AntdConfig({ children }: { children: ReactNode }) {
           colorBgBase:      isDark ? '#0b1326' : '#f0f2f8',
           colorBgContainer: isDark ? '#171f33' : '#ffffff',
           colorBorder:      isDark ? '#464555' : '#c4c6d4',
+          colorText:        isDark ? '#dae2fd' : '#1a1c2e',
+          colorTextSecondary: isDark ? '#c7c4d8' : '#44475a',
           borderRadius:     4,
           fontFamily:       "'Inter', system-ui, sans-serif",
           fontSize:         14,

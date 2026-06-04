@@ -6,13 +6,13 @@ import {
   MdDashboard,
   MdDevices,
   MdLightMode,
+  MdLogout,
   MdMeetingRoom,
   MdNotificationsActive,
   MdSensors,
-  MdFace,
   MdSupervisorAccount,
 } from 'react-icons/md';
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { menuItems } from '@/config/menu';
 import { useTheme } from '@/contexts/theme-context';
 
@@ -22,7 +22,6 @@ const ICON_MAP: Record<string, ReactElement> = {
   MdDevices:          <MdDevices size={20} />,
   MdSensors:          <MdSensors size={20} />,
   MdNotificationsActive:<MdNotificationsActive size={20} />,
-  MdFace:             <MdFace size={20} />,
   MdSupervisorAccount:<MdSupervisorAccount size={20} />,
 };
 
@@ -33,10 +32,20 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
 
   const isActive = (path: string) =>
     path === '/' ? pathname === '/' : pathname.startsWith(path);
+
+  const logout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    navigate('/login', { replace: true });
+  };
 
   return (
     <aside
@@ -84,6 +93,19 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <span className="sidebar-nav-label">
               {isDark ? 'Light Mode' : 'Dark Mode'}
             </span>
+          )}
+        </button>
+
+        <button
+          className="sidebar-nav-item"
+          onClick={logout}
+          title="Đăng xuất"
+        >
+          <span className="sidebar-nav-icon">
+            <MdLogout size={20} />
+          </span>
+          {!collapsed && (
+            <span className="sidebar-nav-label">Đăng xuất</span>
           )}
         </button>
 

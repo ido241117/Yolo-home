@@ -1,52 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Bell, DoorOpen, Lightbulb, ShieldCheck, Thermometer, UserRoundCheck } from 'lucide-react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Bell, CircleAlert, UserRoundCheck } from 'lucide-react-native';
 import { getRoomEvents } from '../../apis';
+import { RoomAccessNotice } from '../../components';
 import { useRoomOverview } from '../../hooks';
 import { theme } from '../../styles';
 import type { RoomEventSummary } from '../../types';
 
-type FilterKey = 'device' | 'door' | 'sensor';
-
-const fallbackEvents: RoomEventSummary[] = [
-  {
-    id: 'face-unlocked',
-    type: 'door',
-    title: 'Door Unlocked via Face',
-    description: 'Entry granted for Main User',
-    time: '10:45',
-    severity: 'success',
-  },
-  {
-    id: 'temp-high',
-    type: 'sensor',
-    title: 'Temp high (32 C)',
-    description: 'Room sensor exceeded the comfort limit',
-    time: '09:30',
-    severity: 'warning',
-  },
-  {
-    id: 'light-on',
-    type: 'device',
-    title: 'Light turned ON',
-    description: 'Entrance hallway motion trigger',
-    time: '08:15',
-    severity: 'success',
-  },
-  {
-    id: 'armed',
-    type: 'security',
-    title: 'Security Armed',
-    description: "System set to 'Away' mode",
-    time: 'Yesterday',
-    severity: 'info',
-  },
-];
-
 export default function AlertsPage() {
-  const { room } = useRoomOverview();
-  const [activeFilter, setActiveFilter] = useState<FilterKey>('device');
-  const [events, setEvents] = useState<RoomEventSummary[]>(fallbackEvents);
+  const { room, isRoomMissing } = useRoomOverview();
+  const [events, setEvents] = useState<RoomEventSummary[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   async function refreshEvents() {
@@ -54,7 +17,7 @@ export default function AlertsPage() {
     setRefreshing(true);
     try {
       const nextEvents = await getRoomEvents(room.id);
-      if (nextEvents.length > 0) setEvents(nextEvents);
+      setEvents(nextEvents);
     } catch {
       await new Promise((resolve) => setTimeout(resolve, 500));
     } finally {
@@ -67,57 +30,54 @@ export default function AlertsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room?.id]);
 
-  const filteredEvents = useMemo(() => {
-    if (activeFilter === 'device') {
-      return events;
-    }
-    return events.filter((event) => event.type === activeFilter);
-  }, [activeFilter, events]);
+  const faceEvents = useMemo(() => events.filter((event) => event.type === 'face'), [events]);
+  const hasEvents = faceEvents.length > 0;
+
+  if (isRoomMissing) {
+    return <RoomAccessNotice />;
+  }
 
   return (
-    <View style={pageStyles.page}>
+    <ScrollView
+      style={pageStyles.page}
+      contentContainerStyle={[pageStyles.content, !hasEvents && pageStyles.emptyContent]}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshEvents} tintColor={theme.colors.primary} />}
+    >
       <View style={pageStyles.refreshHint}>
         <Bell size={18} color={theme.colors.onSurfaceVariant} />
-        <Text style={pageStyles.refreshHintText}>{refreshing ? 'Refreshing...' : 'Last updated just now'}</Text>
+        <Text style={pageStyles.refreshHintText}>{refreshing ? 'Refreshing...' : 'Face alerts only'}</Text>
       </View>
 
-      <View style={pageStyles.tabs}>
-        <FilterButton active={activeFilter === 'device'} label="Device Events" onPress={() => setActiveFilter('device')} />
-        <FilterButton active={activeFilter === 'door'} label="Door Access" onPress={() => setActiveFilter('door')} />
-        <FilterButton active={activeFilter === 'sensor'} label="Sensor Alerts" onPress={() => setActiveFilter('sensor')} />
-      </View>
-
-      <ScrollView
-        scrollEnabled={false}
-        contentContainerStyle={pageStyles.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshEvents} tintColor={theme.colors.primary} />}
-      >
-        <Text style={pageStyles.groupLabel}>TODAY</Text>
-        {filteredEvents.map((event) => (
-          <EventCard key={event.id} event={event} />
-        ))}
-      </ScrollView>
-    </View>
-  );
-}
-
-function FilterButton({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) {
-  return (
-    <Pressable style={[pageStyles.tabButton, active && pageStyles.tabButtonActive]} onPress={onPress}>
-      <Text style={[pageStyles.tabText, active && pageStyles.tabTextActive]} numberOfLines={1}>
-        {label}
-      </Text>
-    </Pressable>
+      {hasEvents ? (
+        <View style={pageStyles.list}>
+          <Text style={pageStyles.groupLabel}>FACE EVENTS</Text>
+          {faceEvents.map((event) => (
+            <EventCard key={event.id} event={event} />
+          ))}
+        </View>
+      ) : (
+        <View style={pageStyles.emptyCard}>
+          <Text style={pageStyles.emptyTitle}>No face alerts yet</Text>
+          <Text style={pageStyles.emptyText}>Only face registrations and face unlock results appear here.</Text>
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
 function EventCard({ event }: { event: RoomEventSummary }) {
-  const Icon = getEventIcon(event);
-  const accentColor = getAccentColor(event);
+  const Icon = event.severity === 'error' ? CircleAlert : UserRoundCheck;
+  const accentColor = event.severity === 'error' ? theme.colors.error : theme.colors.secondary;
+  const iconBackground =
+    event.severity === 'error'
+      ? theme.colors.errorContainer
+      : event.severity === 'success'
+        ? theme.colors.secondaryFixed
+        : theme.colors.primaryFixed;
 
   return (
     <View style={pageStyles.eventCard}>
-      <View style={[pageStyles.eventIcon, { backgroundColor: getIconBackground(event) }]}>
+      <View style={[pageStyles.eventIcon, { backgroundColor: iconBackground }]}>
         <Icon size={24} color={accentColor} />
       </View>
       <View style={pageStyles.eventBody}>
@@ -131,7 +91,7 @@ function EventCard({ event }: { event: RoomEventSummary }) {
         {event.severity === 'warning' ? (
           <View style={pageStyles.warningPill}>
             <View style={pageStyles.warningDot} />
-            <Text style={pageStyles.warningPillText}>Amber Warning</Text>
+            <Text style={pageStyles.warningPillText}>Pending</Text>
           </View>
         ) : null}
       </View>
@@ -139,33 +99,17 @@ function EventCard({ event }: { event: RoomEventSummary }) {
   );
 }
 
-function getEventIcon(event: RoomEventSummary) {
-  if (event.type === 'door') return UserRoundCheck;
-  if (event.type === 'sensor') return Thermometer;
-  if (event.type === 'security') return ShieldCheck;
-  if (event.title.toLowerCase().includes('light')) return Lightbulb;
-  return DoorOpen;
-}
-
-function getAccentColor(event: RoomEventSummary) {
-  if (event.severity === 'warning') return theme.colors.tertiary;
-  if (event.severity === 'error') return theme.colors.error;
-  if (event.severity === 'success') return theme.colors.secondary;
-  return theme.colors.primary;
-}
-
-function getIconBackground(event: RoomEventSummary) {
-  if (event.severity === 'warning') return theme.colors.tertiaryFixed;
-  if (event.severity === 'error') return theme.colors.errorContainer;
-  if (event.severity === 'success') return theme.colors.secondaryFixed;
-  return theme.colors.primaryFixed;
-}
-
 const { colors, elevation, rounded, spacing, typography } = theme;
 
 const pageStyles = StyleSheet.create({
   page: {
     gap: spacing.md,
+  },
+  content: {
+    gap: spacing.md,
+  },
+  emptyContent: {
+    flexGrow: 1,
   },
   refreshHint: {
     minHeight: 32,
@@ -179,34 +123,6 @@ const pageStyles = StyleSheet.create({
     color: colors.onSurfaceVariant,
     fontSize: typography.labelMd.fontSize,
     fontWeight: '600',
-  },
-  tabs: {
-    minHeight: 48,
-    borderRadius: rounded.lg,
-    backgroundColor: colors.surfaceContainerLow,
-    padding: 4,
-    flexDirection: 'row',
-    gap: 4,
-  },
-  tabButton: {
-    flex: 1,
-    minHeight: 40,
-    borderRadius: rounded.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xs,
-  },
-  tabButtonActive: {
-    backgroundColor: colors.surfaceContainerLowest,
-    ...elevation.card,
-  },
-  tabText: {
-    color: colors.onSurfaceVariant,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  tabTextActive: {
-    color: colors.primary,
   },
   list: {
     gap: spacing.md,
@@ -285,5 +201,26 @@ const pageStyles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '900',
     textTransform: 'uppercase',
+  },
+  emptyCard: {
+    minHeight: 160,
+    borderRadius: rounded.lg,
+    backgroundColor: colors.surfaceContainerLowest,
+    padding: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    ...elevation.card,
+  },
+  emptyTitle: {
+    color: colors.onSurface,
+    fontSize: typography.bodyLg.fontSize,
+    fontWeight: '800',
+  },
+  emptyText: {
+    color: colors.onSurfaceVariant,
+    fontSize: typography.labelMd.fontSize,
+    lineHeight: typography.labelMd.lineHeight,
+    textAlign: 'center',
   },
 });

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import type { DeviceMap, RoomDto, SensorMap } from '@/apis';
 import {
@@ -9,18 +10,26 @@ import {
   RoomEventsLog,
   SensorPanel,
 } from '@/components/room-detail';
-import { useRoomDetailData, useRoomDeviceCommand, useUpsertRoomHardware } from '@/hooks';
+import { useRoomDetailData, useRoomDeviceAutoCommand, useRoomDeviceCommand, useUpsertRoomHardware } from '@/hooks';
 
 const emptyDevices: DeviceMap = { led: null, fan: null, door: null };
 const emptySensors: SensorMap = { temp: null, humi: null, light: null, human: null };
 
 export default function RoomDetailPage() {
-  const { id = '' } = useParams();
+  const { code = '' } = useParams();
   const navigate = useNavigate();
-  const { summaryQuery, hardwareQuery, membersQuery, facesQuery, eventsQuery, hasPartialError } = useRoomDetailData(id);
-  const commandMutation = useRoomDeviceCommand(id);
-  const hardwareMutation = useUpsertRoomHardware(id);
+  const { summaryQuery, hardwareQuery, membersQuery, facesQuery, eventsQuery, hasPartialError } = useRoomDetailData(code);
+  const commandMutation = useRoomDeviceCommand(code);
+  const autoCommandMutation = useRoomDeviceAutoCommand(code);
+  const hardwareMutation = useUpsertRoomHardware(code);
   const summary = summaryQuery.data;
+
+  useEffect(() => {
+    const roomCode = summary?.room.code;
+    if (roomCode && code !== roomCode) {
+      navigate(`/rooms/${roomCode}`, { replace: true });
+    }
+  }, [summary?.room.code, code, navigate]);
 
   if (summaryQuery.isError && !summary?.room) {
     return (
@@ -32,7 +41,8 @@ export default function RoomDetailPage() {
   }
 
   const room: RoomDto = summary?.room ?? {
-    id,
+    id: '',
+    code,
     name: 'Room detail',
     status: 'vacant',
     description: 'Syncing room data...',
@@ -59,8 +69,9 @@ export default function RoomDetailPage() {
         <div className="col-span-12 lg:col-span-4 space-y-6">
           <DeviceControlPanel
             devices={devices}
-            loading={commandMutation.isPending}
+            loading={commandMutation.isPending || autoCommandMutation.isPending}
             onCommand={(key, value) => commandMutation.mutate({ key, value })}
+            onAutoCommand={(key) => autoCommandMutation.mutate({ key })}
           />
           <HardwarePanel
             hardware={hardwareQuery.data}

@@ -1,7 +1,9 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { BellRing, ChevronRight, CircleHelp, Edit3, LockKeyhole, LogOut, MapPin } from 'lucide-react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ChevronRight, Edit3, LockKeyhole, LogOut, MapPin } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import type { AuthUser } from '../../apis';
+import { changePassword } from '../../apis';
 import { useRoomOverview } from '../../hooks';
 import { theme } from '../../styles';
 
@@ -11,17 +13,76 @@ interface ProfilePageProps {
 }
 
 export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
-  const { room, sensors } = useRoomOverview();
-  const tempValue = sensors.find((sensor) => sensor.label === 'temp')?.value;
-  const humiValue = sensors.find((sensor) => sensor.label === 'humi')?.value;
+  const { room } = useRoomOverview();
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const displayName = user?.name ?? 'Tran Van A';
+  const avatarInitial = displayName.trim().charAt(0).toUpperCase() || 'U';
   const role = user?.role ? user.role.toUpperCase() : 'TENANT';
+
+  function openPasswordModal() {
+    setPasswordMessage(null);
+    setPasswordModalVisible(true);
+  }
+
+  function closePasswordModal() {
+    if (savingPassword) return;
+    setPasswordModalVisible(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+  }
+
+  async function handleChangePassword() {
+    if (savingPassword) return;
+
+    const trimmedCurrent = currentPassword.trim();
+    const trimmedNew = newPassword.trim();
+    const trimmedConfirm = confirmPassword.trim();
+
+    if (!trimmedCurrent || !trimmedNew || !trimmedConfirm) {
+      Alert.alert('Missing fields', 'Please fill in all password fields.');
+      return;
+    }
+
+    if (trimmedNew.length < 6) {
+      Alert.alert('Password too short', 'New password must be at least 6 characters.');
+      return;
+    }
+
+    if (trimmedNew !== trimmedConfirm) {
+      Alert.alert('Password mismatch', 'New password and confirmation must match.');
+      return;
+    }
+
+    setSavingPassword(true);
+    setPasswordMessage(null);
+    try {
+      await changePassword(trimmedCurrent, trimmedNew);
+      setPasswordMessage('Password updated successfully.');
+      setSavingPassword(false);
+      closePasswordModal();
+      Alert.alert('Success', 'Password changed successfully.');
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : 'Unable to change password';
+      setPasswordMessage(detail);
+      Alert.alert('Change failed', detail);
+    } finally {
+      setSavingPassword(false);
+    }
+  }
 
   return (
     <View style={pageStyles.page}>
       <View style={pageStyles.hero}>
         <View style={pageStyles.avatarWrap}>
-          <Image source={{ uri: 'https://i.pravatar.cc/240?img=15' }} style={pageStyles.avatarImage} />
+          <View style={pageStyles.avatarImage}>
+            <Text style={pageStyles.avatarInitial}>{avatarInitial}</Text>
+          </View>
           <View style={pageStyles.editBadge}>
             <Edit3 size={16} color={theme.colors.onPrimary} />
           </View>
@@ -29,27 +90,18 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
         <Text style={pageStyles.name}>{displayName}</Text>
         <View style={pageStyles.roomLine}>
           <MapPin size={16} color={theme.colors.onSurfaceVariant} />
-          <Text style={pageStyles.roomText}>{room?.name ?? 'Room 302'} - {role}</Text>
-        </View>
-      </View>
-
-      <View style={pageStyles.statsGrid}>
-        <View style={pageStyles.statCard}>
-          <Text style={pageStyles.statValue}>{tempValue ? `${tempValue} C` : '24 C'}</Text>
-          <Text style={pageStyles.statLabel}>Room Temp</Text>
-        </View>
-        <View style={pageStyles.statCard}>
-          <Text style={[pageStyles.statValue, pageStyles.primaryValue]}>{humiValue ? `${humiValue}%` : '85%'}</Text>
-          <Text style={pageStyles.statLabel}>Humidity</Text>
+          <Text style={pageStyles.roomText}>
+            {room?.name ?? 'Room 302'} - {role}
+          </Text>
         </View>
       </View>
 
       <View style={pageStyles.menuSection}>
         <Text style={pageStyles.menuHeading}>Security & Support</Text>
-        <MenuRow icon={<LockKeyhole size={22} color={theme.colors.primary} />} label="Change Password" />
-        <MenuRow icon={<BellRing size={22} color={theme.colors.primary} />} label="Notification Settings" />
-        <MenuRow icon={<CircleHelp size={22} color={theme.colors.primary} />} label="Help & Support" />
+        <MenuRow icon={<LockKeyhole size={22} color={theme.colors.primary} />} label="Change Password" onPress={openPasswordModal} />
       </View>
+
+      {passwordMessage ? <Text style={pageStyles.messageText}>{passwordMessage}</Text> : null}
 
       <View style={pageStyles.logoutSection}>
         <Pressable style={pageStyles.logoutButton} onPress={onLogout}>
@@ -58,13 +110,78 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
         </Pressable>
         <Text style={pageStyles.version}>App Version 2.4.0</Text>
       </View>
+
+      <Modal visible={passwordModalVisible} transparent animationType="fade" onRequestClose={closePasswordModal}>
+        <View style={pageStyles.modalBackdrop}>
+          <View style={pageStyles.modalCard}>
+            <Text style={pageStyles.modalTitle}>Change Password</Text>
+            <Text style={pageStyles.modalSubtitle}>Update your password on this device.</Text>
+
+            <View style={pageStyles.fieldGroup}>
+              <Text style={pageStyles.fieldLabel}>Current password</Text>
+              <TextInput
+                value={currentPassword}
+                onChangeText={setCurrentPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                placeholder="Enter current password"
+                placeholderTextColor={theme.colors.outline}
+                style={pageStyles.fieldInput}
+              />
+            </View>
+
+            <View style={pageStyles.fieldGroup}>
+              <Text style={pageStyles.fieldLabel}>New password</Text>
+              <TextInput
+                value={newPassword}
+                onChangeText={setNewPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                placeholder="Enter new password"
+                placeholderTextColor={theme.colors.outline}
+                style={pageStyles.fieldInput}
+              />
+            </View>
+
+            <View style={pageStyles.fieldGroup}>
+              <Text style={pageStyles.fieldLabel}>Confirm new password</Text>
+              <TextInput
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                placeholder="Re-enter new password"
+                placeholderTextColor={theme.colors.outline}
+                style={pageStyles.fieldInput}
+              />
+            </View>
+
+            <View style={pageStyles.modalActions}>
+              <Pressable style={pageStyles.secondaryButton} onPress={closePasswordModal} disabled={savingPassword}>
+                <Text style={pageStyles.secondaryButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={[pageStyles.primaryButton, savingPassword && pageStyles.buttonDisabled]}
+                onPress={handleChangePassword}
+                disabled={savingPassword}
+              >
+                {savingPassword ? (
+                  <ActivityIndicator color={theme.colors.onPrimary} />
+                ) : (
+                  <Text style={pageStyles.primaryButtonText}>Save</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
-function MenuRow({ icon, label }: { icon: ReactNode; label: string }) {
+function MenuRow({ icon, label, onPress }: { icon: ReactNode; label: string; onPress: () => void }) {
   return (
-    <Pressable style={pageStyles.menuRow}>
+    <Pressable style={pageStyles.menuRow} onPress={onPress}>
       <View style={pageStyles.menuLeft}>
         <View style={pageStyles.menuIcon}>{icon}</View>
         <Text style={pageStyles.menuLabel}>{label}</Text>
@@ -95,6 +212,14 @@ const pageStyles = StyleSheet.create({
     borderWidth: 4,
     borderColor: colors.surfaceContainerHigh,
     backgroundColor: colors.surfaceContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    color: colors.primary,
+    fontSize: 42,
+    fontWeight: '900',
+    lineHeight: 48,
   },
   editBadge: {
     position: 'absolute',
@@ -128,34 +253,6 @@ const pageStyles = StyleSheet.create({
     color: colors.onSurfaceVariant,
     fontSize: typography.bodyMd.fontSize,
     lineHeight: typography.bodyMd.lineHeight,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  statCard: {
-    flex: 1,
-    minHeight: 104,
-    borderRadius: rounded.lg,
-    backgroundColor: colors.surfaceContainerLowest,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.md,
-    ...elevation.card,
-  },
-  statValue: {
-    color: colors.secondary,
-    fontSize: typography.sensorValue.fontSize,
-    fontWeight: '800',
-    lineHeight: typography.sensorValue.lineHeight,
-  },
-  primaryValue: {
-    color: colors.primary,
-  },
-  statLabel: {
-    color: colors.onSurfaceVariant,
-    fontSize: typography.labelMd.fontSize,
-    fontWeight: '700',
   },
   menuSection: {
     gap: spacing.sm,
@@ -195,6 +292,12 @@ const pageStyles = StyleSheet.create({
     fontSize: typography.bodyLg.fontSize,
     fontWeight: '700',
   },
+  messageText: {
+    color: colors.onSurfaceVariant,
+    fontSize: typography.labelMd.fontSize,
+    fontWeight: '700',
+    paddingHorizontal: spacing.sm,
+  },
   logoutSection: {
     gap: spacing.md,
   },
@@ -216,5 +319,80 @@ const pageStyles = StyleSheet.create({
     color: colors.outline,
     fontSize: typography.labelMd.fontSize,
     textAlign: 'center',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    padding: spacing.lg,
+    justifyContent: 'center',
+  },
+  modalCard: {
+    borderRadius: rounded.xl,
+    backgroundColor: colors.surfaceContainerLowest,
+    padding: spacing.lg,
+    gap: spacing.md,
+    ...elevation.card,
+  },
+  modalTitle: {
+    color: colors.onSurface,
+    fontSize: typography.headlineMd.fontSize,
+    fontWeight: '800',
+    lineHeight: typography.headlineMd.lineHeight,
+  },
+  modalSubtitle: {
+    color: colors.onSurfaceVariant,
+    fontSize: typography.bodyMd.fontSize,
+    lineHeight: typography.bodyMd.lineHeight,
+  },
+  fieldGroup: {
+    gap: spacing.xs,
+  },
+  fieldLabel: {
+    color: colors.onSurfaceVariant,
+    fontSize: typography.labelMd.fontSize,
+    fontWeight: '700',
+  },
+  fieldInput: {
+    minHeight: 52,
+    borderRadius: rounded.lg,
+    backgroundColor: colors.surfaceContainerLow,
+    color: colors.onSurface,
+    paddingHorizontal: spacing.md,
+    fontSize: typography.bodyMd.fontSize,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  secondaryButton: {
+    flex: 1,
+    minHeight: 52,
+    borderRadius: rounded.lg,
+    backgroundColor: colors.surfaceContainerHigh,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryButtonText: {
+    color: colors.onSurface,
+    fontSize: typography.bodyMd.fontSize,
+    fontWeight: '800',
+  },
+  primaryButton: {
+    flex: 1,
+    minHeight: 52,
+    borderRadius: rounded.lg,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...elevation.floating,
+  },
+  primaryButtonText: {
+    color: colors.onPrimary,
+    fontSize: typography.bodyMd.fontSize,
+    fontWeight: '800',
+  },
+  buttonDisabled: {
+    opacity: 0.45,
   },
 });

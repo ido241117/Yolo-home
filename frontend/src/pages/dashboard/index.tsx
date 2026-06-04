@@ -40,12 +40,10 @@ export default function DashboardPage() {
         activeAlerts={summary?.humanDetectedRooms ?? alerts.length}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="space-y-8">
         <DashboardRoomsGrid rooms={rooms} />
-        <div className="space-y-8">
-          <GlobalDevicePanel led={summary?.globalDevices.led} fan={summary?.globalDevices.fan} />
-          <RecentEventsTable events={eventsQuery.data ?? []} />
-        </div>
+        <GlobalDevicePanel led={summary?.globalDevices.led} fan={summary?.globalDevices.fan} />
+        <RecentEventsTable events={eventsQuery.data ?? []} />
       </div>
     </div>
   );

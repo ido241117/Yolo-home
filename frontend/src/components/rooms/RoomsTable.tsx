@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router';
 import { Icon } from '@/components';
+import { roomDetailPath } from '@/utils/room-path';
 import { ROOM_STATUS_CONFIG, type RoomRow } from './types';
 
 export function RoomsTable({
@@ -41,7 +42,7 @@ export function RoomsTable({
           {rows.map(room => {
             const s = ROOM_STATUS_CONFIG[room.status];
             return (
-              <tr key={room.id} className="hover:bg-surface-container-high transition-colors cursor-pointer" onClick={() => navigate(`/rooms/${room.id}`)}>
+              <tr key={room.id} className="hover:bg-surface-container-high transition-colors cursor-pointer" onClick={() => navigate(roomDetailPath(room))}>
                 <td className="px-6 py-5">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
@@ -54,7 +55,7 @@ export function RoomsTable({
                   </div>
                 </td>
                 <td className="px-6 py-5">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-label-sm ${s.bg} ${s.text}`}>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-label-sm badge-pill ${s.badge}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${s.dot} mr-2`} />
                     {s.label}
                   </span>
@@ -82,7 +83,11 @@ export function RoomsTable({
                   )}
                 </td>
                 <td className="px-6 py-5">
-                  <code className="text-label-md text-tertiary bg-tertiary/10 px-2 py-1 rounded">{room.adafruit}</code>
+                  {room.adafruit === 'Configure' ? (
+                    <span className="text-label-md text-on-surface-variant/70 italic">Configure</span>
+                  ) : (
+                    <code className="text-label-md text-tertiary bg-tertiary/10 px-2 py-1 rounded">{room.adafruit}</code>
+                  )}
                 </td>
                 <td className="px-6 py-5">
                   <p className="text-body-md text-on-surface-variant">{room.lastActivity}</p>

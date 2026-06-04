@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { GLOBAL_ROOM_NAME } from '../global-devices/global-devices.service';
 import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { AdafruitService } from '../adafruit/adafruit.service';
@@ -55,25 +56,78 @@ export class RoomService {
     );
   }
 
-  findAll() {
-    return this.rooms.find({
+  async findAll() {
+    const rooms = await this.rooms.find({
       where: { name: Not(GLOBAL_ROOM_NAME) },
+      relations: { hardwareConfig: true },
       order: { createdAt: 'DESC' },
     });
+
+    return rooms.map((room) => ({
+      id: room.id,
+      code: room.code,
+      name: room.name,
+      status: room.status,
+      description: room.description,
+      createdAt: room.createdAt,
+      updatedAt: room.updatedAt,
+      adafruitUsername: room.hardwareConfig?.adafruitUsername ?? null,
+    }));
   }
 
   create(dto: CreateRoomDto) {
-    return this.rooms.save(this.rooms.create(dto));
+    return this.createRoom(dto);
   }
 
-  async findOne(id: string) {
-    const room = await this.rooms.findOne({ where: { id }, relations: { hardwareConfig: true } });
+  async createRoom(dto: CreateRoomDto) {
+    const code = dto.code?.trim() || (await this.generateRoomCode(dto.name));
+    const existing = await this.rooms.findOne({ where: { code } });
+    if (existing) throw new BadRequestException(`Room code "${code}" already exists`);
+    return this.rooms.save(this.rooms.create({ ...dto, code }));
+  }
+
+  async findOne(ref: string) {
+    const room = await this.findByRef(ref, { hardwareConfig: true });
     if (!room) throw new NotFoundException('Room not found');
     return room;
   }
 
-  async getSummary(roomId: string) {
-    const room = await this.findOne(roomId);
+  async resolveRoomId(ref: string): Promise<string | null> {
+    const room = await this.findByRef(ref);
+    return room?.id ?? null;
+  }
+
+  private async findByRef(ref: string, relations?: { hardwareConfig?: boolean }) {
+    const where = this.isUuid(ref) ? { id: ref } : { code: ref };
+    return this.rooms.findOne({ where, relations });
+  }
+
+  private isUuid(value: string) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  }
+
+  private async generateRoomCode(name: string) {
+    const fromName = name.match(/\d+/)?.[0];
+    if (fromName && !(await this.rooms.findOne({ where: { code: fromName } }))) {
+      return fromName;
+    }
+
+    const existing = await this.rooms.find({ select: ['code'] });
+    let max = 0;
+    for (const room of existing) {
+      const parsed = Number.parseInt(room.code, 10);
+      if (Number.isFinite(parsed) && parsed > max) max = parsed;
+    }
+    return String(max + 1);
+  }
+
+  private async roomIdFromRef(ref: string) {
+    return (await this.findOne(ref)).id;
+  }
+
+  async getSummary(ref: string) {
+    const room = await this.findOne(ref);
+    const roomId = room.id;
     const [members, devices, sensors, recentEvents] = await Promise.all([
       this.getMembers(roomId),
       this.getDevices(roomId),
@@ -84,6 +138,7 @@ export class RoomService {
     return {
       room: {
         id: room.id,
+        code: room.code,
         name: room.name,
         status: room.status,
         description: room.description,
@@ -177,8 +232,8 @@ export class RoomService {
 
   // --- Members ---
 
-  async getMembers(roomId: string) {
-    await this.findOne(roomId);
+  async getMembers(ref: string) {
+    const roomId = await this.roomIdFromRef(ref);
     return this.permissions.find({
       where: { room: { id: roomId } },
       relations: { user: true },
@@ -186,8 +241,9 @@ export class RoomService {
     });
   }
 
-  async addMember(roomId: string, dto: AddMemberDto) {
-    const room = await this.findOne(roomId);
+  async addMember(ref: string, dto: AddMemberDto) {
+    const room = await this.findOne(ref);
+    const roomId = room.id;
     const user = await this.users.findOne({ where: { id: dto.userId } });
     if (!user) throw new NotFoundException('User not found');
 
@@ -224,8 +280,8 @@ export class RoomService {
     return this.permissions.save(perm);
   }
 
-  private async requirePermission(roomId: string, userId: string): Promise<Permission> {
-    await this.findOne(roomId);
+  private async requirePermission(ref: string, userId: string): Promise<Permission> {
+    const roomId = await this.roomIdFromRef(ref);
     const perm = await this.permissions.findOne({
       where: { room: { id: roomId }, user: { id: userId } },
       relations: { user: true },
@@ -236,8 +292,8 @@ export class RoomService {
 
   // --- Devices ---
 
-  async getDevices(roomId: string) {
-    await this.findOne(roomId);
+  async getDevices(ref: string) {
+    const roomId = await this.roomIdFromRef(ref);
     const results = await Promise.allSettled(
       VALID_DEVICE_KEYS.map(async (key) => {
         const { value, updatedAt } = await this.adafruitService.getLastValue(roomId, key);
@@ -258,15 +314,57 @@ export class RoomService {
     return devices;
   }
 
-  async getDeviceState(roomId: string, deviceKey: string) {
+  async getDeviceState(ref: string, deviceKey: string) {
     this.assertValidDeviceKey(deviceKey);
+    const roomId = await this.roomIdFromRef(ref);
     const { value, updatedAt } = await this.adafruitService.getLastValue(roomId, deviceKey);
     return { deviceKey, value, updatedAt };
   }
 
-  async commandDevice(roomId: string, deviceKey: string, dto: CommandDeviceDto, userId: string) {
-    this.assertValidDeviceKey(deviceKey);
+  async commandDevice(ref: string, deviceKey: string, dto: CommandDeviceDto, userId: string) {
+    return this.commandDeviceWithSource(ref, deviceKey, dto, userId, 'manual');
+  }
 
+  async autoControlDevice(ref: string, deviceKey: string, userId: string) {
+    this.assertValidDeviceKey(deviceKey);
+    if (deviceKey === 'door') throw new BadRequestException('Auto control only supports led and fan');
+
+    const [sensors, devices] = await Promise.all([
+      this.getSensors(ref),
+      this.getDevices(ref),
+    ]);
+    const prediction = await this.aiService.predictAutoControl({
+      sensor_data: {
+        temperature: this.readNumericSensor(sensors.temp?.value, 25),
+        humidity: this.readNumericSensor(sensors.humi?.value, 50),
+        light: this.readNumericSensor(sensors.light?.value, 400),
+      },
+      device_states: {
+        fan: this.isActiveDeviceValue(devices.fan?.value),
+        light: this.isActiveDeviceValue(devices.led?.value),
+      },
+    });
+    const action = this.extractPredictedAction(prediction, deviceKey);
+    return this.commandDeviceWithSource(
+      ref,
+      deviceKey,
+      { value: action },
+      userId,
+      'auto',
+      prediction,
+    );
+  }
+
+  private async commandDeviceWithSource(
+    ref: string,
+    deviceKey: string,
+    dto: CommandDeviceDto,
+    userId: string,
+    source: 'manual' | 'auto',
+    ai?: unknown,
+  ) {
+    this.assertValidDeviceKey(deviceKey);
+    const roomId = await this.roomIdFromRef(ref);
     let value: string;
     if (dto.action === 'toggle') {
       const current = await this.adafruitService.readFeed(roomId, deviceKey);
@@ -279,14 +377,14 @@ export class RoomService {
 
     await this.adafruitService.writeFeed(roomId, deviceKey, value);
 
-    const room = await this.findOne(roomId);
+    const room = await this.findOne(ref);
     const actor = await this.users.findOne({ where: { id: userId } });
     await this.eventLogs.save(
       this.eventLogs.create({
         room,
         actor: actor ?? undefined,
         type: 'device_command',
-        payload: { deviceKey, value, source: 'manual' },
+        payload: { deviceKey, value, source, ...(ai !== undefined && { ai }) },
       }),
     );
 
@@ -295,8 +393,8 @@ export class RoomService {
 
   // --- Event logs ---
 
-  async getRoomEvents(roomId: string, limit = 50, from?: string, to?: string) {
-    await this.findOne(roomId);
+  async getRoomEvents(ref: string, limit = 50, from?: string, to?: string) {
+    const roomId = await this.roomIdFromRef(ref);
     const qb = this.eventLogs
       .createQueryBuilder('e')
       .leftJoinAndSelect('e.actor', 'actor')
@@ -312,8 +410,8 @@ export class RoomService {
 
   // --- Faces ---
 
-  async getFaces(roomId: string) {
-    await this.findOne(roomId);
+  async getFaces(ref: string) {
+    const roomId = await this.roomIdFromRef(ref);
     const [storedLabels, aiResult] = await Promise.all([
       this.faceLabels.find({
         where: { room: { id: roomId } },
@@ -333,24 +431,33 @@ export class RoomService {
       id: face.id,
       label: face.label,
       displayName: face.displayName,
+      previewImage: face.previewImage ?? null,
       createdAt: face.createdAt,
       ai: aiLabels.get(face.label) ?? null,
     }));
   }
 
-  async registerFace(roomId: string, dto: RegisterFaceDto) {
-    const room = await this.findOne(roomId);
+  async registerFace(ref: string, dto: RegisterFaceDto) {
+    const room = await this.findOne(ref);
+    const roomId = room.id;
     const samples = dto.images?.length ? dto.images : dto.image ? [dto.image] : [];
     if (samples.length === 0) throw new BadRequestException('Face image is required');
-    const ai = await this.aiService.registerFace(roomId, dto.label, dto.images?.length ? dto.images : dto.image!);
-    const label = String(ai?.label ?? dto.label).trim();
-    if (!label) throw new BadRequestException('Face label is required');
+    const label = `face_${randomUUID()}`;
+    const ai = await this.aiService.registerFace(roomId, label, dto.images?.length ? dto.images : dto.image!);
 
     let face = await this.faceLabels.findOne({
       where: { room: { id: roomId }, label },
     });
     if (!face) {
-      face = await this.faceLabels.save(this.faceLabels.create({ room, label, displayName: dto.label }));
+      const faceIndex = await this.faceLabels.count({ where: { room: { id: roomId } } });
+      face = await this.faceLabels.save(
+        this.faceLabels.create({
+          room,
+          label,
+          displayName: `Face ${faceIndex + 1}`,
+          previewImage: samples[0],
+        }),
+      );
     }
 
     await this.eventLogs.save(
@@ -365,13 +472,15 @@ export class RoomService {
       id: face.id,
       label: face.label,
       displayName: face.displayName,
+      previewImage: face.previewImage ?? null,
       createdAt: face.createdAt,
       ai,
     };
   }
 
-  async deleteFace(roomId: string, faceId: string) {
-    const room = await this.findOne(roomId);
+  async deleteFace(ref: string, faceId: string) {
+    const room = await this.findOne(ref);
+    const roomId = room.id;
     const face = await this.faceLabels.findOne({
       where: { id: faceId, room: { id: roomId } },
     });
@@ -390,8 +499,9 @@ export class RoomService {
     return { deleted: true, label: face.label, ai };
   }
 
-  async retrainFaces(roomId: string) {
-    const room = await this.findOne(roomId);
+  async retrainFaces(ref: string) {
+    const room = await this.findOne(ref);
+    const roomId = room.id;
     const ai = await this.aiService.retrainFaces(roomId);
     await this.eventLogs.save(
       this.eventLogs.create({
@@ -403,8 +513,9 @@ export class RoomService {
     return ai;
   }
 
-  async recognizeFace(roomId: string, dto: RecognizeFaceDto, userId: string) {
-    const room = await this.findOne(roomId);
+  async recognizeFace(ref: string, dto: RecognizeFaceDto, userId: string) {
+    const room = await this.findOne(ref);
+    const roomId = room.id;
     const actor = await this.users.findOne({ where: { id: userId } });
     const ai = await this.aiService.recognizeFace(roomId, dto.image);
     const confidence = Number(ai?.confidence ?? 0);
@@ -438,8 +549,8 @@ export class RoomService {
 
   // --- Sensors ---
 
-  async getSensors(roomId: string) {
-    await this.findOne(roomId);
+  async getSensors(ref: string) {
+    const roomId = await this.roomIdFromRef(ref);
     const results = await Promise.allSettled(
       VALID_SENSOR_KEYS.map(async (key) => {
         const { value, updatedAt } = await this.adafruitService.getLastValue(roomId, key);
@@ -459,14 +570,16 @@ export class RoomService {
     return sensors;
   }
 
-  async getSensorState(roomId: string, sensorKey: string) {
+  async getSensorState(ref: string, sensorKey: string) {
     this.assertValidSensorKey(sensorKey);
+    const roomId = await this.roomIdFromRef(ref);
     const { value, updatedAt } = await this.adafruitService.getLastValue(roomId, sensorKey);
     return { sensorKey, value, unit: SENSOR_UNITS[sensorKey] ?? null, updatedAt };
   }
 
-  async getSensorHistory(roomId: string, sensorKey: string, limit = 50, from?: string, to?: string) {
+  async getSensorHistory(ref: string, sensorKey: string, limit = 50, from?: string, to?: string) {
     this.assertValidSensorKey(sensorKey);
+    const roomId = await this.roomIdFromRef(ref);
     const history = await this.adafruitService.getFeedHistory(roomId, sensorKey, limit, from, to);
     return { sensorKey, unit: SENSOR_UNITS[sensorKey] ?? null, history };
   }
@@ -481,6 +594,25 @@ export class RoomService {
     if (!(VALID_DEVICE_KEYS as readonly string[]).includes(key)) {
       throw new BadRequestException(`Invalid device key "${key}". Valid: ${VALID_DEVICE_KEYS.join(', ')}`);
     }
+  }
+
+  private readNumericSensor(raw: string | undefined, fallback: number) {
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  private isActiveDeviceValue(raw: string | undefined) {
+    return ['1', 'true', 'on', 'yes', 'detected'].includes(String(raw ?? '').trim().toLowerCase());
+  }
+
+  private extractPredictedAction(prediction: unknown, deviceKey: string) {
+    const key = deviceKey === 'fan' ? 'fan' : 'light';
+    const devicePrediction = (prediction as Record<string, Record<string, unknown> | undefined>)?.[key];
+    const action = devicePrediction?.action;
+    if (action !== 'ON' && action !== 'OFF') {
+      throw new BadRequestException(`AI did not return a valid ${deviceKey} action`);
+    }
+    return action;
   }
 
   private faceUnlockConfidence(): number {

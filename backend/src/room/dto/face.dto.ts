@@ -2,8 +2,8 @@ import { ArrayMaxSize, ArrayMinSize, IsArray, IsNotEmpty, IsOptional, IsString }
 
 export class RegisterFaceDto {
   @IsString()
-  @IsNotEmpty()
-  label: string;
+  @IsOptional()
+  label?: string;
 
   @IsString()
   @IsOptional()

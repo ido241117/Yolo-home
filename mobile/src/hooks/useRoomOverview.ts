@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { commandRoomDevice, getMyDevices, getMyRoom, getMySensors, predictAutoControl } from '../apis';
+import { autoControlRoomDevice, commandRoomDevice, getMyDevices, getMyRoom, getMySensors } from '../apis';
 import type { DeviceSummary, RoomOverview, SensorSummary } from '../types';
 
 type DeviceMode = 'on' | 'off' | 'auto';
@@ -13,17 +13,6 @@ function toDeviceValue(deviceKey: string, mode: DeviceMode) {
     return mode === 'on' ? 'UNLOCKED' : 'LOCKED';
   }
   return mode === 'on' ? 'ON' : 'OFF';
-}
-
-function readNumber(sensors: SensorSummary[], key: string, fallback: number) {
-  const raw = sensors.find((sensor) => sensor.label === key)?.value;
-  const value = Number(raw);
-  return Number.isFinite(value) ? value : fallback;
-}
-
-function readDeviceState(devices: DeviceSummary[], key: string) {
-  const device = devices.find((item) => item.key === key);
-  return isOnValue(device?.value ?? null);
 }
 
 export function useRoomOverview() {
@@ -67,6 +56,8 @@ export function useRoomOverview() {
     void refresh();
   }, [refresh]);
 
+  const isRoomMissing = error === 'No room assigned to current user';
+
   const setDeviceMode = useCallback(
     async (deviceKey: string, mode: DeviceMode) => {
       if (!room) return;
@@ -75,26 +66,12 @@ export function useRoomOverview() {
       try {
         let nextValue = toDeviceValue(deviceKey, mode);
 
-        if (mode === 'auto') {
-          const prediction = await predictAutoControl({
-            sensor_data: {
-              temperature: readNumber(sensors, 'temp', 25),
-              humidity: readNumber(sensors, 'humi', 50),
-              light: readNumber(sensors, 'light', 400),
-            },
-            device_states: {
-              fan: readDeviceState(devices, 'fan'),
-              light: readDeviceState(devices, 'led'),
-            },
-          });
-
-          const action = deviceKey === 'fan' ? prediction.fan?.action : prediction.light?.action;
-          if (action === 'ON' || action === 'OFF') {
-            nextValue = action;
-          }
+        if (mode === 'auto' && (deviceKey === 'led' || deviceKey === 'fan')) {
+          const response = await autoControlRoomDevice(room.id, deviceKey);
+          nextValue = response.value;
+        } else {
+          await commandRoomDevice(room.id, deviceKey, nextValue);
         }
-
-        await commandRoomDevice(room.id, deviceKey, nextValue);
         setDevices((current) =>
           current.map((device) =>
             device.key === deviceKey
@@ -107,7 +84,7 @@ export function useRoomOverview() {
         await refresh();
       }
     },
-    [devices, refresh, room, sensors],
+    [refresh, room],
   );
 
   return {
@@ -117,6 +94,7 @@ export function useRoomOverview() {
     deviceModes,
     loading,
     error,
+    isRoomMissing,
     refresh,
     setDeviceMode,
   };

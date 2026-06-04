@@ -1,4 +1,4 @@
-import { apiPost, setAccessToken } from './http';
+import { apiPost, apiPostVoid, setAccessToken } from './http';
 
 interface LoginResponse {
   accessToken: string;
@@ -20,6 +20,10 @@ export async function login(username: string, password: string) {
 
 export function logout() {
   setAccessToken(undefined);
+}
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+  await apiPostVoid('/auth/change-password', { currentPassword, newPassword });
 }
 
 export type AuthUser = LoginResponse['user'];

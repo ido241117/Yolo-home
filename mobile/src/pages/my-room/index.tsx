@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from 'react-native';
-import { DeviceControl, SensorCard } from '../../components';
+import { DeviceControl, RoomAccessNotice, SensorCard } from '../../components';
 import { useRoomOverview } from '../../hooks';
 import { styles } from '../../styles/app.styles';
 import type { DeviceSummary, SensorSummary } from '../../types';
@@ -53,24 +53,38 @@ function getDeviceLabel(feedKey: string) {
 }
 
 export default function MyRoomPage() {
-  const { room, sensors, devices, deviceModes, loading, error, refresh, setDeviceMode } = useRoomOverview();
-  const sensorCards: SensorSummary[] = sensors.map((sensor) => ({
-    label: getSensorLabel(sensor.label),
-    value: getSensorValue(sensor),
-  }));
-  const deviceControls: DeviceSummary[] = devices.map((device) => ({
-    ...device,
-    label: getDeviceLabel(device.key),
-  }));
+  const { room, sensors, devices, deviceModes, loading, error, isRoomMissing, refresh, setDeviceMode } = useRoomOverview();
+
+  if (isRoomMissing) {
+    return <RoomAccessNotice />;
+  }
+
+  const sensorCards: SensorSummary[] = (loading
+    ? ['temp', 'humi', 'human', 'light'].map((key) => ({
+        label: getSensorLabel(key),
+        value: '0',
+      }))
+    : sensors.map((sensor) => ({
+        label: getSensorLabel(sensor.label),
+        value: getSensorValue(sensor),
+      }))) as SensorSummary[];
+  const deviceControls: DeviceSummary[] = (loading
+    ? [
+        { key: 'led', label: 'Light', value: '0', active: false },
+        { key: 'fan', label: 'Fan', value: '0', active: false },
+        { key: 'door', label: 'Door', value: '0', active: false },
+      ]
+    : devices.map((device) => ({
+        ...device,
+        label: getDeviceLabel(device.key),
+      }))) as DeviceSummary[];
 
   return (
     <>
       <View style={styles.header}>
         <Text style={styles.eyebrow}>DADN Mobile</Text>
         <Text style={styles.title}>{room?.name ?? 'My Room'}</Text>
-        <Text style={styles.subtitle}>
-          {loading ? 'Loading live room data...' : 'Tenant accounts can control room devices through the NestJS API.'}
-        </Text>
+        <Text style={styles.subtitle}>Tenant accounts can control room devices through the NestJS API.</Text>
       </View>
 
       {error ? (
@@ -101,13 +115,6 @@ export default function MyRoomPage() {
         ))}
       </View>
 
-      <View style={styles.panel}>
-        <Text style={styles.panelTitle}>Face Access</Text>
-        <Pressable style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>Open Enrollment Camera</Text>
-        </Pressable>
-        <Text style={styles.hint}>FaceAI runs through the backend instead of being called directly from the app.</Text>
-      </View>
     </>
   );
 }

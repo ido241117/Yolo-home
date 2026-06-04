@@ -14,4 +14,7 @@ export class FaceLabel extends BaseCustomEntity {
 
   @Column({ nullable: true })
   displayName?: string;
+
+  @Column({ type: 'text', nullable: true })
+  previewImage?: string;
 }

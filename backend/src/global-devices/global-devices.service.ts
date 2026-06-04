@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { AdafruitService } from '../adafruit/adafruit.service';
+import { AiService } from '../ai/ai.service';
 import { buildEncryptionKey, encrypt } from '../common/encryption';
 import { CommandDeviceDto } from '../room/dto/command-device.dto';
 import { UpsertHardwareConfigDto } from '../room/dto/hardware-config.dto';
@@ -13,6 +14,7 @@ import { User } from '../user/entities/user.entity';
 
 export const GLOBAL_ROOM_NAME = '__global__';
 const VALID_GLOBAL_DEVICE_KEYS = ['led', 'fan'] as const;
+const GLOBAL_SENSOR_KEYS = ['temp', 'humi', 'light'] as const;
 
 @Injectable()
 export class GlobalDevicesService {
@@ -28,6 +30,7 @@ export class GlobalDevicesService {
     @InjectRepository(User)
     private readonly users: Repository<User>,
     private readonly adafruitService: AdafruitService,
+    private readonly aiService: AiService,
     private readonly config: ConfigService,
   ) {
     this.encryptionKey = buildEncryptionKey(
@@ -102,6 +105,43 @@ export class GlobalDevicesService {
   }
 
   async commandDevice(deviceKey: string, dto: CommandDeviceDto, userId: string) {
+    return this.commandDeviceWithSource(deviceKey, dto, userId, 'manual');
+  }
+
+  async autoControlDevice(deviceKey: string, userId: string) {
+    this.assertValidDeviceKey(deviceKey);
+
+    const [sensorData, devices] = await Promise.all([
+      this.getAggregateSensorData(),
+      this.getDevices(),
+    ]);
+    const prediction = await this.aiService.predictAutoControl({
+      sensor_data: sensorData,
+      device_states: {
+        fan: this.isActiveDeviceValue(devices.devices.fan?.value),
+        light: this.isActiveDeviceValue(devices.devices.led?.value),
+      },
+    });
+    const action = this.extractPredictedAction(prediction, deviceKey);
+
+    return this.commandDeviceWithSource(
+      deviceKey,
+      { value: action },
+      userId,
+      'auto',
+      prediction,
+      sensorData,
+    );
+  }
+
+  private async commandDeviceWithSource(
+    deviceKey: string,
+    dto: CommandDeviceDto,
+    userId: string,
+    source: 'manual' | 'auto',
+    ai?: unknown,
+    sensorData?: Record<string, number>,
+  ) {
     this.assertValidDeviceKey(deviceKey);
     const room = await this.getOrCreateGlobalRoom();
 
@@ -123,7 +163,14 @@ export class GlobalDevicesService {
         room,
         actor: actor ?? undefined,
         type: 'device_command',
-        payload: { deviceKey, value, source: 'manual', global: true },
+        payload: {
+          deviceKey,
+          value,
+          source,
+          global: true,
+          ...(ai !== undefined && { ai }),
+          ...(sensorData !== undefined && { sensorData }),
+        },
       }),
     );
 
@@ -136,6 +183,55 @@ export class GlobalDevicesService {
         `Invalid global device key "${key}". Valid: ${VALID_GLOBAL_DEVICE_KEYS.join(', ')}`,
       );
     }
+  }
+
+  private async getAggregateSensorData() {
+    const rooms = await this.rooms.find({
+      where: { name: Not(GLOBAL_ROOM_NAME) },
+      relations: { hardwareConfig: true },
+    });
+    const values: Record<(typeof GLOBAL_SENSOR_KEYS)[number], number[]> = {
+      temp: [],
+      humi: [],
+      light: [],
+    };
+
+    await Promise.allSettled(
+      rooms
+        .filter((room) => room.hardwareConfig)
+        .flatMap((room) =>
+          GLOBAL_SENSOR_KEYS.map(async (key) => {
+            const { value } = await this.adafruitService.getLastValue(room.id, key);
+            const numeric = Number(value);
+            if (Number.isFinite(numeric)) values[key].push(numeric);
+          }),
+        ),
+    );
+
+    return {
+      temperature: this.average(values.temp, 25),
+      humidity: this.average(values.humi, 50),
+      light: this.average(values.light, 400),
+    };
+  }
+
+  private average(values: number[], fallback: number) {
+    if (!values.length) return fallback;
+    return values.reduce((sum, value) => sum + value, 0) / values.length;
+  }
+
+  private isActiveDeviceValue(raw: string | undefined) {
+    return ['1', 'true', 'on', 'yes', 'detected'].includes(String(raw ?? '').trim().toLowerCase());
+  }
+
+  private extractPredictedAction(prediction: unknown, deviceKey: string) {
+    const key = deviceKey === 'fan' ? 'fan' : 'light';
+    const devicePrediction = (prediction as Record<string, Record<string, unknown> | undefined>)?.[key];
+    const action = devicePrediction?.action;
+    if (action !== 'ON' && action !== 'OFF') {
+      throw new BadRequestException(`AI did not return a valid ${deviceKey} action`);
+    }
+    return action;
   }
 
   private toggleValue(current: string): string {

@@ -20,7 +20,7 @@ const AppRoutes = createBrowserRouter([
     children: [
       { index: true, element: <DashboardPage /> },
       { path: 'rooms', element: <RoomsPage /> },
-      { path: 'rooms/:id', element: <RoomDetailPage /> },
+      { path: 'rooms/:code', element: <RoomDetailPage /> },
       { path: 'accounts', element: <AccountsPage /> },
       { path: 'alerts', element: <AlertsPage /> },
       { path: 'faces', element: <FacesPage /> },

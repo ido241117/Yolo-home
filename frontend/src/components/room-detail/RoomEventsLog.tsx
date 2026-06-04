@@ -4,11 +4,11 @@ import { eventLabel, formatClock } from '@/utils/backend-format';
 
 type EventCategory = 'SENSORS' | 'COMMAND' | 'ACCESS' | 'SYSTEM';
 
-const EVENT_BADGE: Record<EventCategory, { bg: string; text: string }> = {
-  SENSORS: { bg: 'bg-blue-500/10',         text: 'text-blue-400' },
-  COMMAND: { bg: 'bg-primary/10',          text: 'text-primary' },
-  ACCESS:  { bg: 'bg-green-500/10',        text: 'text-green-400' },
-  SYSTEM:  { bg: 'bg-outline-variant/30',  text: 'text-on-surface-variant' },
+const EVENT_BADGE: Record<EventCategory, string> = {
+  SENSORS: 'badge-event-sensors',
+  COMMAND: 'badge-event-command',
+  ACCESS:  'badge-event-access',
+  SYSTEM:  'badge-event-system',
 };
 
 function eventCategory(type: string): EventCategory {
@@ -34,7 +34,7 @@ export function RoomEventsLog({ events }: { events: EventDto[] }) {
               <li key={ev.id} className="px-6 py-3 flex items-center justify-between hover:bg-surface-container-high transition-colors">
                 <div className="flex items-center gap-4">
                   <span className="text-label-sm font-mono text-on-surface-variant">{formatClock(ev.createdAt, true)}</span>
-                  <span className={`px-2 py-0.5 text-[10px] rounded ${badge.bg} ${badge.text}`}>{category}</span>
+                  <span className={`px-2 py-0.5 text-[10px] rounded badge-pill ${badge}`}>{category}</span>
                   <p className="text-body-md text-on-surface">{eventLabel(ev)}</p>
                 </div>
                 <Icon name="chevron_right" size={16} className="text-on-surface-variant flex-shrink-0" />

@@ -15,7 +15,9 @@ const STORAGE_KEY = 'proton-theme';
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<ThemeMode>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === 'light' ? 'light' : 'dark';
+    const initial: ThemeMode = stored === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', initial);
+    return initial;
   });
 
   useEffect(() => {

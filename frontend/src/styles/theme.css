@@ -42,9 +42,54 @@
   --color-status-danger:            #ef4444;  /* critical / alert */
   --color-status-occupied:          #3b82f6;  /* occupied */
 
+  /* Badge (pill/chip) */
+  --badge-occupied-bg:              color-mix(in srgb, var(--color-status-occupied) 18%, transparent);
+  --badge-occupied-text:            #93c5fd;
+  --badge-occupied-border:          color-mix(in srgb, var(--color-status-occupied) 35%, transparent);
+  --badge-vacant-bg:                color-mix(in srgb, var(--color-status-active) 18%, transparent);
+  --badge-vacant-text:              #4ade80;
+  --badge-vacant-border:            color-mix(in srgb, var(--color-status-active) 35%, transparent);
+  --badge-warning-bg:               color-mix(in srgb, var(--color-status-warning) 18%, transparent);
+  --badge-warning-text:             #fbbf24;
+  --badge-warning-border:           color-mix(in srgb, var(--color-status-warning) 35%, transparent);
+  --badge-success-bg:               color-mix(in srgb, var(--color-status-active) 18%, transparent);
+  --badge-success-text:             #4ade80;
+  --badge-success-border:           color-mix(in srgb, var(--color-status-active) 35%, transparent);
+  --badge-danger-bg:                color-mix(in srgb, var(--color-status-danger) 18%, transparent);
+  --badge-danger-text:              var(--color-error);
+  --badge-danger-border:            color-mix(in srgb, var(--color-status-danger) 35%, transparent);
+  --badge-primary-bg:               color-mix(in srgb, var(--color-primary-container) 25%, transparent);
+  --badge-primary-text:             var(--color-primary);
+  --badge-primary-border:           color-mix(in srgb, var(--color-primary) 30%, transparent);
+  --badge-neutral-bg:               color-mix(in srgb, var(--color-border) 40%, transparent);
+  --badge-neutral-text:             var(--color-text-secondary);
+  --badge-neutral-border:           var(--color-border);
+  --badge-role-owner-bg:            color-mix(in srgb, #a855f7 18%, transparent);
+  --badge-role-owner-text:          #d8b4fe;
+  --badge-role-owner-border:        color-mix(in srgb, #a855f7 35%, transparent);
+  --badge-role-admin-bg:            color-mix(in srgb, var(--color-status-warning) 18%, transparent);
+  --badge-role-admin-text:          #fcd34d;
+  --badge-role-admin-border:        color-mix(in srgb, var(--color-status-warning) 35%, transparent);
+  --badge-role-tenant-bg:           color-mix(in srgb, var(--color-status-occupied) 18%, transparent);
+  --badge-role-tenant-text:         #93c5fd;
+  --badge-role-tenant-border:       color-mix(in srgb, var(--color-status-occupied) 35%, transparent);
+
   /* Error */
   --color-error:                    #ffb4ab;
   --color-error-container:          #93000a;
+  --color-on-error:                 #690005;
+  --color-on-error-container:       #ffdad6;
+
+  /* Extended palette (Tailwind / M3 tokens) */
+  --color-inverse-on-surface:       #283044;
+  --color-on-secondary:             #233144;
+  --color-on-secondary-container:   #abb9d2;
+  --color-primary-fixed:            #e2dfff;
+  --color-primary-fixed-dim:        #c3c0ff;
+  --color-tertiary:                 #ffb695;
+  --color-on-tertiary:              #571f00;
+  --color-tertiary-container:       #a44100;
+  --color-on-tertiary-container:    #ffd2be;
 
   /* Sidebar */
   --sidebar-width:                  240px;
@@ -105,8 +150,51 @@
   --color-status-danger:            #dc2626;
   --color-status-occupied:          #2563eb;
 
+  --badge-occupied-bg:              #dbeafe;
+  --badge-occupied-text:            #1e40af;
+  --badge-occupied-border:          #93c5fd;
+  --badge-vacant-bg:                #dcfce7;
+  --badge-vacant-text:              #166534;
+  --badge-vacant-border:            #86efac;
+  --badge-warning-bg:               #fef3c7;
+  --badge-warning-text:             #92400e;
+  --badge-warning-border:           #fcd34d;
+  --badge-success-bg:               #dcfce7;
+  --badge-success-text:             #166534;
+  --badge-success-border:           #86efac;
+  --badge-danger-bg:                #fee2e2;
+  --badge-danger-text:              #991b1b;
+  --badge-danger-border:            #fca5a5;
+  --badge-primary-bg:               #ebe8ff;
+  --badge-primary-text:             #3730a3;
+  --badge-primary-border:           #c7d2fe;
+  --badge-neutral-bg:               #eef0f6;
+  --badge-neutral-text:             #44475a;
+  --badge-neutral-border:           #c4c6d4;
+  --badge-role-owner-bg:            #f3e8ff;
+  --badge-role-owner-text:          #6b21a8;
+  --badge-role-owner-border:        #d8b4fe;
+  --badge-role-admin-bg:            #fef3c7;
+  --badge-role-admin-text:          #92400e;
+  --badge-role-admin-border:        #fcd34d;
+  --badge-role-tenant-bg:           #dbeafe;
+  --badge-role-tenant-text:         #1e40af;
+  --badge-role-tenant-border:       #93c5fd;
+
   --color-error:                    #ba1a1a;
   --color-error-container:          #ffdad6;
+  --color-on-error:                 #ffffff;
+  --color-on-error-container:       #93000a;
+
+  --color-inverse-on-surface:       #eef0f6;
+  --color-on-secondary:             #ffffff;
+  --color-on-secondary-container:   #3a485c;
+  --color-primary-fixed:            #ebe8ff;
+  --color-primary-fixed-dim:        #4f46e5;
+  --color-tertiary:                 #c2410c;
+  --color-on-tertiary:              #ffffff;
+  --color-tertiary-container:       #ffdbcc;
+  --color-on-tertiary-container:    #351000;
 }
 
 /* ─────────────────────────────────────────────
@@ -247,7 +335,7 @@ a {
 
 .btn-primary {
   background: var(--color-primary-container);
-  color: #fff;
+  color: var(--color-primary-container-on);
   border: none;
   border-radius: var(--radius);
   padding: 6px 16px;
@@ -265,6 +353,11 @@ a {
   opacity: 0.45;
   cursor: not-allowed;
   transform: none;
+}
+
+:root[data-theme='light'] .btn-primary {
+  background: var(--color-primary);
+  color: var(--color-primary-on);
 }
 
 .btn-secondary {
@@ -361,7 +454,7 @@ a {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: #fff;
+  color: var(--color-primary-container-on);
   font-size: 13px;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -464,3 +557,210 @@ a {
 .text-body-md    { font-size: 14px; font-weight: 400; line-height: 1.5; }
 .text-label-md   { font-size: 12px; font-weight: 500; line-height: 1; letter-spacing: 0.02em; }
 .text-label-sm   { font-size: 11px; font-weight: 400; line-height: 1; }
+
+/* ─────────────────────────────────────────────
+   BADGES & STATUS CHIPS
+   Theme-aware — readable in both dark and light mode
+   ───────────────────────────────────────────── */
+
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid transparent;
+}
+
+.badge-status-occupied {
+  background: var(--badge-occupied-bg);
+  color: var(--badge-occupied-text);
+  border-color: var(--badge-occupied-border);
+}
+
+.badge-status-vacant {
+  background: var(--badge-vacant-bg);
+  color: var(--badge-vacant-text);
+  border-color: var(--badge-vacant-border);
+}
+
+.badge-status-maintenance {
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
+  border-color: var(--badge-warning-border);
+}
+
+.badge-dot-occupied    { background-color: var(--color-status-occupied); }
+.badge-dot-vacant      { background-color: var(--color-status-active); }
+.badge-dot-maintenance { background-color: var(--color-status-warning); }
+
+.badge-role-owner  { background: var(--badge-role-owner-bg);  color: var(--badge-role-owner-text);  border-color: var(--badge-role-owner-border); }
+.badge-role-admin  { background: var(--badge-role-admin-bg);  color: var(--badge-role-admin-text);  border-color: var(--badge-role-admin-border); }
+.badge-role-tenant { background: var(--badge-role-tenant-bg); color: var(--badge-role-tenant-text); border-color: var(--badge-role-tenant-border); }
+
+.badge-event-sensors { background: var(--badge-occupied-bg); color: var(--badge-occupied-text); border-color: var(--badge-occupied-border); }
+.badge-event-command { background: var(--badge-primary-bg);   color: var(--badge-primary-text);   border-color: var(--badge-primary-border); }
+.badge-event-access  { background: var(--badge-vacant-bg);    color: var(--badge-vacant-text);    border-color: var(--badge-vacant-border); }
+.badge-event-system  { background: var(--badge-neutral-bg); color: var(--badge-neutral-text);  border-color: var(--badge-neutral-border); }
+
+.badge-success { background: var(--badge-success-bg); color: var(--badge-success-text); border-color: var(--badge-success-border); }
+.badge-danger  { background: var(--badge-danger-bg);  color: var(--badge-danger-text);  border-color: var(--badge-danger-border); }
+
+.text-status-active    { color: var(--color-status-active); }
+.text-status-occupied  { color: var(--color-status-occupied); }
+.text-status-warning   { color: var(--color-status-warning); }
+.text-status-danger    { color: var(--color-status-danger); }
+
+.bg-status-active    { background-color: var(--color-status-active); }
+.bg-status-occupied  { background-color: var(--color-status-occupied); }
+.bg-status-warning   { background-color: var(--color-status-warning); }
+.bg-status-danger    { background-color: var(--color-status-danger); }
+
+/* ─────────────────────────────────────────────
+   LOGIN PAGE
+   ───────────────────────────────────────────── */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-gutter);
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  position: relative;
+}
+
+.login-theme-toggle {
+  position: absolute;
+  top: var(--space-gutter);
+  right: var(--space-gutter);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container);
+  color: var(--color-text-secondary);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.login-theme-toggle:hover {
+  background: var(--color-surface-high);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
+}
+
+.login-shell {
+  width: 100%;
+  max-width: 440px;
+}
+
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.login-brand-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-container);
+  color: var(--color-primary-container-on);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: 0 10px 25px color-mix(in srgb, var(--color-primary-container) 35%, transparent);
+}
+
+:root[data-theme='light'] .login-brand-mark {
+  background: var(--color-primary);
+  color: var(--color-primary-on);
+}
+
+.login-title {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-align: center;
+  color: var(--color-text-primary);
+}
+
+.login-subtitle {
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+  margin-top: 8px;
+  color: var(--color-text-secondary);
+}
+
+.login-card {
+  background: var(--color-surface-container);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px color-mix(in srgb, #000 35%, transparent);
+}
+
+:root[data-theme='light'] .login-card {
+  box-shadow: 0 20px 40px -16px color-mix(in srgb, #000 14%, transparent);
+}
+
+.login-card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--color-primary-container);
+}
+
+:root[data-theme='light'] .login-card-accent {
+  background: var(--color-primary);
+}
+
+.login-field {
+  display: block;
+}
+
+.login-field + .login-field {
+  margin-top: 20px;
+}
+
+.login-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.login-error {
+  margin-top: 20px;
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--badge-danger-border);
+  background: var(--badge-danger-bg);
+  color: var(--badge-danger-text);
+  font-size: 14px;
+}
+
+.login-demo {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 30%, transparent);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}

@@ -18,6 +18,9 @@ export class Room extends BaseCustomEntity {
   @Column()
   name: string;
 
+  @Column({ unique: true })
+  code: string;
+
   @Column({ type: 'enum', enum: RoomStatus, default: RoomStatus.Vacant })
   status: RoomStatus;
 

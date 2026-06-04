@@ -56,8 +56,8 @@ export function HardwarePanel({ hardware, isSaving = false, onSave }: HardwarePa
           Adafruit Config
         </h3>
         <div className="flex items-center gap-2">
-          <span className={`${hardware ? 'text-green-400' : 'text-on-surface-variant'} flex items-center gap-1 text-label-sm font-bold`}>
-            <Icon name={hardware ? 'check_circle' : 'cloud_off'} size={14} filled className={hardware ? 'text-green-400' : 'text-on-surface-variant'} />
+          <span className={`${hardware ? 'text-status-active' : 'text-on-surface-variant'} flex items-center gap-1 text-label-sm font-bold`}>
+            <Icon name={hardware ? 'check_circle' : 'cloud_off'} size={14} filled className={hardware ? 'text-status-active' : 'text-on-surface-variant'} />
             {hardware ? 'CONFIGURED' : 'NOT SET'}
           </span>
           {hardware && (

@@ -22,12 +22,12 @@ export interface FaceSummary {
   id: string;
   label: string;
   name: string;
-  addedAt?: string | null;
+  previewImage?: string | null;
 }
 
 export interface RoomEventSummary {
   id: string;
-  type: 'device' | 'door' | 'sensor' | 'security';
+  type: 'device' | 'door' | 'sensor' | 'security' | 'face';
   title: string;
   description: string;
   time: string;

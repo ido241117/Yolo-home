@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import type { CameraType } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { CheckCircle2, CircleAlert, Lock, ScanFace, Trash2, UserPlus, Wand2 } from 'lucide-react-native';
+import { Camera, CheckCircle2, CircleAlert, Lock, ScanFace, Trash2, UserPlus, Wand2 } from 'lucide-react-native';
 import {
   commandRoomDevice,
   deleteRoomFace,
@@ -11,6 +13,7 @@ import {
   registerRoomFace,
   retrainRoomFaces,
 } from '../../apis';
+import { RoomAccessNotice } from '../../components';
 import { useRoomOverview } from '../../hooks';
 import { theme } from '../../styles';
 import type { FaceSummary, RoomEventSummary } from '../../types';
@@ -18,17 +21,37 @@ import type { FaceSummary, RoomEventSummary } from '../../types';
 const REGISTER_MIN_IMAGES = 3;
 const REGISTER_CAMERA_TARGET_IMAGES = 5;
 const REGISTER_MAX_IMAGES = 7;
+type CameraMode = 'register' | 'unlock';
 
 export default function IdentityPage() {
-  const { room, refresh } = useRoomOverview();
+  const { room, refresh, isRoomMissing } = useRoomOverview();
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [faces, setFaces] = useState<FaceSummary[]>([]);
   const [history, setHistory] = useState<RoomEventSummary[]>([]);
-  const [label, setLabel] = useState('');
   const [status, setStatus] = useState<string | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isRecognizing, setIsRecognizing] = useState(false);
   const [isLocking, setIsLocking] = useState(false);
   const [isRetraining, setIsRetraining] = useState(false);
+  const [isCameraVisible, setIsCameraVisible] = useState(false);
+  const [cameraMode, setCameraMode] = useState<CameraMode | null>(null);
+  const [cameraFacing, setCameraFacing] = useState<CameraType>('front');
+  const [cameraReady, setCameraReady] = useState(false);
+  const [cameraBusy, setCameraBusy] = useState(false);
+  const [cameraSwitching, setCameraSwitching] = useState(false);
+  const [cameraPreviewMounted, setCameraPreviewMounted] = useState(true);
+  const [cameraPreviewKey, setCameraPreviewKey] = useState(0);
+  const [cameraModalShown, setCameraModalShown] = useState(false);
+  const [cameraShots, setCameraShots] = useState<string[]>([]);
+  const cameraRef = useRef<any>(null);
+  const cameraSwapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (cameraSwapTimer.current) clearTimeout(cameraSwapTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!room?.id) return;
@@ -37,124 +60,227 @@ export default function IdentityPage() {
 
   const totalLabel = useMemo(() => `${faces.length} Total`, [faces.length]);
 
+  if (isRoomMissing) {
+    return <RoomAccessNotice />;
+  }
+
   async function loadIdentityData(roomId: string) {
     try {
       const [nextFaces, nextEvents] = await Promise.all([getRoomFaces(roomId), getRoomEvents(roomId)]);
       setFaces(nextFaces);
-      setHistory(nextEvents.filter((event) => event.type === 'door').slice(0, 5));
+      setHistory(nextEvents.filter((event) => event.type === 'face').slice(0, 5));
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Unable to load face data');
     }
   }
 
-  async function pickImageBase64(source: 'camera' | 'library') {
-    if (source === 'library') {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert('Photo library permission needed', 'Allow photo access to select a face image.');
-        return null;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        base64: true,
-        quality: 0.72,
-      });
-
-      if (result.canceled || !result.assets[0]?.base64) return null;
-      return result.assets[0].base64;
-    }
-
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
+  async function pickImageBase64() {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Camera permission needed', 'Allow camera access to capture a face image.');
+      Alert.alert('Photo library permission needed', 'Allow photo access to select a face image.');
       return null;
     }
 
-    const result = await ImagePicker.launchCameraAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       base64: true,
-      quality: 0.65,
+      quality: 0.72,
     });
 
     if (result.canceled || !result.assets[0]?.base64) return null;
     return result.assets[0].base64;
   }
 
-  async function pickRegisterImagesBase64(source: 'camera' | 'library') {
-    if (source === 'library') {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert('Photo library permission needed', 'Allow photo access to select several face images.');
-        return null;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsMultipleSelection: true,
-        selectionLimit: REGISTER_MAX_IMAGES,
-        base64: true,
-        quality: 0.7,
-      });
-
-      if (result.canceled) return null;
-      const images = result.assets.map((asset) => asset.base64).filter((value): value is string => Boolean(value));
-      if (images.length < REGISTER_MIN_IMAGES) {
-        Alert.alert('More samples needed', `Select at least ${REGISTER_MIN_IMAGES} clear face photos.`);
-        return null;
-      }
-      return images.slice(0, REGISTER_MAX_IMAGES);
-    }
-
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
+  async function pickRegisterImagesBase64() {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Camera permission needed', 'Allow camera access to capture several face images.');
+      Alert.alert('Photo library permission needed', 'Allow photo access to select several face images.');
       return null;
     }
 
-    const images: string[] = [];
-    const prompts = ['Look straight', 'Turn left slightly', 'Turn right slightly', 'Tilt up or down slightly', 'Hold still for one clear shot'];
-    for (let index = 0; index < REGISTER_CAMERA_TARGET_IMAGES; index += 1) {
-      setStatus(`Capture ${index + 1}/${REGISTER_CAMERA_TARGET_IMAGES}: ${prompts[index]}`);
-      const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [1, 1],
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      selectionLimit: REGISTER_MAX_IMAGES,
+      base64: true,
+      quality: 0.7,
+    });
+
+    if (result.canceled) return null;
+    const images = result.assets.map((asset) => asset.base64).filter((value): value is string => Boolean(value));
+    if (images.length < REGISTER_MIN_IMAGES) {
+      Alert.alert('More samples needed', `Select at least ${REGISTER_MIN_IMAGES} clear face photos.`);
+      return null;
+    }
+    return images.slice(0, REGISTER_MAX_IMAGES);
+  }
+
+  function resetCameraSession() {
+    if (cameraSwapTimer.current) {
+      clearTimeout(cameraSwapTimer.current);
+      cameraSwapTimer.current = null;
+    }
+    setIsCameraVisible(false);
+    setCameraMode(null);
+    setCameraFacing('front');
+    setCameraReady(false);
+    setCameraBusy(false);
+    setCameraSwitching(false);
+    setCameraPreviewMounted(true);
+    setCameraModalShown(false);
+    setCameraShots([]);
+  }
+
+  async function switchCameraFacing() {
+    if (cameraBusy || cameraSwitching) return;
+
+    const nextFacing: CameraType = cameraFacing === 'back' ? 'front' : 'back';
+    setCameraSwitching(true);
+    setCameraReady(false);
+    setCameraPreviewMounted(false);
+    setCameraFacing(nextFacing);
+
+    if (cameraSwapTimer.current) clearTimeout(cameraSwapTimer.current);
+    cameraSwapTimer.current = setTimeout(() => {
+      setCameraPreviewKey((current) => current + 1);
+      setCameraPreviewMounted(true);
+      cameraSwapTimer.current = null;
+    }, 120);
+  }
+
+  async function ensureCameraPermission() {
+    if (cameraPermission?.granted) return true;
+
+    const permission = await requestCameraPermission();
+    if (!permission.granted) {
+      Alert.alert('Camera permission needed', 'Allow camera access to capture face images.');
+      return false;
+    }
+
+    return true;
+  }
+
+  async function openCameraSession(mode: CameraMode) {
+    if (!room?.id) return;
+
+    const granted = await ensureCameraPermission();
+    if (!granted) return;
+
+    if (mode === 'register') {
+      setCameraShots([]);
+    }
+
+    setCameraMode(mode);
+    setCameraFacing('front');
+    setCameraReady(false);
+    setCameraBusy(false);
+    setCameraSwitching(false);
+    setCameraPreviewMounted(true);
+    setCameraModalShown(false);
+    setIsCameraVisible(true);
+    setStatus(
+      mode === 'register'
+        ? `Capture ${REGISTER_MIN_IMAGES}-${REGISTER_MAX_IMAGES} samples. Target ${REGISTER_CAMERA_TARGET_IMAGES}.`
+        : 'Capture one clear image to unlock the door.',
+    );
+  }
+
+  async function handleCapturePhoto() {
+    if (!cameraReady || !cameraRef.current || !cameraMode || cameraBusy || cameraSwitching) return;
+
+    setCameraBusy(true);
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
         base64: true,
-        quality: 0.65,
+        quality: cameraMode === 'register' ? 0.65 : 0.72,
       });
 
-      if (result.canceled) break;
-      const image = result.assets[0]?.base64;
-      if (image) images.push(image);
+      const image = photo?.base64;
+      if (!image) {
+        setStatus('Unable to read camera capture.');
+        return;
+      }
+
+      if (cameraMode === 'unlock') {
+        const roomId = room?.id;
+        resetCameraSession();
+        if (!roomId) return;
+
+        const result = await recognizeRoomFace(roomId, image);
+        const confidence = result.confidence == null ? '-' : `${Math.round(result.confidence * 100)}%`;
+        setStatus(result.doorUnlocked ? `Door unlocked (${confidence})` : `Access denied (${confidence})`);
+        await Promise.all([loadIdentityData(roomId), refresh()]);
+        return;
+      }
+
+      setCameraShots((current) => {
+        const next = [...current, image].slice(0, REGISTER_MAX_IMAGES);
+        setStatus(
+          next.length >= REGISTER_MAX_IMAGES
+            ? `Captured ${next.length}/${REGISTER_MAX_IMAGES} samples. Tap Done to save.`
+            : `Captured ${next.length}/${REGISTER_MAX_IMAGES} sample(s).`,
+        );
+        return next;
+      });
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Unable to capture photo');
+    } finally {
+      setCameraBusy(false);
+    }
+  }
+
+  function handleUndoCameraShot() {
+    setCameraShots((current) => current.slice(0, -1));
+  }
+
+  async function handleFinalizeCameraRegistration() {
+    if (!room?.id || isRegistering) return;
+
+    if (cameraShots.length < REGISTER_MIN_IMAGES) {
+      Alert.alert('More samples needed', `Capture at least ${REGISTER_MIN_IMAGES} clear face photos.`);
+      return;
     }
 
-    if (images.length < REGISTER_MIN_IMAGES) {
-      Alert.alert('More samples needed', `Capture at least ${REGISTER_MIN_IMAGES} clear face photos.`);
-      return null;
+    const roomId = room.id;
+    const images = cameraShots;
+
+    setIsRegistering(true);
+    setStatus(`Uploading ${images.length} face samples...`);
+    resetCameraSession();
+
+    try {
+      const result = await registerRoomFace(roomId, images);
+      await loadIdentityData(roomId);
+      const ai = result as { ai?: { accepted_samples?: number; rejected_samples?: number } };
+      const accepted = ai.ai?.accepted_samples ?? images.length;
+      const rejected = ai.ai?.rejected_samples ?? 0;
+      setStatus(`Face registered with ${accepted} sample(s)${rejected ? `; ${rejected} rejected by quality checks` : ''}.`);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : 'Unable to register face';
+      setStatus(`Face registration failed: ${detail}`);
+    } finally {
+      setIsRegistering(false);
     }
-    return images;
   }
 
   async function handleRegisterFace(source: 'camera' | 'library') {
     if (!room?.id || isRegistering) return;
-    const cleanLabel = label.trim();
-    if (!cleanLabel) {
-      Alert.alert('Face label required', 'Enter a short label before registering this face.');
+
+    if (source === 'camera') {
+      await openCameraSession('register');
       return;
     }
 
     setIsRegistering(true);
-    setStatus(source === 'camera' ? 'Capturing face samples...' : 'Selecting face samples...');
+    setStatus('Selecting face samples...');
     try {
-      const images = await pickRegisterImagesBase64(source);
+      const images = await pickRegisterImagesBase64();
       if (!images) return;
       setStatus(`Uploading ${images.length} face samples...`);
-      const result = await registerRoomFace(room.id, cleanLabel, images);
+      const result = await registerRoomFace(room.id, images);
       await loadIdentityData(room.id);
-      setLabel('');
       const ai = result as { ai?: { accepted_samples?: number; rejected_samples?: number } };
       const accepted = ai.ai?.accepted_samples ?? images.length;
       const rejected = ai.ai?.rejected_samples ?? 0;
@@ -169,14 +295,20 @@ export default function IdentityPage() {
 
   async function handleFaceUnlock(source: 'camera' | 'library') {
     if (!room?.id || isRecognizing) return;
+
+    if (source === 'camera') {
+      await openCameraSession('unlock');
+      return;
+    }
+
     setIsRecognizing(true);
-    setStatus(source === 'camera' ? 'Capturing face for unlock...' : 'Selecting face image for unlock...');
+    setStatus('Selecting face image for unlock...');
     try {
-      const image = await pickImageBase64(source);
+      const image = await pickImageBase64();
       if (!image) return;
       const result = await recognizeRoomFace(room.id, image);
       const confidence = result.confidence == null ? '-' : `${Math.round(result.confidence * 100)}%`;
-      setStatus(result.doorUnlocked ? `Door unlocked by ${result.label ?? 'face'} (${confidence})` : `Access denied (${confidence})`);
+      setStatus(result.doorUnlocked ? `Door unlocked (${confidence})` : `Access denied (${confidence})`);
       await Promise.all([loadIdentityData(room.id), refresh()]);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Unable to recognize face');
@@ -215,8 +347,7 @@ export default function IdentityPage() {
   async function handleDelete(faceId: string) {
     setFaces((current) => current.filter((face) => face.id !== faceId));
     if (!room?.id) return;
-    deleteRoomFace(room.id, faceId)
-      .catch(() => undefined);
+    deleteRoomFace(room.id, faceId).catch(() => undefined);
   }
 
   return (
@@ -237,14 +368,7 @@ export default function IdentityPage() {
       </View>
 
       <View style={pageStyles.controlCard}>
-        <TextInput
-          style={pageStyles.labelInput}
-          value={label}
-          onChangeText={setLabel}
-          placeholder="Face label, e.g. thien_primary"
-          placeholderTextColor={theme.colors.outline}
-          autoCapitalize="none"
-        />
+        <Text style={pageStyles.faceRegisterHint}>Capture 3-7 clear face samples. The app will assign the internal face ID automatically.</Text>
         <View style={pageStyles.actionRow}>
           <Pressable style={pageStyles.tertiaryAction} onPress={() => handleRegisterFace('camera')} disabled={isRegistering}>
             <UserPlus size={18} color={theme.colors.onSurface} />
@@ -268,22 +392,123 @@ export default function IdentityPage() {
         {status && <Text style={pageStyles.statusText}>{status}</Text>}
       </View>
 
+      <Modal
+        visible={isCameraVisible}
+        animationType="slide"
+        onShow={() => setCameraModalShown(true)}
+        onRequestClose={resetCameraSession}
+      >
+          <View style={pageStyles.cameraModal}>
+          <View style={pageStyles.cameraPreviewShell}>
+            {cameraModalShown && cameraPreviewMounted ? (
+              <CameraView
+                key={cameraPreviewKey}
+                ref={cameraRef}
+                style={[pageStyles.cameraPreview, { width: windowWidth, height: windowHeight }]}
+                facing={cameraFacing}
+                onCameraReady={() => {
+                  setCameraReady(true);
+                  setCameraSwitching(false);
+                }}
+              />
+            ) : (
+              <View style={[pageStyles.cameraPreviewPlaceholder, { width: windowWidth, height: windowHeight }]}>
+                <ActivityIndicator color={theme.colors.onPrimary} />
+                <Text style={pageStyles.cameraSwitchText}>Switching camera...</Text>
+              </View>
+            )}
+          </View>
+          <View style={pageStyles.cameraScrim} />
+
+          <View style={pageStyles.cameraTopBar}>
+            <Pressable style={pageStyles.cameraTopButton} onPress={resetCameraSession}>
+              <Text style={pageStyles.cameraTopButtonText}>Cancel</Text>
+            </Pressable>
+
+            <View style={pageStyles.cameraTopCenter}>
+              <Text style={pageStyles.cameraModeText}>
+                {cameraMode === 'register' ? 'Register face samples' : 'Unlock with camera'}
+              </Text>
+              <Text style={pageStyles.cameraHintText}>
+                {cameraMode === 'register'
+                  ? `${cameraShots.length}/${REGISTER_MAX_IMAGES} samples`
+                  : 'Capture one clear image'}
+              </Text>
+            </View>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Switch to ${cameraFacing === 'back' ? 'front' : 'back'} camera`}
+              style={[pageStyles.cameraTopIconButton, (cameraBusy || cameraSwitching) && pageStyles.cameraTopButtonDisabled]}
+              onPress={switchCameraFacing}
+              disabled={cameraBusy || cameraSwitching}
+            >
+              <Camera size={18} color={theme.colors.onPrimary} />
+            </Pressable>
+
+            <Pressable
+              style={[pageStyles.cameraTopButton, (!cameraShots.length || cameraBusy) && pageStyles.cameraTopButtonDisabled]}
+              onPress={handleUndoCameraShot}
+              disabled={!cameraShots.length || cameraBusy || cameraMode !== 'register'}
+            >
+              <Text style={pageStyles.cameraTopButtonText}>Undo</Text>
+            </Pressable>
+          </View>
+
+          <View style={pageStyles.cameraFooter}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={pageStyles.sampleStrip}>
+              {cameraShots.map((shot, index) => (
+                <View key={`${shot.slice(0, 24)}-${index}`} style={pageStyles.sampleThumbWrap}>
+                  <Image source={{ uri: `data:image/jpeg;base64,${shot}` }} style={pageStyles.sampleThumb} />
+                </View>
+              ))}
+            </ScrollView>
+
+            <View style={pageStyles.cameraActionRow}>
+              <Pressable style={pageStyles.cameraActionSecondary} onPress={resetCameraSession}>
+                <Text style={pageStyles.cameraActionSecondaryText}>Close</Text>
+              </Pressable>
+
+              <Pressable
+                style={[pageStyles.cameraActionPrimary, (!cameraReady || cameraBusy || cameraSwitching) && pageStyles.cameraActionDisabled]}
+                onPress={handleCapturePhoto}
+                disabled={!cameraReady || cameraBusy || cameraSwitching}
+              >
+                {cameraBusy ? <ActivityIndicator color={theme.colors.onPrimary} /> : <Text style={pageStyles.cameraActionPrimaryText}>Capture</Text>}
+              </Pressable>
+
+              {cameraMode === 'register' ? (
+                <Pressable
+                  style={[pageStyles.cameraActionSecondary, cameraShots.length < REGISTER_MIN_IMAGES && pageStyles.cameraActionDisabled]}
+                  onPress={handleFinalizeCameraRegistration}
+                  disabled={cameraShots.length < REGISTER_MIN_IMAGES || isRegistering}
+                >
+                  <Text style={pageStyles.cameraActionSecondaryText}>{isRegistering ? 'Saving...' : 'Done'}</Text>
+                </Pressable>
+              ) : (
+                <View style={pageStyles.cameraActionGhost} />
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <View style={pageStyles.sectionHeader}>
         <Text style={pageStyles.sectionTitle}>Registered Faces</Text>
         <Text style={pageStyles.countPill}>{totalLabel}</Text>
       </View>
 
       <View style={pageStyles.list}>
-        {faces.map((face, index) => (
+        {faces.map((face) => (
           <View key={face.id} style={pageStyles.faceRow}>
             <View style={pageStyles.faceInfo}>
-              <Image
-                source={{ uri: `https://i.pravatar.cc/120?img=${index + 12}` }}
-                style={pageStyles.faceImage}
-              />
+              {face.previewImage ? (
+                <Image source={{ uri: `data:image/jpeg;base64,${face.previewImage}` }} style={pageStyles.faceImage} />
+              ) : (
+                <View style={pageStyles.faceImageFallback} />
+              )}
               <View>
                 <Text style={pageStyles.faceName}>{face.name}</Text>
-                <Text style={pageStyles.faceMeta}>Added: {face.addedAt ?? 'Recently'}</Text>
               </View>
             </View>
             <Pressable style={pageStyles.deleteButton} onPress={() => handleDelete(face.id)}>
@@ -294,7 +519,7 @@ export default function IdentityPage() {
         {faces.length === 0 && (
           <View style={pageStyles.emptyCard}>
             <Text style={pageStyles.emptyTitle}>No registered faces</Text>
-            <Text style={pageStyles.emptyText}>Enter a label, then capture or select 3-7 clear face samples.</Text>
+            <Text style={pageStyles.emptyText}>Capture or select 3-7 clear face samples to create the first face profile.</Text>
           </View>
         )}
       </View>
@@ -308,26 +533,26 @@ export default function IdentityPage() {
         {history.map((item) => {
           const ok = item.severity !== 'error';
           return (
-          <View key={item.id} style={[pageStyles.historyCard, ok ? pageStyles.successBorder : pageStyles.errorBorder]}>
-            <View style={pageStyles.historyTop}>
-              <View style={pageStyles.historyStatus}>
-                {ok ? (
-                  <CheckCircle2 size={20} color={theme.colors.secondary} fill={theme.colors.secondary} />
-                ) : (
-                  <CircleAlert size={20} color={theme.colors.error} />
-                )}
-                <Text style={pageStyles.historyTitle}>{item.title}</Text>
+            <View key={item.id} style={[pageStyles.historyCard, ok ? pageStyles.successBorder : pageStyles.errorBorder]}>
+              <View style={pageStyles.historyTop}>
+                <View style={pageStyles.historyStatus}>
+                  {ok ? (
+                    <CheckCircle2 size={20} color={theme.colors.secondary} fill={theme.colors.secondary} />
+                  ) : (
+                    <CircleAlert size={20} color={theme.colors.error} />
+                  )}
+                  <Text style={pageStyles.historyTitle}>{item.title}</Text>
+                </View>
+                <Text style={pageStyles.historyTime}>{item.time}</Text>
               </View>
-              <Text style={pageStyles.historyTime}>{item.time}</Text>
+              <View style={pageStyles.historyBottom}>
+                <Text style={pageStyles.historyName}>{item.description}</Text>
+                <Text style={[pageStyles.historyAction, ok ? pageStyles.successText : pageStyles.errorText]}>
+                  {ok ? 'Accepted' : 'Denied'}
+                </Text>
+              </View>
             </View>
-            <View style={pageStyles.historyBottom}>
-              <Text style={pageStyles.historyName}>{item.description}</Text>
-              <Text style={[pageStyles.historyAction, ok ? pageStyles.successText : pageStyles.errorText]}>
-                {ok ? 'Accepted' : 'Denied'}
-              </Text>
-            </View>
-          </View>
-        );
+          );
         })}
         {history.length === 0 && (
           <View style={pageStyles.emptyCard}>
@@ -399,16 +624,11 @@ const pageStyles = StyleSheet.create({
     gap: spacing.md,
     ...elevation.card,
   },
-  labelInput: {
-    minHeight: 52,
-    borderRadius: rounded.md,
-    backgroundColor: colors.surfaceContainer,
-    borderWidth: 1,
-    borderColor: colors.surfaceContainerHighest,
-    color: colors.onSurface,
-    paddingHorizontal: spacing.md,
-    fontSize: typography.bodyMd.fontSize,
+  faceRegisterHint: {
+    color: colors.onSurfaceVariant,
+    fontSize: typography.labelMd.fontSize,
     fontWeight: '700',
+    lineHeight: typography.labelMd.lineHeight,
   },
   tertiaryAction: {
     flex: 1,
@@ -429,6 +649,155 @@ const pageStyles = StyleSheet.create({
     color: colors.onSurfaceVariant,
     fontSize: typography.labelMd.fontSize,
     fontWeight: '700',
+  },
+  cameraModal: {
+    flex: 1,
+    backgroundColor: colors.inverseSurface,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  cameraPreviewShell: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.inverseSurface,
+    overflow: 'hidden',
+  },
+  cameraPreview: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  cameraPreviewPlaceholder: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.inverseSurface,
+  },
+  cameraSwitchText: {
+    color: colors.inverseOnSurface,
+    fontSize: typography.bodyMd.fontSize,
+    fontWeight: '700',
+  },
+  cameraScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+  },
+  cameraTopBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingTop: 56,
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  cameraTopCenter: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+  cameraModeText: {
+    color: colors.onPrimary,
+    fontSize: typography.bodyLg.fontSize,
+    fontWeight: '800',
+  },
+  cameraHintText: {
+    color: colors.inverseOnSurface,
+    fontSize: typography.labelMd.fontSize,
+    fontWeight: '700',
+  },
+  cameraTopButton: {
+    minWidth: 68,
+    minHeight: 38,
+    borderRadius: rounded.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+  },
+  cameraTopButtonDisabled: {
+    opacity: 0.45,
+  },
+  cameraTopIconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: rounded.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraTopButtonText: {
+    color: colors.onPrimary,
+    fontSize: typography.labelMd.fontSize,
+    fontWeight: '800',
+  },
+  cameraFooter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xl,
+    paddingTop: spacing.md,
+    backgroundColor: 'rgba(11, 28, 48, 0.72)',
+    gap: spacing.md,
+  },
+  sampleStrip: {
+    gap: spacing.sm,
+    alignItems: 'center',
+    minHeight: 66,
+  },
+  sampleThumbWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: rounded.md,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.28)',
+  },
+  sampleThumb: {
+    width: '100%',
+    height: '100%',
+  },
+  cameraActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  cameraActionPrimary: {
+    flex: 1,
+    minHeight: 56,
+    borderRadius: rounded.lg,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraActionPrimaryText: {
+    color: colors.onPrimary,
+    fontSize: typography.bodyMd.fontSize,
+    fontWeight: '800',
+  },
+  cameraActionSecondary: {
+    minWidth: 82,
+    minHeight: 56,
+    borderRadius: rounded.lg,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+  },
+  cameraActionSecondaryText: {
+    color: colors.onPrimary,
+    fontSize: typography.labelMd.fontSize,
+    fontWeight: '800',
+  },
+  cameraActionDisabled: {
+    opacity: 0.45,
+  },
+  cameraActionGhost: {
+    minWidth: 82,
+    minHeight: 56,
   },
   sectionHeader: {
     marginTop: spacing.sm,
@@ -479,14 +848,16 @@ const pageStyles = StyleSheet.create({
     borderRadius: rounded.md,
     backgroundColor: colors.surfaceContainer,
   },
+  faceImageFallback: {
+    width: 48,
+    height: 48,
+    borderRadius: rounded.md,
+    backgroundColor: colors.surfaceContainerHigh,
+  },
   faceName: {
     color: colors.onSurface,
     fontSize: typography.bodyLg.fontSize,
     fontWeight: '700',
-  },
-  faceMeta: {
-    color: colors.onSurfaceVariant,
-    fontSize: typography.labelMd.fontSize,
   },
   deleteButton: {
     width: 40,

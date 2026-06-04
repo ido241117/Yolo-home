@@ -36,4 +36,12 @@ export class GlobalDevicesController {
   ) {
     return this.globalDevicesService.commandDevice(deviceKey, dto, user.id);
   }
+
+  @Post(':deviceKey/auto')
+  autoControlDevice(
+    @Param('deviceKey') deviceKey: string,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.globalDevicesService.autoControlDevice(deviceKey, user.id);
+  }
 }

@@ -36,10 +36,4 @@ export const menuItems: MenuItem[] = [
     icon: 'MdNotificationsActive',
     roles: ['owner', 'admin'],
   },
-  {
-    key: 'faces',
-    label: 'Faces',
-    path: '/faces',
-    icon: 'MdFace',
-  },
 ];

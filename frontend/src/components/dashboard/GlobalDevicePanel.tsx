@@ -1,27 +1,39 @@
 import type { ValueState } from '@/apis';
 import { Icon } from '@/components';
-import { useGlobalDeviceCommand } from '@/hooks';
+import { useGlobalDeviceAutoCommand, useGlobalDeviceCommand } from '@/hooks';
 import { isActiveValue } from '@/utils/backend-format';
 
 function DeviceToggle({ label, icon, deviceKey, state }: { label: string; icon: string; deviceKey: 'led' | 'fan'; state?: ValueState | null }) {
   const active = isActiveValue(state);
-  const mutation = useGlobalDeviceCommand();
+  const manualMutation = useGlobalDeviceCommand();
+  const autoMutation = useGlobalDeviceAutoCommand();
+  const busy = manualMutation.isPending || autoMutation.isPending;
 
   return (
-    <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-lg border border-outline-variant">
+    <div className="flex items-center justify-between gap-3 p-3 bg-surface-container-low rounded-lg border border-outline-variant">
       <div className="flex items-center gap-3">
         <Icon name={icon} size={20} className="text-primary" />
         <span className="text-body-md font-medium text-on-surface">{label}</span>
       </div>
-      <label className="toggle-wrap">
-        <input
-          type="checkbox"
-          checked={Boolean(active)}
-          disabled={active === null || mutation.isPending}
-          onChange={() => mutation.mutate({ deviceKey, value: active ? '0' : '1' })}
-        />
-        <span className="toggle-track" />
-      </label>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          disabled={active === null || busy}
+          onClick={() => autoMutation.mutate({ deviceKey })}
+          className="px-3 py-1 rounded-full border border-primary/40 text-primary text-label-md font-bold hover:bg-primary/10 transition-colors disabled:opacity-50"
+        >
+          Auto
+        </button>
+        <label className="toggle-wrap">
+          <input
+            type="checkbox"
+            checked={Boolean(active)}
+            disabled={active === null || busy}
+            onChange={() => manualMutation.mutate({ deviceKey, value: active ? '0' : '1' })}
+          />
+          <span className="toggle-track" />
+        </label>
+      </div>
     </div>
   );
 }

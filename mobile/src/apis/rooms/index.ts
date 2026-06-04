@@ -41,8 +41,7 @@ interface RawFace {
   label?: string;
   name?: string;
   displayName?: string | null;
-  createdAt?: string | null;
-  addedAt?: string | null;
+  previewImage?: string | null;
 }
 
 interface FaceRecognitionResponse {
@@ -95,6 +94,12 @@ export function commandRoomDevice(roomId: string, deviceKey: string, value: stri
   return apiPost(`/rooms/${roomId}/devices/${deviceKey}/command`, { value });
 }
 
+export function autoControlRoomDevice(roomId: string, deviceKey: 'led' | 'fan') {
+  return apiPost<DeviceStateResponse & { deviceKey: string }>(
+    `/rooms/${roomId}/devices/${deviceKey}/auto`,
+  );
+}
+
 export async function getRoomFaces(roomId: string) {
   const response = await apiGet<RawFace[] | { faces?: RawFace[] }>(`/rooms/${roomId}/faces`);
   const faces = Array.isArray(response) ? response : response.faces ?? [];
@@ -103,14 +108,14 @@ export async function getRoomFaces(roomId: string) {
     return {
       id: face.id ?? label,
       label,
-      name: face.displayName ?? toDisplayName(face.name ?? label),
-      addedAt: face.addedAt ?? face.createdAt ?? null,
+      name: face.displayName ?? `Face ${index + 1}`,
+      previewImage: face.previewImage ?? null,
     };
   });
 }
 
-export function registerRoomFace(roomId: string, label: string, images: string | string[]) {
-  const payload = Array.isArray(images) ? { label, images } : { label, image: images };
+export function registerRoomFace(roomId: string, images: string | string[]) {
+  const payload = Array.isArray(images) ? { images } : { image: images };
   return apiPost<RawFace>(`/rooms/${roomId}/faces`, payload);
 }
 
@@ -132,14 +137,17 @@ export async function getRoomEvents(roomId: string) {
   return events.map<RoomEventSummary>((event, index) => {
     const eventType = event.type ?? event.eventType ?? '';
     const type = inferEventType(eventType, event.deviceKey, event.sensorKey);
-    const title = event.title ?? buildEventTitle(type, event.deviceKey, event.sensorKey, event.value);
+    const title = event.title ?? buildEventTitle(type, eventType, event.deviceKey, event.sensorKey, event.value);
     return {
       id: event.id ?? `${type}-${index}`,
       type,
       title,
-      description: event.description ?? event.message ?? buildEventDescription(event.deviceKey, event.sensorKey, event.value),
+      description:
+        event.description ??
+        event.message ??
+        buildEventDescription(type, eventType, event.deviceKey, event.sensorKey, event.value),
       time: formatEventTime(event.createdAt ?? event.timestamp),
-      severity: inferSeverity(type, event.severity),
+      severity: inferSeverity(type, eventType, event.severity),
     };
   });
 }
@@ -165,7 +173,10 @@ function toDisplayName(value: string) {
 }
 
 function inferEventType(type: string, deviceKey?: string, sensorKey?: string): RoomEventSummary['type'] {
-  if (type.toLowerCase().includes('face') || deviceKey === 'door') {
+  if (type.toLowerCase().includes('face')) {
+    return 'face';
+  }
+  if (deviceKey === 'door') {
     return 'door';
   }
   if (sensorKey || type.toLowerCase().includes('sensor') || type.toLowerCase().includes('alert')) {
@@ -177,14 +188,40 @@ function inferEventType(type: string, deviceKey?: string, sensorKey?: string): R
   return 'device';
 }
 
-function buildEventTitle(type: RoomEventSummary['type'], deviceKey?: string, sensorKey?: string, value?: string) {
+function buildEventTitle(
+  type: RoomEventSummary['type'],
+  rawType: string,
+  deviceKey?: string,
+  sensorKey?: string,
+  value?: string,
+) {
+  if (type === 'face') {
+    if (rawType.includes('register')) return 'Face registered';
+    if (rawType.includes('denied')) return 'Face unlock failed';
+    if (rawType.includes('recognized')) return 'Door unlocked by face';
+    if (rawType.includes('retrain')) return 'Face model retrained';
+    return 'Face event';
+  }
   if (type === 'door') return 'Door access event';
   if (type === 'sensor') return `${toDisplayName(sensorKey ?? 'sensor')} alert`;
   if (type === 'security') return 'Security update';
   return `${toDisplayName(deviceKey ?? 'device')} ${value ?? 'updated'}`;
 }
 
-function buildEventDescription(deviceKey?: string, sensorKey?: string, value?: string) {
+function buildEventDescription(
+  type: RoomEventSummary['type'],
+  rawType: string,
+  deviceKey?: string,
+  sensorKey?: string,
+  value?: string,
+) {
+  if (type === 'face') {
+    if (rawType.includes('register')) return 'A new face profile was registered';
+    if (rawType.includes('denied')) return 'A face unlock attempt failed';
+    if (rawType.includes('recognized')) return 'A face unlock attempt succeeded';
+    if (rawType.includes('retrain')) return 'The face model was retrained';
+    return 'Face activity recorded by backend';
+  }
   if (sensorKey) return `${toDisplayName(sensorKey)} reported ${value ?? 'a new value'}`;
   if (deviceKey) return `${toDisplayName(deviceKey)} command was recorded`;
   return 'Room event recorded by backend';
@@ -197,8 +234,13 @@ function formatEventTime(value?: string) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function inferSeverity(type: RoomEventSummary['type'], severity?: string): RoomEventSummary['severity'] {
+function inferSeverity(type: RoomEventSummary['type'], rawType: string, severity?: string): RoomEventSummary['severity'] {
   if (severity === 'error' || severity === 'warning' || severity === 'success') return severity;
+  if (type === 'face') {
+    if (rawType.includes('denied')) return 'error';
+    if (rawType.includes('recognized')) return 'success';
+    return 'info';
+  }
   if (type === 'sensor') return 'warning';
   if (type === 'door') return 'success';
   return 'info';

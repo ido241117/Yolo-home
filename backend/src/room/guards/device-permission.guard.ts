@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserRole } from '../../user/entities/user.entity';
 import { Permission } from '../entities/permission.entity';
+import { RoomService } from '../room.service';
+import { resolveRoomIdFromRequest } from './resolve-room-ref';
 
 const DEVICE_PERM: Record<string, keyof Permission> = {
   led: 'canControlLed',
@@ -15,6 +17,7 @@ export class DevicePermissionGuard implements CanActivate {
   constructor(
     @InjectRepository(Permission)
     private readonly permissions: Repository<Permission>,
+    private readonly roomService: RoomService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -24,7 +27,8 @@ export class DevicePermissionGuard implements CanActivate {
 
     if (user.role === UserRole.Owner) return true;
 
-    const { roomId, deviceKey } = request.params as { roomId?: string; deviceKey?: string };
+    const { deviceKey } = request.params as { roomId?: string; deviceKey?: string };
+    const roomId = await resolveRoomIdFromRequest(this.roomService, request.params);
     if (!roomId || !deviceKey) return false;
 
     const permField = DEVICE_PERM[deviceKey];

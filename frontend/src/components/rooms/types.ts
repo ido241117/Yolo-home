@@ -9,6 +9,7 @@ export interface TenantAvatar {
 
 export interface RoomRow {
   id: string;
+  code: string;
   name: string;
   location: string;
   status: RoomStatus;
@@ -19,10 +20,10 @@ export interface RoomRow {
   lastSensor: string;
 }
 
-export const ROOM_STATUS_CONFIG: Record<RoomStatus, { dot: string; text: string; bg: string; label: string }> = {
-  occupied:    { dot: 'bg-blue-500',  text: 'text-blue-400',  bg: 'bg-blue-500/15',  label: 'Occupied' },
-  vacant:      { dot: 'bg-green-500', text: 'text-green-400', bg: 'bg-green-500/15', label: 'Vacant' },
-  maintenance: { dot: 'bg-amber-500', text: 'text-amber-400', bg: 'bg-amber-500/15', label: 'Maintenance' },
+export const ROOM_STATUS_CONFIG: Record<RoomStatus, { dot: string; badge: string; label: string }> = {
+  occupied:    { dot: 'badge-dot-occupied',    badge: 'badge-status-occupied',    label: 'Occupied' },
+  vacant:      { dot: 'badge-dot-vacant',      badge: 'badge-status-vacant',      label: 'Vacant' },
+  maintenance: { dot: 'badge-dot-maintenance', badge: 'badge-status-maintenance', label: 'Maintenance' },
 };
 
 export const ROOM_FILTER_TABS: { key: FilterTab; label: string }[] = [

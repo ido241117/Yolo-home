@@ -67,7 +67,7 @@ export function AlertsTable({ liveAlerts, events, acknowledgedIds, isLoading, is
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${acknowledged ? 'bg-green-400' : 'bg-error'}`} />
+                      <span className={`w-2 h-2 rounded-full ${acknowledged ? 'bg-status-active' : 'bg-error'}`} />
                       <span className="text-body-md text-on-surface">{row.room}</span>
                     </div>
                   </td>
@@ -78,12 +78,12 @@ export function AlertsTable({ liveAlerts, events, acknowledgedIds, isLoading, is
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span className="bg-green-500/15 text-green-300 text-label-md px-2 py-0.5 rounded border border-green-500/30">
+                    <span className="badge-pill badge-success text-label-md px-2 py-0.5 rounded">
                       {row.value}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-label-sm border font-medium ${acknowledged ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-error/10 text-error border-error/20'}`}>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-label-sm badge-pill font-medium ${acknowledged ? 'badge-success' : 'badge-danger'}`}>
                       {acknowledged ? 'Acknowledged' : row.live ? 'Live' : 'Unresolved'}
                     </span>
                   </td>

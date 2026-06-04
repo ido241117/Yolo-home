@@ -63,6 +63,18 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+export async function apiPostVoid(path: string, body?: unknown): Promise<void> {
+  const url = `${API_URL}${path}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: buildHeaders(),
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!response.ok) {
+    throw await buildRequestError(response);
+  }
+}
+
 export async function apiDelete<T>(path: string): Promise<T> {
   const url = `${API_URL}${path}`;
   const response = await fetch(url, {

@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from 'react';
 import { Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
-import { Bell, Home, ShieldAlert, User, UserRoundCheck } from 'lucide-react-native';
+import { Home, ShieldAlert, User, UserRoundCheck } from 'lucide-react-native';
 import { styles, theme } from '../../styles';
 
 export type AppTabKey = 'home' | 'identity' | 'alerts' | 'profile';
@@ -18,6 +18,8 @@ const navItems = [
   { key: 'profile', label: 'Profile', Icon: User },
 ] as const;
 
+const APP_HEADER_VERSION = '02';
+
 export default function AppLayout({ activeTab = 'home', children, onTabPress, title = 'My Room' }: AppLayoutProps) {
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -28,10 +30,10 @@ export default function AppLayout({ activeTab = 'home', children, onTabPress, ti
               <Text style={styles.avatarText}>DA</Text>
             </View>
             <Text style={styles.appBarTitle}>{title}</Text>
+            <View style={styles.appVersionPill}>
+              <Text style={styles.appVersionText}>{APP_HEADER_VERSION}</Text>
+            </View>
           </View>
-          <Pressable style={styles.appBarIconButton} accessibilityRole="button" accessibilityLabel="Notifications">
-            <Bell size={26} color={theme.colors.primary} strokeWidth={2.2} />
-          </Pressable>
         </View>
 
         <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>

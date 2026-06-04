@@ -10,11 +10,12 @@ export default function RoomsPage() {
 
   const rows: RoomRow[] = (roomsQuery.data ?? []).map(room => ({
     id: room.id,
+    code: room.code,
     name: room.name,
     location: room.description || 'No description',
     status: room.status,
     tenants: [],
-    adafruit: 'Configure',
+    adafruit: room.adafruitUsername || 'Configure',
     lastActivity: formatDateTime(room.updatedAt),
     lastSensor: 'Open detail for live sensors',
   }));

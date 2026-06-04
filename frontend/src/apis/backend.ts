@@ -4,9 +4,11 @@ export type RoomStatus = 'occupied' | 'vacant' | 'maintenance';
 
 export interface RoomDto {
   id: string;
+  code: string;
   name: string;
   status: RoomStatus;
   description?: string | null;
+  adafruitUsername?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -300,10 +302,24 @@ export async function commandRoomDevice(roomId: string, deviceKey: 'led' | 'fan'
   return response.data;
 }
 
+export async function autoControlRoomDevice(roomId: string, deviceKey: 'led' | 'fan') {
+  const response = await http.post<ValueState & { deviceKey: string }>(
+    `/rooms/${roomId}/devices/${deviceKey}/auto`,
+  );
+  return response.data;
+}
+
 export async function commandGlobalDevice(deviceKey: 'led' | 'fan', value: string) {
   const response = await http.post<ValueState & { deviceKey: string }>(
     `/global-devices/${deviceKey}/command`,
     { value },
+  );
+  return response.data;
+}
+
+export async function autoControlGlobalDevice(deviceKey: 'led' | 'fan') {
+  const response = await http.post<ValueState & { deviceKey: string }>(
+    `/global-devices/${deviceKey}/auto`,
   );
   return response.data;
 }

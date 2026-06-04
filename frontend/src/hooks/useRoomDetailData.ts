@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  autoControlRoomDevice,
   commandRoomDevice,
   getRoomEvents,
   getRoomFaces,
@@ -10,13 +11,13 @@ import {
   type UpsertHardwareConfigPayload,
 } from '@/apis';
 
-export function useRoomDetailData(roomId: string) {
-  const enabled = Boolean(roomId);
-  const summaryQuery = useQuery({ queryKey: ['rooms', roomId, 'summary'], queryFn: () => getRoomSummary(roomId), enabled });
-  const hardwareQuery = useQuery({ queryKey: ['rooms', roomId, 'hardware'], queryFn: () => getRoomHardware(roomId), enabled });
-  const membersQuery = useQuery({ queryKey: ['rooms', roomId, 'members'], queryFn: () => getRoomMembers(roomId), enabled });
-  const facesQuery = useQuery({ queryKey: ['rooms', roomId, 'faces'], queryFn: () => getRoomFaces(roomId), enabled });
-  const eventsQuery = useQuery({ queryKey: ['rooms', roomId, 'events'], queryFn: () => getRoomEvents(roomId, 20), enabled });
+export function useRoomDetailData(roomCode: string) {
+  const enabled = Boolean(roomCode);
+  const summaryQuery = useQuery({ queryKey: ['rooms', roomCode, 'summary'], queryFn: () => getRoomSummary(roomCode), enabled });
+  const hardwareQuery = useQuery({ queryKey: ['rooms', roomCode, 'hardware'], queryFn: () => getRoomHardware(roomCode), enabled });
+  const membersQuery = useQuery({ queryKey: ['rooms', roomCode, 'members'], queryFn: () => getRoomMembers(roomCode), enabled });
+  const facesQuery = useQuery({ queryKey: ['rooms', roomCode, 'faces'], queryFn: () => getRoomFaces(roomCode), enabled });
+  const eventsQuery = useQuery({ queryKey: ['rooms', roomCode, 'events'], queryFn: () => getRoomEvents(roomCode, 20), enabled });
 
   return {
     summaryQuery,
@@ -28,22 +29,31 @@ export function useRoomDetailData(roomId: string) {
   };
 }
 
-export function useRoomDeviceCommand(roomId: string) {
+export function useRoomDeviceCommand(roomCode: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ key, value }: { key: 'led' | 'fan' | 'door'; value: string }) =>
-      commandRoomDevice(roomId, key, value),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['rooms', roomId] }),
+      commandRoomDevice(roomCode, key, value),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['rooms', roomCode] }),
   });
 }
 
-export function useUpsertRoomHardware(roomId: string) {
+export function useRoomDeviceAutoCommand(roomCode: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: UpsertHardwareConfigPayload) => upsertRoomHardware(roomId, payload),
+    mutationFn: ({ key }: { key: 'led' | 'fan' }) =>
+      autoControlRoomDevice(roomCode, key),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['rooms', roomCode] }),
+  });
+}
+
+export function useUpsertRoomHardware(roomCode: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: UpsertHardwareConfigPayload) => upsertRoomHardware(roomCode, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rooms', roomId, 'hardware'] });
-      queryClient.invalidateQueries({ queryKey: ['rooms', roomId, 'summary'] });
+      queryClient.invalidateQueries({ queryKey: ['rooms', roomCode, 'hardware'] });
+      queryClient.invalidateQueries({ queryKey: ['rooms', roomCode, 'summary'] });
     },
   });
 }

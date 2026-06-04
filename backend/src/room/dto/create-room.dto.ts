@@ -12,4 +12,8 @@ export class CreateRoomDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  code?: string;
 }

@@ -11,7 +11,7 @@ import ProfilePage from '../pages/profile';
 const tabTitles: Record<AppTabKey, string> = {
   home: 'My Room',
   identity: 'My Room',
-  alerts: 'Alerts',
+  alerts: 'MyRoom',
   profile: 'My Room',
 };
 
