@@ -15,6 +15,7 @@ interface SensorStateResponse {
 interface MyDevicesResponse {
   room: Pick<RoomOverview, 'id' | 'name'>;
   devices: Record<string, DeviceStateResponse | null>;
+  autoModes?: Record<string, boolean>;
 }
 
 interface MySensorsResponse {
@@ -22,7 +23,7 @@ interface MySensorsResponse {
   sensors: Record<string, SensorStateResponse | null>;
 }
 
-interface AutoControlResponse {
+interface AutoControlPredictResponse {
   fan?: {
     action?: string;
     changed?: boolean;
@@ -34,6 +35,12 @@ interface AutoControlResponse {
     reason?: string;
   };
   error?: string;
+}
+
+interface AutoModeResponse {
+  deviceKey: string;
+  enabled: boolean;
+  updatedAt: string;
 }
 
 interface RawFace {
@@ -73,12 +80,16 @@ export function getMyRoom() {
 
 export async function getMyDevices() {
   const response = await apiGet<MyDevicesResponse>('/mobile/my-devices');
-  return Object.entries(response.devices).map<DeviceSummary>(([key, state]) => ({
-    key,
-    label: key,
-    active: state?.value === 'ON' || state?.value === 'UNLOCKED' || state?.value === '1',
-    value: state?.value ?? null,
-  }));
+  return Object.entries(response.devices).map<DeviceSummary>(([key, state]) => {
+    const autoEnabled = Boolean(response.autoModes?.[key]);
+    return {
+      key,
+      label: key,
+      active: state?.value === 'ON' || state?.value === 'UNLOCKED' || state?.value === '1',
+      value: state?.value ?? null,
+      autoEnabled,
+    };
+  });
 }
 
 export async function getMySensors() {
@@ -95,7 +106,7 @@ export function commandRoomDevice(roomId: string, deviceKey: string, value: stri
 }
 
 export function autoControlRoomDevice(roomId: string, deviceKey: 'led' | 'fan') {
-  return apiPost<DeviceStateResponse & { deviceKey: string }>(
+  return apiPost<AutoModeResponse>(
     `/rooms/${roomId}/devices/${deviceKey}/auto`,
   );
 }
@@ -163,7 +174,7 @@ export function predictAutoControl(payload: {
     light: boolean;
   };
 }) {
-  return apiPost<AutoControlResponse>('/ai/auto-control/predict', payload);
+  return apiPost<AutoControlPredictResponse>('/ai/auto-control/predict', payload);
 }
 
 function toDisplayName(value: string) {

@@ -6,6 +6,7 @@ import {
   getDashboardOccupancy,
   getDashboardSummary,
   getEvents,
+  getGlobalDevices,
   retrainGlobalAutoControl,
 } from '@/apis';
 
@@ -14,12 +15,14 @@ export function useDashboardData() {
   const occupancyQuery = useQuery({ queryKey: ['dashboard', 'occupancy'], queryFn: getDashboardOccupancy });
   const alertsQuery = useQuery({ queryKey: ['dashboard', 'alerts'], queryFn: getDashboardAlerts });
   const eventsQuery = useQuery({ queryKey: ['events', 'recent'], queryFn: () => getEvents(5) });
+  const globalDevicesQuery = useQuery({ queryKey: ['global-devices'], queryFn: getGlobalDevices });
 
   return {
     summaryQuery,
     occupancyQuery,
     alertsQuery,
     eventsQuery,
+    globalDevicesQuery,
     isLoading: summaryQuery.isLoading || occupancyQuery.isLoading,
     hasError: summaryQuery.isError || occupancyQuery.isError || alertsQuery.isError || eventsQuery.isError,
   };
@@ -30,7 +33,12 @@ export function useGlobalDeviceCommand() {
   return useMutation({
     mutationFn: ({ deviceKey, value }: { deviceKey: 'led' | 'fan'; value: string }) =>
       commandGlobalDevice(deviceKey, value),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['global-devices'] }),
+      ]);
+    },
   });
 }
 
@@ -39,7 +47,12 @@ export function useGlobalDeviceAutoCommand() {
   return useMutation({
     mutationFn: ({ deviceKey }: { deviceKey: 'led' | 'fan' }) =>
       autoControlGlobalDevice(deviceKey),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['global-devices'] }),
+      ]);
+    },
   });
 }
 

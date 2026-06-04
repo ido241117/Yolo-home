@@ -2,16 +2,19 @@
  * Local seed for DADN without mocking users or Adafruit credentials.
  *
  * This script resets the public schema, lets TypeORM synchronize tables, then
- * inserts demo rooms, sensor/event history, face labels, and auto-control
- * training rows. Users and hardware_configs are intentionally left empty.
+ * inserts one bootstrap owner plus demo rooms, sensor/event history, face
+ * labels, and auto-control training rows. Hardware configs are intentionally
+ * left empty because Adafruit credentials must be real.
  *
  * Run from backend/:
  *   npm run seed
  */
 
 import 'dotenv/config';
+import * as bcrypt from 'bcrypt';
 import { DataSource } from 'typeorm';
 import { GLOBAL_ROOM_NAME } from '../src/global-devices/global-devices.service';
+import { AutoControlMode } from '../src/room/entities/auto-control-mode.entity';
 import { AutoControlTrainingLog } from '../src/room/entities/auto-control-training-log.entity';
 import { EventLog } from '../src/room/entities/event-log.entity';
 import { FaceLabel } from '../src/room/entities/face-label.entity';
@@ -19,7 +22,7 @@ import { HardwareConfig } from '../src/room/entities/hardware-config.entity';
 import { Permission } from '../src/room/entities/permission.entity';
 import { Room, RoomStatus } from '../src/room/entities/room.entity';
 import { SensorSnapshot } from '../src/room/entities/sensor-snapshot.entity';
-import { User } from '../src/user/entities/user.entity';
+import { User, UserRole } from '../src/user/entities/user.entity';
 
 const ds = new DataSource({
   type: 'postgres',
@@ -37,6 +40,7 @@ const ds = new DataSource({
     SensorSnapshot,
     FaceLabel,
     AutoControlTrainingLog,
+    AutoControlMode,
   ],
   synchronize: false,
 });
@@ -60,10 +64,22 @@ async function seed() {
   await ds.synchronize();
 
   const rooms = ds.getRepository(Room);
+  const users = ds.getRepository(User);
   const eventLogs = ds.getRepository(EventLog);
   const sensorSnapshots = ds.getRepository(SensorSnapshot);
   const faceLabels = ds.getRepository(FaceLabel);
   const autoControlTrainingLogs = ds.getRepository(AutoControlTrainingLog);
+
+  const owner = await users.save(
+    users.create({
+      name: 'Owner',
+      username: 'owner',
+      passwordHash: await bcrypt.hash('owner123', 10),
+      role: UserRole.Owner,
+      active: true,
+      isGlobalAdmin: true,
+    }),
+  );
 
   const globalRoom = await rooms.save(
     rooms.create({
@@ -132,6 +148,7 @@ async function seed() {
   await eventLogs.save([
     eventLogs.create({
       room: room101,
+      actor: owner,
       type: 'room_seeded',
       payload: { status: room101.status },
       createdAt: addMinutes(now, -240),
@@ -168,6 +185,7 @@ async function seed() {
     }),
     eventLogs.create({
       room: globalRoom,
+      actor: owner,
       type: 'auto_control_seed_ready',
       payload: { samples: 16, defaultModelsPreserved: true },
       createdAt: addMinutes(now, -25),
@@ -203,7 +221,7 @@ async function seed() {
 
   console.log('Seed completed');
   console.table({
-    users: await ds.getRepository(User).count(),
+    users: await users.count(),
     rooms: await rooms.count(),
     hardwareConfigs: await ds.getRepository(HardwareConfig).count(),
     permissions: await ds.getRepository(Permission).count(),
@@ -211,6 +229,7 @@ async function seed() {
     sensorSnapshots: await sensorSnapshots.count(),
     eventLogs: await eventLogs.count(),
     autoControlTrainingLogs: await autoControlTrainingLogs.count(),
+    autoControlModes: await ds.getRepository(AutoControlMode).count(),
   });
 }
 

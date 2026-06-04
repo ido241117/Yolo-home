@@ -36,6 +36,7 @@ export class MobileService {
         name: permission.room.name,
       },
       devices: await this.roomService.getDevices(permission.room.id),
+      autoModes: await this.roomService.getAutoModes(permission.room.id),
     };
   }
 

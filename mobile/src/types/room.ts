@@ -16,6 +16,7 @@ export interface DeviceSummary {
   label: string;
   value: string | null;
   active: boolean;
+  autoEnabled?: boolean;
 }
 
 export interface FaceSummary {

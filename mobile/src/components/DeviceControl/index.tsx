@@ -11,16 +11,11 @@ interface DeviceControlProps {
 }
 
 export default function DeviceControl({ device, mode, onModeChange }: DeviceControlProps) {
-  const value =
-    device.label === 'Door'
-      ? device.active
-        ? 'Unlocked'
-        : 'Locked'
-      : mode === 'auto'
-        ? 'Auto'
-        : device.active
-          ? 'On'
-          : 'Off';
+  const value = device.key === 'door'
+    ? device.active
+      ? 'Unlocked'
+      : 'Locked'
+    : `${device.active ? 'On' : 'Off'}${mode === 'auto' ? ' - Auto mode' : ''}`;
   const modes: DeviceMode[] = device.key === 'door' ? ['off', 'on'] : ['on', 'off', 'auto'];
 
   return (
@@ -32,6 +27,7 @@ export default function DeviceControl({ device, mode, onModeChange }: DeviceCont
       <View style={styles.segmentedControl}>
         {modes.map((item) => {
           const selected = item === mode;
+          const disabled = mode === 'auto' && item !== 'auto';
           const label =
             device.key === 'door'
               ? item === 'on'
@@ -47,9 +43,10 @@ export default function DeviceControl({ device, mode, onModeChange }: DeviceCont
             <Pressable
               key={item}
               accessibilityRole="button"
-              accessibilityState={{ selected }}
+              accessibilityState={{ selected, disabled }}
+              disabled={disabled}
               onPress={() => onModeChange(item)}
-              style={[styles.segmentedItem, selected && styles.segmentedItemActive]}
+              style={[styles.segmentedItem, selected && styles.segmentedItemActive, disabled && { opacity: 0.45 }]}
             >
               <Text style={[styles.segmentedText, selected && { color: theme.colors.onPrimary }]}>{label}</Text>
             </Pressable>

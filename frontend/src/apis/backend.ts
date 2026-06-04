@@ -18,6 +18,11 @@ export interface ValueState {
   updatedAt: string;
 }
 
+export interface AutoModeMap {
+  led: boolean;
+  fan: boolean;
+}
+
 export interface SensorState extends ValueState {
   unit: string | null;
 }
@@ -33,6 +38,12 @@ export interface DashboardSummary {
   totalTenants: number;
   humanDetectedRooms: number;
   globalDevices: Record<'led' | 'fan', ValueState | null>;
+}
+
+export interface GlobalDevicesResponse {
+  configured: boolean;
+  devices: Record<'led' | 'fan', ValueState | null>;
+  autoModes: AutoModeMap;
 }
 
 export interface DashboardOccupancy {
@@ -185,6 +196,7 @@ export interface RoomSummaryDto {
     isRoomAdmin: boolean;
   }>;
   devices: DeviceMap;
+  autoModes: AutoModeMap;
   sensors: SensorMap;
   recentEvents: EventDto[];
 }
@@ -329,7 +341,7 @@ export async function commandRoomDevice(roomId: string, deviceKey: 'led' | 'fan'
 }
 
 export async function autoControlRoomDevice(roomId: string, deviceKey: 'led' | 'fan') {
-  const response = await http.post<ValueState & { deviceKey: string }>(
+  const response = await http.post<{ deviceKey: string; enabled: boolean; updatedAt: string }>(
     `/rooms/${roomId}/devices/${deviceKey}/auto`,
   );
   return response.data;
@@ -344,9 +356,14 @@ export async function commandGlobalDevice(deviceKey: 'led' | 'fan', value: strin
 }
 
 export async function autoControlGlobalDevice(deviceKey: 'led' | 'fan') {
-  const response = await http.post<ValueState & { deviceKey: string }>(
+  const response = await http.post<{ deviceKey: string; enabled: boolean; updatedAt: string }>(
     `/global-devices/${deviceKey}/auto`,
   );
+  return response.data;
+}
+
+export async function getGlobalDevices() {
+  const response = await http.get<GlobalDevicesResponse>('/global-devices');
   return response.data;
 }
 

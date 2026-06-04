@@ -23,7 +23,19 @@ const defaultFeedMapping: Record<FeedKey, string> = {
   human: 'human',
 };
 
-function DeviceToggle({ label, icon, deviceKey, state }: { label: string; icon: string; deviceKey: 'led' | 'fan'; state?: ValueState | null }) {
+function DeviceToggle({
+  label,
+  icon,
+  deviceKey,
+  state,
+  autoEnabled,
+}: {
+  label: string;
+  icon: string;
+  deviceKey: 'led' | 'fan';
+  state?: ValueState | null;
+  autoEnabled: boolean;
+}) {
   const active = isActiveValue(state);
   const manualMutation = useGlobalDeviceCommand();
   const autoMutation = useGlobalDeviceAutoCommand();
@@ -40,7 +52,11 @@ function DeviceToggle({ label, icon, deviceKey, state }: { label: string; icon: 
           type="button"
           disabled={active === null || busy}
           onClick={() => autoMutation.mutate({ deviceKey })}
-          className="px-3 py-1 rounded-full border border-primary/40 text-primary text-label-md font-bold hover:bg-primary/10 transition-colors disabled:opacity-50"
+          className={`px-3 py-1 rounded-full border text-label-md font-bold transition-colors disabled:opacity-50 ${
+            autoEnabled
+              ? 'border-status-active bg-status-active text-white shadow-sm'
+              : 'border-primary/40 text-primary hover:bg-primary/10'
+          }`}
         >
           Auto
         </button>
@@ -48,7 +64,7 @@ function DeviceToggle({ label, icon, deviceKey, state }: { label: string; icon: 
           <input
             type="checkbox"
             checked={Boolean(active)}
-            disabled={active === null || busy}
+            disabled={active === null || busy || autoEnabled}
             onChange={() => manualMutation.mutate({ deviceKey, value: active ? '0' : '1' })}
           />
           <span className="toggle-track" />
@@ -58,7 +74,15 @@ function DeviceToggle({ label, icon, deviceKey, state }: { label: string; icon: 
   );
 }
 
-export function GlobalDevicePanel({ led, fan }: { led?: ValueState | null; fan?: ValueState | null }) {
+export function GlobalDevicePanel({
+  led,
+  fan,
+  autoModes = { led: false, fan: false },
+}: {
+  led?: ValueState | null;
+  fan?: ValueState | null;
+  autoModes?: { led: boolean; fan: boolean };
+}) {
   const queryClient = useQueryClient();
   const hardwareQuery = useQuery({
     queryKey: ['global-devices', 'hardware'],
@@ -228,8 +252,8 @@ export function GlobalDevicePanel({ led, fan }: { led?: ValueState | null; fan?:
       )}
 
       <div className="space-y-4">
-        <DeviceToggle label="Global LED Toggle" icon="lightbulb" deviceKey="led" state={led} />
-        <DeviceToggle label="Global Fan Toggle" icon="mode_fan" deviceKey="fan" state={fan} />
+        <DeviceToggle label="Global LED Toggle" icon="lightbulb" deviceKey="led" state={led} autoEnabled={autoModes.led} />
+        <DeviceToggle label="Global Fan Toggle" icon="mode_fan" deviceKey="fan" state={fan} autoEnabled={autoModes.fan} />
       </div>
     </section>
   );

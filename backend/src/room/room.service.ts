@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { GLOBAL_ROOM_NAME } from '../global-devices/global-devices.service';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
@@ -15,6 +15,7 @@ import { CreateRoomDto } from './dto/create-room.dto';
 import { UpsertHardwareConfigDto } from './dto/hardware-config.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
+import { AutoControlMode } from './entities/auto-control-mode.entity';
 import { AutoControlTrainingLog } from './entities/auto-control-training-log.entity';
 import { EventLog } from './entities/event-log.entity';
 import { FaceLabel } from './entities/face-label.entity';
@@ -23,6 +24,7 @@ import { Permission } from './entities/permission.entity';
 import { Room } from './entities/room.entity';
 
 const VALID_DEVICE_KEYS = ['led', 'fan', 'door'] as const;
+const AUTO_DEVICE_KEYS = ['led', 'fan'] as const;
 const VALID_SENSOR_KEYS = ['temp', 'humi', 'light', 'human'] as const;
 const SENSOR_UNITS: Record<string, string | null> = {
   temp: '°C',
@@ -41,8 +43,10 @@ type AutoTrainingContext = {
 };
 
 @Injectable()
-export class RoomService {
+export class RoomService implements OnModuleInit {
+  private readonly logger = new Logger(RoomService.name);
   private readonly encryptionKey: Buffer;
+  private autoControlTimer?: NodeJS.Timeout;
 
   constructor(
     @InjectRepository(Room)
@@ -57,6 +61,8 @@ export class RoomService {
     private readonly eventLogs: Repository<EventLog>,
     @InjectRepository(AutoControlTrainingLog)
     private readonly autoControlTrainingLogs: Repository<AutoControlTrainingLog>,
+    @InjectRepository(AutoControlMode)
+    private readonly autoControlModes: Repository<AutoControlMode>,
     @InjectRepository(FaceLabel)
     private readonly faceLabels: Repository<FaceLabel>,
     private readonly adafruitService: AdafruitService,
@@ -65,6 +71,13 @@ export class RoomService {
   ) {
     this.encryptionKey = buildEncryptionKey(
       this.config.get<string>('ENCRYPTION_KEY', 'default_dev_key_change_me'),
+    );
+  }
+
+  onModuleInit() {
+    this.autoControlTimer = setInterval(
+      () => void this.runEnabledAutoControls().catch((error) => this.logger.error(error)),
+      this.autoControlIntervalMs(),
     );
   }
 
@@ -146,6 +159,7 @@ export class RoomService {
       this.getSensors(roomId),
       this.getRoomEvents(roomId, 5),
     ]);
+    const autoModes = await this.getAutoModes(roomId);
 
     return {
       room: {
@@ -162,6 +176,7 @@ export class RoomService {
         isRoomAdmin: permission.isRoomAdmin,
       })),
       devices,
+      autoModes,
       sensors,
       recentEvents: recentEvents.map((event) => ({
         id: event.id,
@@ -334,16 +349,48 @@ export class RoomService {
   }
 
   async commandDevice(ref: string, deviceKey: string, dto: CommandDeviceDto, userId: string) {
+    await this.assertManualCommandAllowed(ref, deviceKey);
     return this.commandDeviceWithSource(ref, deviceKey, dto, userId, 'manual');
   }
 
   async autoControlDevice(ref: string, deviceKey: string, userId: string) {
-    this.assertValidDeviceKey(deviceKey);
-    if (deviceKey === 'door') throw new BadRequestException('Auto control only supports led and fan');
+    this.assertAutoDeviceKey(deviceKey);
+    const room = await this.findOne(ref);
+    const mode = await this.getOrCreateAutoMode(room, deviceKey);
+    mode.enabled = !mode.enabled;
+    await this.autoControlModes.save(mode);
+
+    const actor = await this.users.findOne({ where: { id: userId } });
+    await this.eventLogs.save(
+      this.eventLogs.create({
+        room,
+        actor: actor ?? undefined,
+        type: 'auto_control_mode_changed',
+        payload: { deviceKey, enabled: mode.enabled },
+      }),
+    );
+
+    if (mode.enabled) {
+      await this.runAutoControlForRoom(room, deviceKey, 'auto_mode');
+    }
+
+    return {
+      deviceKey,
+      enabled: mode.enabled,
+      updatedAt: new Date(),
+    };
+  }
+
+  private async runAutoControlForRoom(
+    room: Room,
+    deviceKey: string,
+    source: 'auto' | 'auto_mode' = 'auto_mode',
+  ) {
+    this.assertAutoDeviceKey(deviceKey);
 
     const [sensors, devices] = await Promise.all([
-      this.getSensors(ref),
-      this.getDevices(ref),
+      this.getSensors(room.id),
+      this.getDevices(room.id),
     ]);
     const sensorData = {
       temperature: this.readNumericSensor(sensors.temp?.value, 25),
@@ -362,12 +409,12 @@ export class RoomService {
       },
     });
     const action = this.extractPredictedAction(prediction, deviceKey);
-    return this.commandDeviceWithSource(
-      ref,
+    const result = await this.commandDeviceWithSource(
+      room.id,
       deviceKey,
       { value: action },
-      userId,
-      'auto',
+      undefined,
+      source,
       prediction,
       {
         ...sensorData,
@@ -376,14 +423,21 @@ export class RoomService {
         currentLightState: Number(deviceStates.light),
       },
     );
+    const mode = await this.autoControlModes.findOne({ where: { room: { id: room.id }, deviceKey } });
+    if (mode) {
+      mode.lastRunAt = new Date();
+      mode.lastResult = { prediction, result };
+      await this.autoControlModes.save(mode);
+    }
+    return result;
   }
 
   private async commandDeviceWithSource(
     ref: string,
     deviceKey: string,
     dto: CommandDeviceDto,
-    userId: string,
-    source: 'manual' | 'auto',
+    userId: string | undefined,
+    source: 'manual' | 'auto' | 'auto_mode',
     ai?: unknown,
     trainingContext?: AutoTrainingContext,
   ) {
@@ -406,7 +460,7 @@ export class RoomService {
     await this.adafruitService.writeFeed(roomId, deviceKey, value);
 
     const room = await this.findOne(ref);
-    const actor = await this.users.findOne({ where: { id: userId } });
+    const actor = userId ? await this.users.findOne({ where: { id: userId } }) : null;
     await this.eventLogs.save(
       this.eventLogs.create({
         room,
@@ -444,16 +498,17 @@ export class RoomService {
     actor: User | undefined,
     deviceKey: string,
     value: string,
-    source: 'manual' | 'auto',
+    source: 'manual' | 'auto' | 'auto_mode',
     context: AutoTrainingContext,
     ai?: unknown,
   ) {
-    const desiredAction = source === 'manual' ? this.toBinaryAction(value) : undefined;
+    const trainingSource = source === 'manual' ? 'manual' : 'auto';
+    const desiredAction = trainingSource === 'manual' ? this.toBinaryAction(value) : undefined;
     await this.autoControlTrainingLogs.save(
       this.autoControlTrainingLogs.create({
         room,
         actor,
-        source,
+        source: trainingSource,
         deviceKey,
         temperature: context.temperature,
         humidity: context.humidity,
@@ -671,6 +726,58 @@ export class RoomService {
     if (!(VALID_DEVICE_KEYS as readonly string[]).includes(key)) {
       throw new BadRequestException(`Invalid device key "${key}". Valid: ${VALID_DEVICE_KEYS.join(', ')}`);
     }
+  }
+
+  private assertAutoDeviceKey(key: string) {
+    if (!(AUTO_DEVICE_KEYS as readonly string[]).includes(key)) {
+      throw new BadRequestException(`Auto control only supports ${AUTO_DEVICE_KEYS.join(', ')}`);
+    }
+  }
+
+  async getAutoModes(ref: string) {
+    const roomId = await this.roomIdFromRef(ref);
+    const modes = await this.autoControlModes.find({ where: { room: { id: roomId } } });
+    return {
+      led: modes.find((mode) => mode.deviceKey === 'led')?.enabled ?? false,
+      fan: modes.find((mode) => mode.deviceKey === 'fan')?.enabled ?? false,
+    };
+  }
+
+  private async getOrCreateAutoMode(room: Room, deviceKey: string) {
+    const existing = await this.autoControlModes.findOne({
+      where: { room: { id: room.id }, deviceKey },
+      relations: { room: true },
+    });
+    if (existing) return existing;
+    return this.autoControlModes.save(
+      this.autoControlModes.create({ room, deviceKey, enabled: false, lastResult: {} }),
+    );
+  }
+
+  private async assertManualCommandAllowed(ref: string, deviceKey: string) {
+    if (!(AUTO_DEVICE_KEYS as readonly string[]).includes(deviceKey)) return;
+    const roomId = await this.roomIdFromRef(ref);
+    const mode = await this.autoControlModes.findOne({
+      where: { room: { id: roomId }, deviceKey, enabled: true },
+    });
+    if (mode) throw new BadRequestException(`Disable ${deviceKey} auto mode before manual control`);
+  }
+
+  private async runEnabledAutoControls() {
+    const modes = await this.autoControlModes.find({
+      where: { enabled: true },
+      relations: { room: true },
+    });
+    await Promise.allSettled(
+      modes
+        .filter((mode) => mode.room?.name !== GLOBAL_ROOM_NAME)
+        .map((mode) => this.runAutoControlForRoom(mode.room, mode.deviceKey, 'auto_mode')),
+    );
+  }
+
+  private autoControlIntervalMs() {
+    const minutes = Number(this.config.get<string>('AUTO_CONTROL_INTERVAL_MINUTES', '30'));
+    return (Number.isFinite(minutes) && minutes > 0 ? minutes : 30) * 60_000;
   }
 
   private readNumericSensor(raw: string | undefined, fallback: number) {

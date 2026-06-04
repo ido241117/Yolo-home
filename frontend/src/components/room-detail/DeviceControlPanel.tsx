@@ -3,9 +3,9 @@ import { Icon } from '@/components';
 import { isActiveValue, isLockedValue } from '@/utils/backend-format';
 
 function DeviceRow({
-  icon, iconClass, label, on, loading, onToggle, onAuto,
+  icon, iconClass, label, on, loading, onToggle, onAuto, autoEnabled,
 }: {
-  icon: string; iconClass: string; label: string; on: boolean | null; loading: boolean; onToggle: () => void; onAuto?: () => void;
+  icon: string; iconClass: string; label: string; on: boolean | null; loading: boolean; onToggle: () => void; onAuto?: () => void; autoEnabled?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between p-3 border border-outline-variant bg-surface rounded">
@@ -15,11 +15,19 @@ function DeviceRow({
       </div>
       <div className="flex items-center gap-2">
         {onAuto && (
-          <button onClick={onAuto} disabled={on === null || loading} className="px-3 py-1 text-label-md rounded border border-primary/40 text-primary font-bold transition-colors hover:bg-primary/10 disabled:opacity-50">
+          <button
+            onClick={onAuto}
+            disabled={on === null || loading}
+            className={`px-3 py-1 text-label-md rounded border font-bold transition-colors disabled:opacity-50 ${
+              autoEnabled
+                ? 'border-status-active bg-status-active text-white shadow-sm'
+                : 'border-primary/40 text-primary hover:bg-primary/10'
+            }`}
+          >
             Auto
           </button>
         )}
-        <button onClick={onToggle} disabled={on === null || loading} className={`px-3 py-1 text-label-md rounded font-bold uppercase tracking-tighter transition-colors disabled:opacity-50 ${on ? 'bg-primary text-on-primary-fixed' : 'bg-slate-600 text-white'}`}>
+        <button onClick={onToggle} disabled={on === null || loading || autoEnabled} className={`px-3 py-1 text-label-md rounded font-bold uppercase tracking-tighter transition-colors disabled:opacity-50 ${on ? 'bg-primary text-on-primary-fixed' : 'bg-slate-600 text-white'}`}>
           {on === null ? 'N/A' : on ? 'ON' : 'OFF'}
         </button>
       </div>
@@ -32,11 +40,13 @@ export function DeviceControlPanel({
   loading,
   onCommand,
   onAutoCommand,
+  autoModes = { led: false, fan: false },
 }: {
   devices: DeviceMap;
   loading: boolean;
   onCommand: (key: 'led' | 'fan' | 'door', value: string) => void;
   onAutoCommand?: (key: 'led' | 'fan') => void;
+  autoModes?: { led: boolean; fan: boolean };
 }) {
   const ledOn = isActiveValue(devices.led);
   const fanOn = isActiveValue(devices.fan);
@@ -49,8 +59,8 @@ export function DeviceControlPanel({
         Device Control
       </h3>
       <div className="space-y-4">
-        <DeviceRow icon="lightbulb" iconClass="text-yellow-400" label="Main LED" on={ledOn} loading={loading} onToggle={() => onCommand('led', ledOn ? '0' : '1')} onAuto={onAutoCommand ? () => onAutoCommand('led') : undefined} />
-        <DeviceRow icon="toys_fan" iconClass="text-status-occupied" label="Cooling Fan" on={fanOn} loading={loading} onToggle={() => onCommand('fan', fanOn ? '0' : '1')} onAuto={onAutoCommand ? () => onAutoCommand('fan') : undefined} />
+        <DeviceRow icon="lightbulb" iconClass="text-yellow-400" label="Main LED" on={ledOn} loading={loading} onToggle={() => onCommand('led', ledOn ? '0' : '1')} onAuto={onAutoCommand ? () => onAutoCommand('led') : undefined} autoEnabled={autoModes.led} />
+        <DeviceRow icon="toys_fan" iconClass="text-status-occupied" label="Cooling Fan" on={fanOn} loading={loading} onToggle={() => onCommand('fan', fanOn ? '0' : '1')} onAuto={onAutoCommand ? () => onAutoCommand('fan') : undefined} autoEnabled={autoModes.fan} />
         <div className="flex items-center justify-between p-3 border border-outline-variant bg-surface rounded">
           <div className="flex items-center gap-3">
             <Icon name="lock" size={20} filled={Boolean(locked)} className="text-error" />

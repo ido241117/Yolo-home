@@ -8,8 +8,9 @@ import {
 import { useDashboardData } from '@/hooks';
 
 export default function DashboardPage() {
-  const { summaryQuery, occupancyQuery, alertsQuery, eventsQuery, hasError } = useDashboardData();
+  const { summaryQuery, occupancyQuery, alertsQuery, eventsQuery, globalDevicesQuery, hasError } = useDashboardData();
   const summary = summaryQuery.data;
+  const globalDevices = globalDevicesQuery.data;
   const alerts = alertsQuery.data ?? [];
   const rooms = (occupancyQuery.data?.rooms ?? []).map(room => ({
     ...room,
@@ -42,7 +43,11 @@ export default function DashboardPage() {
 
       <div className="space-y-8">
         <DashboardRoomsGrid rooms={rooms} />
-        <GlobalDevicePanel led={summary?.globalDevices.led} fan={summary?.globalDevices.fan} />
+        <GlobalDevicePanel
+          led={globalDevices?.devices.led ?? summary?.globalDevices.led}
+          fan={globalDevices?.devices.fan ?? summary?.globalDevices.fan}
+          autoModes={globalDevices?.autoModes}
+        />
         <RecentEventsTable events={eventsQuery.data ?? []} />
       </div>
     </div>

@@ -39,7 +39,9 @@ export function useRoomOverview() {
       setDeviceModes((current) => {
         const nextModes = { ...current };
         for (const device of nextDevices) {
-          if (!nextModes[device.key]) {
+          if (device.autoEnabled) {
+            nextModes[device.key] = 'auto';
+          } else {
             nextModes[device.key] = isOnValue(device.value) ? 'on' : 'off';
           }
         }
@@ -68,7 +70,15 @@ export function useRoomOverview() {
 
         if (mode === 'auto' && (deviceKey === 'led' || deviceKey === 'fan')) {
           const response = await autoControlRoomDevice(room.id, deviceKey);
-          nextValue = response.value;
+          if (!response.enabled) {
+            const currentDevice = devices.find((device) => device.key === deviceKey);
+            setDeviceModes((current) => ({
+              ...current,
+              [deviceKey]: isOnValue(currentDevice?.value ?? null) ? 'on' : 'off',
+            }));
+          }
+          await refresh();
+          return;
         } else {
           await commandRoomDevice(room.id, deviceKey, nextValue);
         }
@@ -84,7 +94,7 @@ export function useRoomOverview() {
         await refresh();
       }
     },
-    [refresh, room],
+    [devices, refresh, room],
   );
 
   return {

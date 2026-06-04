@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
@@ -7,6 +7,7 @@ import { AiService } from '../ai/ai.service';
 import { buildEncryptionKey, decrypt, encrypt } from '../common/encryption';
 import { CommandDeviceDto } from '../room/dto/command-device.dto';
 import { UpsertHardwareConfigDto } from '../room/dto/hardware-config.dto';
+import { AutoControlMode } from '../room/entities/auto-control-mode.entity';
 import { AutoControlTrainingLog } from '../room/entities/auto-control-training-log.entity';
 import { EventLog } from '../room/entities/event-log.entity';
 import { HardwareConfig } from '../room/entities/hardware-config.entity';
@@ -27,8 +28,10 @@ type AutoTrainingContext = {
 };
 
 @Injectable()
-export class GlobalDevicesService {
+export class GlobalDevicesService implements OnModuleInit {
+  private readonly logger = new Logger(GlobalDevicesService.name);
   private readonly encryptionKey: Buffer;
+  private autoControlTimer?: NodeJS.Timeout;
 
   constructor(
     @InjectRepository(Room)
@@ -39,6 +42,8 @@ export class GlobalDevicesService {
     private readonly eventLogs: Repository<EventLog>,
     @InjectRepository(AutoControlTrainingLog)
     private readonly autoControlTrainingLogs: Repository<AutoControlTrainingLog>,
+    @InjectRepository(AutoControlMode)
+    private readonly autoControlModes: Repository<AutoControlMode>,
     @InjectRepository(User)
     private readonly users: Repository<User>,
     private readonly adafruitService: AdafruitService,
@@ -50,6 +55,13 @@ export class GlobalDevicesService {
     );
   }
 
+  onModuleInit() {
+    this.autoControlTimer = setInterval(
+      () => void this.runEnabledAutoControls().catch((error) => this.logger.error(error)),
+      this.autoControlIntervalMs(),
+    );
+  }
+
   private async getOrCreateGlobalRoom(): Promise<Room> {
     let room = await this.rooms.findOne({
       where: { name: GLOBAL_ROOM_NAME },
@@ -57,7 +69,7 @@ export class GlobalDevicesService {
     });
     if (!room) {
       room = await this.rooms.save(
-        this.rooms.create({ name: GLOBAL_ROOM_NAME, status: RoomStatus.Maintenance }),
+        this.rooms.create({ name: GLOBAL_ROOM_NAME, code: 'global', status: RoomStatus.Maintenance }),
       );
     }
     return room;
@@ -65,7 +77,7 @@ export class GlobalDevicesService {
 
   async getDevices() {
     const room = await this.getOrCreateGlobalRoom();
-    if (!room.hardwareConfig) return { configured: false, devices: {} };
+    if (!room.hardwareConfig) return { configured: false, devices: {}, autoModes: await this.getAutoModes(room.id) };
 
     const results = await Promise.allSettled(
       VALID_GLOBAL_DEVICE_KEYS.map(async (key) => {
@@ -83,7 +95,7 @@ export class GlobalDevicesService {
         devices[key] = null;
       }
     }
-    return { configured: true, devices };
+    return { configured: true, devices, autoModes: await this.getAutoModes(room.id) };
   }
 
   async getHardware() {
@@ -128,12 +140,36 @@ export class GlobalDevicesService {
   }
 
   async commandDevice(deviceKey: string, dto: CommandDeviceDto, userId: string) {
+    await this.assertManualCommandAllowed(deviceKey);
     return this.commandDeviceWithSource(deviceKey, dto, userId, 'manual');
   }
 
   async autoControlDevice(deviceKey: string, userId: string) {
     this.assertValidDeviceKey(deviceKey);
+    const room = await this.getOrCreateGlobalRoom();
+    const mode = await this.getOrCreateAutoMode(room, deviceKey);
+    mode.enabled = !mode.enabled;
+    await this.autoControlModes.save(mode);
 
+    const actor = await this.users.findOne({ where: { id: userId } });
+    await this.eventLogs.save(
+      this.eventLogs.create({
+        room,
+        actor: actor ?? undefined,
+        type: 'auto_control_mode_changed',
+        payload: { deviceKey, enabled: mode.enabled, global: true },
+      }),
+    );
+
+    if (mode.enabled) {
+      await this.runAutoControlForGlobalDevice(room, deviceKey);
+    }
+
+    return { deviceKey, enabled: mode.enabled, updatedAt: new Date() };
+  }
+
+  private async runAutoControlForGlobalDevice(room: Room, deviceKey: string) {
+    this.assertValidDeviceKey(deviceKey);
     const [sensorData, devices] = await Promise.all([
       this.getAggregateSensorData(),
       this.getDevices(),
@@ -147,11 +183,11 @@ export class GlobalDevicesService {
     });
     const action = this.extractPredictedAction(prediction, deviceKey);
 
-    return this.commandDeviceWithSource(
+    const result = await this.commandDeviceWithSource(
       deviceKey,
       { value: action },
-      userId,
-      'auto',
+      undefined,
+      'auto_mode',
       prediction,
       {
         ...sensorData,
@@ -160,6 +196,13 @@ export class GlobalDevicesService {
         currentLightState: Number(this.isActiveDeviceValue(devices.devices.led?.value)),
       },
     );
+    const mode = await this.autoControlModes.findOne({ where: { room: { id: room.id }, deviceKey } });
+    if (mode) {
+      mode.lastRunAt = new Date();
+      mode.lastResult = { prediction, result };
+      await this.autoControlModes.save(mode);
+    }
+    return result;
   }
 
   async retrainAutoControl(userId: string) {
@@ -208,8 +251,8 @@ export class GlobalDevicesService {
   private async commandDeviceWithSource(
     deviceKey: string,
     dto: CommandDeviceDto,
-    userId: string,
-    source: 'manual' | 'auto',
+    userId: string | undefined,
+    source: 'manual' | 'auto' | 'auto_mode',
     ai?: unknown,
     trainingContext?: AutoTrainingContext,
   ) {
@@ -229,7 +272,7 @@ export class GlobalDevicesService {
 
     await this.adafruitService.writeFeed(room.id, deviceKey, value);
 
-    const actor = await this.users.findOne({ where: { id: userId } });
+    const actor = userId ? await this.users.findOne({ where: { id: userId } }) : null;
     await this.eventLogs.save(
       this.eventLogs.create({
         room,
@@ -317,21 +360,61 @@ export class GlobalDevicesService {
     };
   }
 
+  private async getAutoModes(roomId: string) {
+    const modes = await this.autoControlModes.find({ where: { room: { id: roomId } } });
+    return {
+      led: modes.find((mode) => mode.deviceKey === 'led')?.enabled ?? false,
+      fan: modes.find((mode) => mode.deviceKey === 'fan')?.enabled ?? false,
+    };
+  }
+
+  private async getOrCreateAutoMode(room: Room, deviceKey: string) {
+    const existing = await this.autoControlModes.findOne({
+      where: { room: { id: room.id }, deviceKey },
+      relations: { room: true },
+    });
+    if (existing) return existing;
+    return this.autoControlModes.save(
+      this.autoControlModes.create({ room, deviceKey, enabled: false, lastResult: {} }),
+    );
+  }
+
+  private async assertManualCommandAllowed(deviceKey: string) {
+    const room = await this.getOrCreateGlobalRoom();
+    const mode = await this.autoControlModes.findOne({
+      where: { room: { id: room.id }, deviceKey, enabled: true },
+    });
+    if (mode) throw new BadRequestException(`Disable ${deviceKey} auto mode before manual control`);
+  }
+
+  private async runEnabledAutoControls() {
+    const modes = await this.autoControlModes.find({
+      where: { enabled: true },
+      relations: { room: true },
+    });
+    await Promise.allSettled(
+      modes
+        .filter((mode) => mode.room?.name === GLOBAL_ROOM_NAME)
+        .map((mode) => this.runAutoControlForGlobalDevice(mode.room, mode.deviceKey)),
+    );
+  }
+
   private async saveAutoControlTrainingLog(
     room: Room,
     actor: User | undefined,
     deviceKey: string,
     value: string,
-    source: 'manual' | 'auto',
+    source: 'manual' | 'auto' | 'auto_mode',
     context: AutoTrainingContext,
     ai?: unknown,
   ) {
-    const desiredAction = source === 'manual' ? this.toBinaryAction(value) : undefined;
+    const trainingSource = source === 'manual' ? 'manual' : 'auto';
+    const desiredAction = trainingSource === 'manual' ? this.toBinaryAction(value) : undefined;
     await this.autoControlTrainingLogs.save(
       this.autoControlTrainingLogs.create({
         room,
         actor,
-        source,
+        source: trainingSource,
         deviceKey,
         temperature: context.temperature,
         humidity: context.humidity,
@@ -361,6 +444,11 @@ export class GlobalDevicesService {
 
   private toBinaryAction(raw: string) {
     return this.isActiveDeviceValue(raw) ? 1 : 0;
+  }
+
+  private autoControlIntervalMs() {
+    const minutes = Number(this.config.get<string>('AUTO_CONTROL_INTERVAL_MINUTES', '30'));
+    return (Number.isFinite(minutes) && minutes > 0 ? minutes : 30) * 60_000;
   }
 
   private extractPredictedAction(prediction: unknown, deviceKey: string) {

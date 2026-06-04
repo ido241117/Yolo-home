@@ -72,6 +72,7 @@ export default function RoomDetailPage() {
             loading={commandMutation.isPending || autoCommandMutation.isPending}
             onCommand={(key, value) => commandMutation.mutate({ key, value })}
             onAutoCommand={(key) => autoCommandMutation.mutate({ key })}
+            autoModes={summary?.autoModes}
           />
           <HardwarePanel
             hardware={hardwareQuery.data}
