@@ -76,6 +76,32 @@ export interface UpsertHardwareConfigPayload {
   feedMapping?: Record<string, string>;
 }
 
+export interface GlobalHardwareConfigDto {
+  id: string;
+  adafruitUsername: string;
+  adafruitKeyMasked: string;
+  feedMapping: Record<string, string>;
+}
+
+export interface UpsertGlobalHardwareConfigPayload {
+  adafruitUsername: string;
+  adafruitKey: string;
+  feedMapping?: Record<string, string>;
+}
+
+export interface AutoControlRetrainResponse {
+  success: boolean;
+  bundleId?: string;
+  bundleDir?: string;
+  samples?: {
+    fan: number;
+    light: number;
+  };
+  latestManifest?: string;
+  defaultModelsPreserved?: boolean;
+  error?: string;
+}
+
 export interface PermissionDto {
   id: string;
   canControlLed: boolean;
@@ -321,5 +347,20 @@ export async function autoControlGlobalDevice(deviceKey: 'led' | 'fan') {
   const response = await http.post<ValueState & { deviceKey: string }>(
     `/global-devices/${deviceKey}/auto`,
   );
+  return response.data;
+}
+
+export async function retrainGlobalAutoControl() {
+  const response = await http.post<AutoControlRetrainResponse>('/global-devices/auto-control/retrain');
+  return response.data;
+}
+
+export async function getGlobalDeviceHardware() {
+  const response = await http.get<GlobalHardwareConfigDto | null>('/global-devices/hardware');
+  return response.data;
+}
+
+export async function upsertGlobalDeviceHardware(payload: UpsertGlobalHardwareConfigPayload) {
+  const response = await http.patch<GlobalHardwareConfigDto>('/global-devices/hardware', payload);
   return response.data;
 }

@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Not, Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { AdafruitService } from '../adafruit/adafruit.service';
 import { AiService } from '../ai/ai.service';
-import { buildEncryptionKey, encrypt } from '../common/encryption';
+import { buildEncryptionKey, decrypt, encrypt } from '../common/encryption';
 import { CommandDeviceDto } from '../room/dto/command-device.dto';
 import { UpsertHardwareConfigDto } from '../room/dto/hardware-config.dto';
+import { AutoControlTrainingLog } from '../room/entities/auto-control-training-log.entity';
 import { EventLog } from '../room/entities/event-log.entity';
 import { HardwareConfig } from '../room/entities/hardware-config.entity';
 import { Room, RoomStatus } from '../room/entities/room.entity';
@@ -15,6 +16,15 @@ import { User } from '../user/entities/user.entity';
 export const GLOBAL_ROOM_NAME = '__global__';
 const VALID_GLOBAL_DEVICE_KEYS = ['led', 'fan'] as const;
 const GLOBAL_SENSOR_KEYS = ['temp', 'humi', 'light'] as const;
+
+type AutoTrainingContext = {
+  temperature: number;
+  humidity: number;
+  light: number;
+  hour: number;
+  currentFanState?: number;
+  currentLightState?: number;
+};
 
 @Injectable()
 export class GlobalDevicesService {
@@ -27,6 +37,8 @@ export class GlobalDevicesService {
     private readonly hardwareConfigs: Repository<HardwareConfig>,
     @InjectRepository(EventLog)
     private readonly eventLogs: Repository<EventLog>,
+    @InjectRepository(AutoControlTrainingLog)
+    private readonly autoControlTrainingLogs: Repository<AutoControlTrainingLog>,
     @InjectRepository(User)
     private readonly users: Repository<User>,
     private readonly adafruitService: AdafruitService,
@@ -72,6 +84,17 @@ export class GlobalDevicesService {
       }
     }
     return { configured: true, devices };
+  }
+
+  async getHardware() {
+    const room = await this.getOrCreateGlobalRoom();
+    if (!room.hardwareConfig) return null;
+
+    const { adafruitKeyEncrypted, room: _room, ...rest } = room.hardwareConfig as HardwareConfig & { room: Room };
+    return {
+      ...rest,
+      adafruitKeyMasked: this.maskKey(adafruitKeyEncrypted),
+    };
   }
 
   async getDeviceState(deviceKey: string) {
@@ -130,8 +153,56 @@ export class GlobalDevicesService {
       userId,
       'auto',
       prediction,
-      sensorData,
+      {
+        ...sensorData,
+        hour: this.hourFraction(),
+        currentFanState: Number(this.isActiveDeviceValue(devices.devices.fan?.value)),
+        currentLightState: Number(this.isActiveDeviceValue(devices.devices.led?.value)),
+      },
     );
+  }
+
+  async retrainAutoControl(userId: string) {
+    const rows = await this.autoControlTrainingLogs
+      .find({
+        where: [
+          { source: 'manual', desiredFanAction: Not(IsNull()) },
+          { source: 'manual', desiredLightAction: Not(IsNull()) },
+        ],
+        relations: { room: true },
+        order: { createdAt: 'DESC' },
+        take: 5000,
+      });
+
+    const ai = await this.aiService.retrainAutoControl({
+      rows: rows.map((row) => ({
+        timestamp: row.createdAt,
+        room_id: row.room?.id ?? null,
+        temperature: row.temperature,
+        humidity: row.humidity,
+        light: row.light,
+        hour: row.hour,
+        current_fan_state: row.currentFanState,
+        current_light_state: row.currentLightState,
+        desired_fan_action: row.desiredFanAction,
+        desired_light_action: row.desiredLightAction,
+      })),
+    });
+
+    const [room, actor] = await Promise.all([
+      this.getOrCreateGlobalRoom(),
+      this.users.findOne({ where: { id: userId } }),
+    ]);
+    await this.eventLogs.save(
+      this.eventLogs.create({
+        room,
+        actor: actor ?? undefined,
+        type: 'auto_control_retrain',
+        payload: { ai, samples: rows.length },
+      }),
+    );
+
+    return ai;
   }
 
   private async commandDeviceWithSource(
@@ -140,10 +211,11 @@ export class GlobalDevicesService {
     userId: string,
     source: 'manual' | 'auto',
     ai?: unknown,
-    sensorData?: Record<string, number>,
+    trainingContext?: AutoTrainingContext,
   ) {
     this.assertValidDeviceKey(deviceKey);
     const room = await this.getOrCreateGlobalRoom();
+    const context = trainingContext ?? await this.getGlobalAutoTrainingContext();
 
     let value: string;
     if (dto.action === 'toggle') {
@@ -169,10 +241,16 @@ export class GlobalDevicesService {
           source,
           global: true,
           ...(ai !== undefined && { ai }),
-          ...(sensorData !== undefined && { sensorData }),
+          sensorData: {
+            temperature: context.temperature,
+            humidity: context.humidity,
+            light: context.light,
+          },
         },
       }),
     );
+
+    await this.saveAutoControlTrainingLog(room, actor ?? undefined, deviceKey, value, source, context, ai);
 
     return { deviceKey, value, updatedAt: new Date() };
   }
@@ -182,6 +260,16 @@ export class GlobalDevicesService {
       throw new BadRequestException(
         `Invalid global device key "${key}". Valid: ${VALID_GLOBAL_DEVICE_KEYS.join(', ')}`,
       );
+    }
+  }
+
+  private maskKey(encryptedKey: string): string {
+    try {
+      const plain = decrypt(encryptedKey, this.encryptionKey);
+      if (plain.length <= 8) return '****';
+      return `${plain.slice(0, 4)}****${plain.slice(-4)}`;
+    } catch {
+      return '****';
     }
   }
 
@@ -215,6 +303,49 @@ export class GlobalDevicesService {
     };
   }
 
+  private async getGlobalAutoTrainingContext(): Promise<AutoTrainingContext> {
+    const [sensorData, devices] = await Promise.all([
+      this.getAggregateSensorData(),
+      this.getDevices(),
+    ]);
+
+    return {
+      ...sensorData,
+      hour: this.hourFraction(),
+      currentFanState: Number(this.isActiveDeviceValue(devices.devices.fan?.value)),
+      currentLightState: Number(this.isActiveDeviceValue(devices.devices.led?.value)),
+    };
+  }
+
+  private async saveAutoControlTrainingLog(
+    room: Room,
+    actor: User | undefined,
+    deviceKey: string,
+    value: string,
+    source: 'manual' | 'auto',
+    context: AutoTrainingContext,
+    ai?: unknown,
+  ) {
+    const desiredAction = source === 'manual' ? this.toBinaryAction(value) : undefined;
+    await this.autoControlTrainingLogs.save(
+      this.autoControlTrainingLogs.create({
+        room,
+        actor,
+        source,
+        deviceKey,
+        temperature: context.temperature,
+        humidity: context.humidity,
+        light: context.light,
+        hour: context.hour,
+        currentFanState: context.currentFanState,
+        currentLightState: context.currentLightState,
+        desiredFanAction: deviceKey === 'fan' ? desiredAction : undefined,
+        desiredLightAction: deviceKey === 'led' ? desiredAction : undefined,
+        metadata: { global: true, ...(ai !== undefined && { ai }) },
+      }),
+    );
+  }
+
   private average(values: number[], fallback: number) {
     if (!values.length) return fallback;
     return values.reduce((sum, value) => sum + value, 0) / values.length;
@@ -222,6 +353,14 @@ export class GlobalDevicesService {
 
   private isActiveDeviceValue(raw: string | undefined) {
     return ['1', 'true', 'on', 'yes', 'detected'].includes(String(raw ?? '').trim().toLowerCase());
+  }
+
+  private hourFraction(now = new Date()) {
+    return now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+  }
+
+  private toBinaryAction(raw: string) {
+    return this.isActiveDeviceValue(raw) ? 1 : 0;
   }
 
   private extractPredictedAction(prediction: unknown, deviceKey: string) {

@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AdafruitModule } from '../adafruit/adafruit.module';
 import { AiModule } from '../ai/ai.module';
 import { User } from '../user/entities/user.entity';
+import { AutoControlTrainingLog } from './entities/auto-control-training-log.entity';
 import { EventLog } from './entities/event-log.entity';
 import { FaceLabel } from './entities/face-label.entity';
 import { HardwareConfig } from './entities/hardware-config.entity';
@@ -20,7 +21,7 @@ import { RoomService } from './room.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Room, Permission, HardwareConfig, EventLog, SensorSnapshot, FaceLabel, User]),
+    TypeOrmModule.forFeature([Room, Permission, HardwareConfig, EventLog, SensorSnapshot, FaceLabel, AutoControlTrainingLog, User]),
     AdafruitModule,
     AiModule,
   ],

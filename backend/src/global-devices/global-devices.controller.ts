@@ -18,9 +18,19 @@ export class GlobalDevicesController {
   }
 
   // /hardware must be registered before /:deviceKey to avoid param capture
+  @Get('hardware')
+  getHardware() {
+    return this.globalDevicesService.getHardware();
+  }
+
   @Patch('hardware')
   upsertHardware(@Body() dto: UpsertHardwareConfigDto) {
     return this.globalDevicesService.upsertHardware(dto);
+  }
+
+  @Post('auto-control/retrain')
+  retrainAutoControl(@CurrentUser() user: RequestUser) {
+    return this.globalDevicesService.retrainAutoControl(user.id);
   }
 
   @Get(':deviceKey/state')

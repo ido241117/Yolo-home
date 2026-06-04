@@ -1,5 +1,6 @@
 import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
 import { BaseCustomEntity } from '../../common/entities/base-custom.entity';
+import { AutoControlTrainingLog } from './auto-control-training-log.entity';
 import { EventLog } from './event-log.entity';
 import { FaceLabel } from './face-label.entity';
 import { HardwareConfig } from './hardware-config.entity';
@@ -41,4 +42,7 @@ export class Room extends BaseCustomEntity {
 
   @OneToMany(() => FaceLabel, (faceLabel) => faceLabel.room)
   faceLabels: FaceLabel[];
+
+  @OneToMany(() => AutoControlTrainingLog, (log) => log.room)
+  autoControlTrainingLogs: AutoControlTrainingLog[];
 }

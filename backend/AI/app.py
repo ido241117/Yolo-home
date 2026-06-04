@@ -5,6 +5,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 from ai.auto_control import process as auto_control_process
+from ai.auto_control import retrain_from_rows as auto_control_retrain
 from ai.face_ai import (
     delete_registered_face,
     list_registered_faces_for_room,
@@ -54,6 +55,15 @@ def predict_auto_control():
         "light": body.get("lightState", body.get("led", False)),
     }
     return jsonify(auto_control_process(sensor_data, device_states))
+
+
+@app.post("/ai/auto-control/retrain")
+def retrain_auto_control():
+    body = _body()
+    try:
+        return jsonify(auto_control_retrain(body.get("rows", [])))
+    except Exception as exc:
+        return jsonify({"success": False, "error": str(exc)}), 400
 
 
 @app.post("/ai/face/recognize")

@@ -65,4 +65,9 @@ export class AiService {
     const response = await firstValueFrom(this.http.post(`${this.baseUrl}/auto-control/predict`, payload));
     return response.data;
   }
+
+  async retrainAutoControl(payload: Record<string, unknown>) {
+    const response = await firstValueFrom(this.http.post(`${this.baseUrl}/auto-control/retrain`, payload));
+    return response.data;
+  }
 }

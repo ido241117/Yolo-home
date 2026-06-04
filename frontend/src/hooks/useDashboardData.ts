@@ -6,6 +6,7 @@ import {
   getDashboardOccupancy,
   getDashboardSummary,
   getEvents,
+  retrainGlobalAutoControl,
 } from '@/apis';
 
 export function useDashboardData() {
@@ -39,5 +40,18 @@ export function useGlobalDeviceAutoCommand() {
     mutationFn: ({ deviceKey }: { deviceKey: 'led' | 'fan' }) =>
       autoControlGlobalDevice(deviceKey),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+  });
+}
+
+export function useGlobalAutoControlRetrain() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: retrainGlobalAutoControl,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['events'] }),
+      ]);
+    },
   });
 }

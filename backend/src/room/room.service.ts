@@ -15,6 +15,7 @@ import { CreateRoomDto } from './dto/create-room.dto';
 import { UpsertHardwareConfigDto } from './dto/hardware-config.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
+import { AutoControlTrainingLog } from './entities/auto-control-training-log.entity';
 import { EventLog } from './entities/event-log.entity';
 import { FaceLabel } from './entities/face-label.entity';
 import { HardwareConfig } from './entities/hardware-config.entity';
@@ -28,6 +29,15 @@ const SENSOR_UNITS: Record<string, string | null> = {
   humi: '%',
   light: 'lux',
   human: null,
+};
+
+type AutoTrainingContext = {
+  temperature: number;
+  humidity: number;
+  light: number;
+  hour: number;
+  currentFanState?: number;
+  currentLightState?: number;
 };
 
 @Injectable()
@@ -45,6 +55,8 @@ export class RoomService {
     private readonly users: Repository<User>,
     @InjectRepository(EventLog)
     private readonly eventLogs: Repository<EventLog>,
+    @InjectRepository(AutoControlTrainingLog)
+    private readonly autoControlTrainingLogs: Repository<AutoControlTrainingLog>,
     @InjectRepository(FaceLabel)
     private readonly faceLabels: Repository<FaceLabel>,
     private readonly adafruitService: AdafruitService,
@@ -333,15 +345,20 @@ export class RoomService {
       this.getSensors(ref),
       this.getDevices(ref),
     ]);
+    const sensorData = {
+      temperature: this.readNumericSensor(sensors.temp?.value, 25),
+      humidity: this.readNumericSensor(sensors.humi?.value, 50),
+      light: this.readNumericSensor(sensors.light?.value, 400),
+    };
+    const deviceStates = {
+      fan: this.isActiveDeviceValue(devices.fan?.value),
+      light: this.isActiveDeviceValue(devices.led?.value),
+    };
     const prediction = await this.aiService.predictAutoControl({
-      sensor_data: {
-        temperature: this.readNumericSensor(sensors.temp?.value, 25),
-        humidity: this.readNumericSensor(sensors.humi?.value, 50),
-        light: this.readNumericSensor(sensors.light?.value, 400),
-      },
+      sensor_data: sensorData,
       device_states: {
-        fan: this.isActiveDeviceValue(devices.fan?.value),
-        light: this.isActiveDeviceValue(devices.led?.value),
+        fan: deviceStates.fan,
+        light: deviceStates.light,
       },
     });
     const action = this.extractPredictedAction(prediction, deviceKey);
@@ -352,6 +369,12 @@ export class RoomService {
       userId,
       'auto',
       prediction,
+      {
+        ...sensorData,
+        hour: this.hourFraction(),
+        currentFanState: Number(deviceStates.fan),
+        currentLightState: Number(deviceStates.light),
+      },
     );
   }
 
@@ -362,9 +385,14 @@ export class RoomService {
     userId: string,
     source: 'manual' | 'auto',
     ai?: unknown,
+    trainingContext?: AutoTrainingContext,
   ) {
     this.assertValidDeviceKey(deviceKey);
     const roomId = await this.roomIdFromRef(ref);
+    const shouldLogTraining = deviceKey === 'led' || deviceKey === 'fan';
+    const context = shouldLogTraining
+      ? trainingContext ?? await this.getAutoTrainingContext(ref)
+      : undefined;
     let value: string;
     if (dto.action === 'toggle') {
       const current = await this.adafruitService.readFeed(roomId, deviceKey);
@@ -388,7 +416,56 @@ export class RoomService {
       }),
     );
 
+    if (shouldLogTraining && context) {
+      await this.saveAutoControlTrainingLog(room, actor ?? undefined, deviceKey, value, source, context, ai);
+    }
+
     return { deviceKey, value, updatedAt: new Date() };
+  }
+
+  private async getAutoTrainingContext(ref: string): Promise<AutoTrainingContext> {
+    const [sensors, devices] = await Promise.all([
+      this.getSensors(ref),
+      this.getDevices(ref),
+    ]);
+
+    return {
+      temperature: this.readNumericSensor(sensors.temp?.value, 25),
+      humidity: this.readNumericSensor(sensors.humi?.value, 50),
+      light: this.readNumericSensor(sensors.light?.value, 400),
+      hour: this.hourFraction(),
+      currentFanState: Number(this.isActiveDeviceValue(devices.fan?.value)),
+      currentLightState: Number(this.isActiveDeviceValue(devices.led?.value)),
+    };
+  }
+
+  private async saveAutoControlTrainingLog(
+    room: Room,
+    actor: User | undefined,
+    deviceKey: string,
+    value: string,
+    source: 'manual' | 'auto',
+    context: AutoTrainingContext,
+    ai?: unknown,
+  ) {
+    const desiredAction = source === 'manual' ? this.toBinaryAction(value) : undefined;
+    await this.autoControlTrainingLogs.save(
+      this.autoControlTrainingLogs.create({
+        room,
+        actor,
+        source,
+        deviceKey,
+        temperature: context.temperature,
+        humidity: context.humidity,
+        light: context.light,
+        hour: context.hour,
+        currentFanState: context.currentFanState,
+        currentLightState: context.currentLightState,
+        desiredFanAction: deviceKey === 'fan' ? desiredAction : undefined,
+        desiredLightAction: deviceKey === 'led' ? desiredAction : undefined,
+        metadata: { ...(ai !== undefined && { ai }) },
+      }),
+    );
   }
 
   // --- Event logs ---
@@ -599,6 +676,14 @@ export class RoomService {
   private readNumericSensor(raw: string | undefined, fallback: number) {
     const value = Number(raw);
     return Number.isFinite(value) ? value : fallback;
+  }
+
+  private hourFraction(now = new Date()) {
+    return now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+  }
+
+  private toBinaryAction(raw: string) {
+    return this.isActiveDeviceValue(raw) ? 1 : 0;
   }
 
   private isActiveDeviceValue(raw: string | undefined) {
