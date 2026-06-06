@@ -309,7 +309,7 @@ export class GlobalDevicesService implements OnModuleInit {
     } else if (dto.value !== undefined) {
       value = dto.value;
     } else {
-      throw new BadRequestException('Provide either value or action: toggle');
+      throw new BadRequestException('command.valueOrToggleRequired');
     }
 
     await this.adafruitService.writeFeed(room.id, deviceKey, value);
@@ -342,9 +342,7 @@ export class GlobalDevicesService implements OnModuleInit {
 
   private assertValidDeviceKey(key: string) {
     if (!(VALID_GLOBAL_DEVICE_KEYS as readonly string[]).includes(key)) {
-      throw new BadRequestException(
-        `Invalid global device key "${key}". Valid: ${VALID_GLOBAL_DEVICE_KEYS.join(', ')}`,
-      );
+      throw new BadRequestException(`device.globalInvalidKey:${key}:${VALID_GLOBAL_DEVICE_KEYS.join(', ')}`);
     }
   }
 
@@ -444,7 +442,7 @@ export class GlobalDevicesService implements OnModuleInit {
     const mode = await this.autoControlModes.findOne({
       where: { room: { id: room.id }, deviceKey, enabled: true },
     });
-    if (mode) throw new BadRequestException(`Disable ${deviceKey} auto mode before manual control`);
+    if (mode) throw new BadRequestException(`autoControl.manualDisabled:${deviceKey}`);
   }
 
   private async runEnabledAutoControls() {
@@ -516,7 +514,7 @@ export class GlobalDevicesService implements OnModuleInit {
     const devicePrediction = (prediction as Record<string, Record<string, unknown> | undefined>)?.[key];
     const action = devicePrediction?.action;
     if (action !== 'ON' && action !== 'OFF') {
-      throw new BadRequestException(`AI did not return a valid ${deviceKey} action`);
+      throw new BadRequestException(`autoControl.invalidAiAction:${deviceKey}`);
     }
     return action;
   }

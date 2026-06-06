@@ -86,3 +86,20 @@ timestamp,event,label,confidence,action,message
 2026-06-04 10:58:58.236148,face_register,face_82c37157-5b4f-4526-99c5-4df2b02717fd,,REGISTER,Saved 3 sample(s); rejected 4
 2026-06-04 10:58:58.469227,face_retrain,face_82c37157-5b4f-4526-99c5-4df2b02717fd,,TRAIN,Trained FaceAI with 3 sample(s)
 2026-06-04 10:59:08.998116,face_recognized,face_82c37157-5b4f-4526-99c5-4df2b02717fd,0.9335,ALLOW,Recognized face_82c37157-5b4f-4526-99c5-4df2b02717fd
+2026-06-06 09:23:38.701562,face_register,face_3ec11665-8509-455a-ac1e-532fade63343,,REGISTER,Saved 3 sample(s); rejected 4
+2026-06-06 09:23:38.946605,face_retrain,face_3ec11665-8509-455a-ac1e-532fade63343,,TRAIN,Trained FaceAI with 3 sample(s)
+2026-06-06 09:23:50.945279,face_recognized,face_3ec11665-8509-455a-ac1e-532fade63343,0.9229,ALLOW,Recognized face_3ec11665-8509-455a-ac1e-532fade63343
+2026-06-06 09:23:59.529942,face_recognition_failed,,,DENY,Không phát hiện khuôn mặt trong ảnh
+2026-06-06 09:24:04.246155,face_recognition_failed,,,DENY,Không phát hiện khuôn mặt trong ảnh
+2026-06-06 09:30:33.872175,face_recognition_failed,,,DENY,Không phát hiện khuôn mặt trong ảnh
+2026-06-06 09:30:55.708825,face_recognition_failed,,,DENY,Không phát hiện khuôn mặt trong ảnh
+2026-06-06 09:31:16.224340,face_recognition_failed,,,DENY,Không phát hiện khuôn mặt trong ảnh
+2026-06-06 09:31:23.294464,face_recognition_failed,,,DENY,Không phát hiện khuôn mặt trong ảnh
+2026-06-06 09:31:30.474890,face_low_confidence,face_3ec11665-8509-455a-ac1e-532fade63343,0.9115,DENY,"Độ tin cậy thấp, không mở cửa; distance=0.4850; max=0.5479; sample_distance=0.5226; sample_max=0.5000"
+2026-06-06 09:31:39.649296,face_recognized,face_3ec11665-8509-455a-ac1e-532fade63343,0.909,ALLOW,Recognized face_3ec11665-8509-455a-ac1e-532fade63343
+2026-06-06 09:31:49.237304,face_low_confidence,face_3ec11665-8509-455a-ac1e-532fade63343,0.9081,DENY,"Độ tin cậy thấp, không mở cửa; distance=0.5035; max=0.5479; sample_distance=0.5195; sample_max=0.5000"
+2026-06-06 09:32:22.708476,face_register,face_20f1c175-02d2-4986-9244-537ca3534a10,,REGISTER,Saved 5 sample(s); rejected 2
+2026-06-06 09:32:23.123354,face_retrain,face_20f1c175-02d2-4986-9244-537ca3534a10,,TRAIN,Trained FaceAI with 5 sample(s)
+2026-06-06 09:32:38.155733,face_recognized,face_20f1c175-02d2-4986-9244-537ca3534a10,0.9212,ALLOW,Recognized face_20f1c175-02d2-4986-9244-537ca3534a10
+2026-06-06 09:50:16.924121,face_recognition_failed,,,DENY,Không phát hiện khuôn mặt trong ảnh
+2026-06-06 09:50:23.324396,face_recognized,face_20f1c175-02d2-4986-9244-537ca3534a10,0.9365,ALLOW,Recognized face_20f1c175-02d2-4986-9244-537ca3534a10

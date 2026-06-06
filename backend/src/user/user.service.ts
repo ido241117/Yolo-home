@@ -8,7 +8,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Permission } from '../room/entities/permission.entity';
 import { Room } from '../room/entities/room.entity';
-import { User } from './entities/user.entity';
+import { User, UserRole } from './entities/user.entity';
+import { RoomStatus } from '../room/entities/room.entity';
 import { AssignUserRoomDto } from './dto/assign-user-room.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -70,7 +71,7 @@ export class UserService {
 
   async create(dto: CreateUserDto) {
     const exists = await this.users.findOne({ where: { username: dto.username } });
-    if (exists) throw new ConflictException('Username đã tồn tại');
+    if (exists) throw new ConflictException('user.usernameExists');
 
     const user = this.users.create({
       name: dto.name,
@@ -84,7 +85,7 @@ export class UserService {
 
   async update(id: string, dto: UpdateUserDto) {
     const user = await this.findById(id);
-    if (!user) throw new NotFoundException('User không tồn tại');
+    if (!user) throw new NotFoundException('user.notFound');
 
     if (dto.name !== undefined) user.name = dto.name;
     if (dto.phone !== undefined) user.phone = dto.phone;
@@ -95,13 +96,13 @@ export class UserService {
 
   async revoke(id: string): Promise<void> {
     const user = await this.findById(id);
-    if (!user) throw new NotFoundException('User không tồn tại');
+    if (!user) throw new NotFoundException('user.notFound');
     await this.users.update(id, { active: false, refreshTokenHash: null as any });
   }
 
   async resetPassword(id: string): Promise<string> {
     const user = await this.findById(id);
-    if (!user) throw new NotFoundException('User không tồn tại');
+    if (!user) throw new NotFoundException('user.notFound');
 
     await this.users.update(id, { passwordHash: await bcrypt.hash(DEFAULT_RESET_PASSWORD, 10) });
     return DEFAULT_RESET_PASSWORD;
@@ -109,7 +110,7 @@ export class UserService {
 
   async getRoomAssignments(id: string) {
     const user = await this.findById(id);
-    if (!user) throw new NotFoundException('User không tồn tại');
+    if (!user) throw new NotFoundException('user.notFound');
 
     return this.permissions.find({
       where: { user: { id } },
@@ -120,10 +121,10 @@ export class UserService {
 
   async assignRoom(id: string, dto: AssignUserRoomDto) {
     const user = await this.findById(id);
-    if (!user) throw new NotFoundException('User không tồn tại');
+    if (!user) throw new NotFoundException('user.notFound');
 
     const room = await this.rooms.findOne({ where: { id: dto.roomId } });
-    if (!room) throw new NotFoundException('Room không tồn tại');
+    if (!room) throw new NotFoundException('room.notFound');
 
     let permission = await this.permissions.findOne({
       where: { user: { id }, room: { id: dto.roomId } },
@@ -135,17 +136,37 @@ export class UserService {
     }
 
     this.applyRoomPermissions(permission, dto);
-    return this.permissions.save(permission);
+    const saved = await this.permissions.save(permission);
+    await this.syncRoomOccupancy(dto.roomId);
+    return saved;
   }
 
   async removeRoomAssignment(id: string, roomId: string) {
     const permission = await this.permissions.findOne({
       where: { user: { id }, room: { id: roomId } },
     });
-    if (!permission) throw new NotFoundException('User chưa được gán vào room này');
+    if (!permission) throw new NotFoundException('user.roomAssignmentNotFound');
 
     await this.permissions.remove(permission);
+    await this.syncRoomOccupancy(roomId);
     return { deleted: true };
+  }
+
+  private async syncRoomOccupancy(roomId: string) {
+    const room = await this.rooms.findOne({ where: { id: roomId } });
+    if (!room || room.status === RoomStatus.Maintenance) return;
+
+    const tenantCount = await this.permissions.count({
+      where: {
+        room: { id: roomId },
+        user: { role: UserRole.Tenant, active: true },
+      },
+    });
+
+    const nextStatus = tenantCount > 0 ? RoomStatus.Occupied : RoomStatus.Vacant;
+    if (room.status !== nextStatus) {
+      await this.rooms.update(roomId, { status: nextStatus });
+    }
   }
 
   private applyRoomPermissions(permission: Permission, dto: AssignUserRoomDto) {

@@ -9,6 +9,11 @@ export interface RoomDto {
   status: RoomStatus;
   description?: string | null;
   adafruitUsername?: string | null;
+  tenants?: Array<{
+    id: string;
+    name: string;
+    username: string;
+  }>;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -296,6 +301,11 @@ export async function getRooms() {
 
 export async function createRoom(payload: CreateRoomPayload) {
   const response = await http.post<RoomDto>('/rooms', payload);
+  return response.data;
+}
+
+export async function deleteRoom(roomId: string) {
+  const response = await http.delete<{ deleted: boolean }>(`/rooms/${roomId}`);
   return response.data;
 }
 

@@ -19,7 +19,7 @@ export class AiService {
       const response = await firstValueFrom(this.http.get(`${this.baseUrl}/health`));
       return response.data;
     } catch {
-      throw new ServiceUnavailableException('Python AI service is unavailable');
+      throw new ServiceUnavailableException('ai.serviceUnavailable');
     }
   }
 

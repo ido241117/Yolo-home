@@ -7,7 +7,7 @@ import { Not, Repository } from 'typeorm';
 import { AdafruitService } from '../adafruit/adafruit.service';
 import { AiService } from '../ai/ai.service';
 import { buildEncryptionKey, decrypt, encrypt } from '../common/encryption';
-import { User } from '../user/entities/user.entity';
+import { User, UserRole } from '../user/entities/user.entity';
 import { CommandDeviceDto } from './dto/command-device.dto';
 import { RecognizeFaceDto, RegisterFaceDto } from './dto/face.dto';
 import { AddMemberDto, UpdateMemberDto } from './dto/member.dto';
@@ -84,20 +84,28 @@ export class RoomService implements OnModuleInit {
   async findAll() {
     const rooms = await this.rooms.find({
       where: { name: Not(GLOBAL_ROOM_NAME) },
-      relations: { hardwareConfig: true },
+      relations: { hardwareConfig: true, permissions: { user: true } },
       order: { createdAt: 'DESC' },
     });
 
-    return rooms.map((room) => ({
-      id: room.id,
-      code: room.code,
-      name: room.name,
-      status: room.status,
-      description: room.description,
-      createdAt: room.createdAt,
-      updatedAt: room.updatedAt,
-      adafruitUsername: room.hardwareConfig?.adafruitUsername ?? null,
-    }));
+    return rooms.map((room) => {
+      const tenants = this.activeTenants(room);
+      return {
+        id: room.id,
+        code: room.code,
+        name: room.name,
+        status: this.effectiveStatus(room, tenants.length),
+        description: room.description,
+        createdAt: room.createdAt,
+        updatedAt: room.updatedAt,
+        adafruitUsername: room.hardwareConfig?.adafruitUsername ?? null,
+        tenants: tenants.map((tenant) => ({
+          id: tenant.id,
+          name: tenant.name,
+          username: tenant.username,
+        })),
+      };
+    });
   }
 
   create(dto: CreateRoomDto) {
@@ -107,13 +115,13 @@ export class RoomService implements OnModuleInit {
   async createRoom(dto: CreateRoomDto) {
     const code = dto.code?.trim() || (await this.generateRoomCode(dto.name));
     const existing = await this.rooms.findOne({ where: { code } });
-    if (existing) throw new BadRequestException(`Room code "${code}" already exists`);
+    if (existing) throw new BadRequestException(`room.codeExists:${code}`);
     return this.rooms.save(this.rooms.create({ ...dto, code }));
   }
 
   async findOne(ref: string) {
     const room = await this.findByRef(ref, { hardwareConfig: true });
-    if (!room) throw new NotFoundException('Room not found');
+    if (!room) throw new NotFoundException('room.notFound');
     return room;
   }
 
@@ -206,6 +214,17 @@ export class RoomService implements OnModuleInit {
     return { deleted: true };
   }
 
+  private activeTenants(room: Room) {
+    return (room.permissions ?? [])
+      .map((permission) => permission.user)
+      .filter((user) => user?.role === UserRole.Tenant && user.active);
+  }
+
+  private effectiveStatus(room: Room, tenantCount: number) {
+    if (room.status === 'maintenance') return room.status;
+    return tenantCount > 0 ? 'occupied' : 'vacant';
+  }
+
   // --- Hardware config ---
 
   async getHardware(roomId: string) {
@@ -272,12 +291,12 @@ export class RoomService implements OnModuleInit {
     const room = await this.findOne(ref);
     const roomId = room.id;
     const user = await this.users.findOne({ where: { id: dto.userId } });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException('user.notFound');
 
     const existing = await this.permissions.findOne({
       where: { room: { id: roomId }, user: { id: dto.userId } },
     });
-    if (existing) throw new BadRequestException('User is already a member of this room');
+    if (existing) throw new BadRequestException('room.memberAlreadyExists');
 
     const perm = this.permissions.create({ room, user });
     return this.permissions.save(perm);
@@ -313,7 +332,7 @@ export class RoomService implements OnModuleInit {
       where: { room: { id: roomId }, user: { id: userId } },
       relations: { user: true },
     });
-    if (!perm) throw new NotFoundException('Member not found in this room');
+    if (!perm) throw new NotFoundException('room.memberNotFound');
     return perm;
   }
 
@@ -454,7 +473,7 @@ export class RoomService implements OnModuleInit {
     } else if (dto.value !== undefined) {
       value = dto.value;
     } else {
-      throw new BadRequestException('Provide either value or action: toggle');
+      throw new BadRequestException('command.valueOrToggleRequired');
     }
 
     await this.adafruitService.writeFeed(roomId, deviceKey, value);
@@ -573,7 +592,7 @@ export class RoomService implements OnModuleInit {
     const room = await this.findOne(ref);
     const roomId = room.id;
     const samples = dto.images?.length ? dto.images : dto.image ? [dto.image] : [];
-    if (samples.length === 0) throw new BadRequestException('Face image is required');
+    if (samples.length === 0) throw new BadRequestException('face.imageRequired');
     const label = `face_${randomUUID()}`;
     const ai = await this.aiService.registerFace(roomId, label, dto.images?.length ? dto.images : dto.image!);
 
@@ -616,7 +635,7 @@ export class RoomService implements OnModuleInit {
     const face = await this.faceLabels.findOne({
       where: { id: faceId, room: { id: roomId } },
     });
-    if (!face) throw new NotFoundException('Face label not found');
+    if (!face) throw new NotFoundException('face.labelNotFound');
 
     const ai = await this.aiService.deleteFace(roomId, face.label);
     await this.faceLabels.remove(face);
@@ -718,19 +737,19 @@ export class RoomService implements OnModuleInit {
 
   private assertValidSensorKey(key: string) {
     if (!(VALID_SENSOR_KEYS as readonly string[]).includes(key)) {
-      throw new BadRequestException(`Invalid sensor key "${key}". Valid: ${VALID_SENSOR_KEYS.join(', ')}`);
+      throw new BadRequestException(`sensor.invalidKey:${key}:${VALID_SENSOR_KEYS.join(', ')}`);
     }
   }
 
   private assertValidDeviceKey(key: string) {
     if (!(VALID_DEVICE_KEYS as readonly string[]).includes(key)) {
-      throw new BadRequestException(`Invalid device key "${key}". Valid: ${VALID_DEVICE_KEYS.join(', ')}`);
+      throw new BadRequestException(`device.invalidKey:${key}:${VALID_DEVICE_KEYS.join(', ')}`);
     }
   }
 
   private assertAutoDeviceKey(key: string) {
     if (!(AUTO_DEVICE_KEYS as readonly string[]).includes(key)) {
-      throw new BadRequestException(`Auto control only supports ${AUTO_DEVICE_KEYS.join(', ')}`);
+      throw new BadRequestException(`autoControl.unsupportedDevice:${AUTO_DEVICE_KEYS.join(', ')}`);
     }
   }
 
@@ -760,7 +779,7 @@ export class RoomService implements OnModuleInit {
     const mode = await this.autoControlModes.findOne({
       where: { room: { id: roomId }, deviceKey, enabled: true },
     });
-    if (mode) throw new BadRequestException(`Disable ${deviceKey} auto mode before manual control`);
+    if (mode) throw new BadRequestException(`autoControl.manualDisabled:${deviceKey}`);
   }
 
   private async runEnabledAutoControls() {
@@ -802,7 +821,7 @@ export class RoomService implements OnModuleInit {
     const devicePrediction = (prediction as Record<string, Record<string, unknown> | undefined>)?.[key];
     const action = devicePrediction?.action;
     if (action !== 'ON' && action !== 'OFF') {
-      throw new BadRequestException(`AI did not return a valid ${deviceKey} action`);
+      throw new BadRequestException(`autoControl.invalidAiAction:${deviceKey}`);
     }
     return action;
   }

@@ -58,8 +58,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     >
       {/* Logo */}
       <div className="sidebar-logo">
-        <span className="sidebar-logo-mark">P</span>
-        {!collapsed && <span className="sidebar-logo-text">Proton IoT</span>}
+        <span className="sidebar-logo-mark">BK</span>
+        {!collapsed && <span className="sidebar-logo-text">BK IoT</span>}
       </div>
 
       {/* Navigation */}

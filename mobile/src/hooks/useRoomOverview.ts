@@ -58,18 +58,22 @@ export function useRoomOverview() {
     void refresh();
   }, [refresh]);
 
-  const isRoomMissing = error === 'No room assigned to current user';
+  const isRoomMissing =
+    error === 'No room assigned to current user' ||
+    error === 'Người dùng hiện tại chưa được gán phòng' ||
+    error === 'mobile.roomNotAssigned';
 
   const setDeviceMode = useCallback(
     async (deviceKey: string, mode: DeviceMode) => {
       if (!room) return;
+      const roomRef = room.code ?? room.id;
       setDeviceModes((current) => ({ ...current, [deviceKey]: mode }));
 
       try {
         let nextValue = toDeviceValue(deviceKey, mode);
 
         if (mode === 'auto' && (deviceKey === 'led' || deviceKey === 'fan')) {
-          const response = await autoControlRoomDevice(room.id, deviceKey);
+          const response = await autoControlRoomDevice(roomRef, deviceKey);
           if (!response.enabled) {
             const currentDevice = devices.find((device) => device.key === deviceKey);
             setDeviceModes((current) => ({
@@ -80,7 +84,7 @@ export function useRoomOverview() {
           await refresh();
           return;
         } else {
-          await commandRoomDevice(room.id, deviceKey, nextValue);
+          await commandRoomDevice(roomRef, deviceKey, nextValue);
         }
         setDevices((current) =>
           current.map((device) =>

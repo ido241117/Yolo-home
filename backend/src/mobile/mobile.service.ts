@@ -17,6 +17,7 @@ export class MobileService {
     const permission = await this.getPrimaryPermission(userId);
     return {
       id: permission.room.id,
+      code: permission.room.code,
       name: permission.room.name,
       status: permission.room.status,
       description: permission.room.description,
@@ -61,7 +62,7 @@ export class MobileService {
       .orderBy('room.name', 'ASC')
       .getOne();
 
-    if (!permission) throw new NotFoundException('No room assigned to current user');
+    if (!permission) throw new NotFoundException('mobile.roomNotAssigned');
     return permission;
   }
 

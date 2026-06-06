@@ -68,7 +68,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     return {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      error: 'Internal Server Error',
+      error: this.statusToErrorLabel(HttpStatus.INTERNAL_SERVER_ERROR),
       message: this.translateMessage(fallbackMessage),
     };
   }
@@ -131,6 +131,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
         return 'Quá nhiều yêu cầu';
       case HttpStatus.SERVICE_UNAVAILABLE:
         return 'Dịch vụ tạm thời không khả dụng';
+      case HttpStatus.BAD_GATEWAY:
+        return 'Dịch vụ bên ngoài không phản hồi';
       case HttpStatus.GATEWAY_TIMEOUT:
         return 'Hết thời gian chờ';
       case HttpStatus.INTERNAL_SERVER_ERROR:
@@ -155,6 +157,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
         return 'Dữ liệu không thể xử lý';
       case HttpStatus.TOO_MANY_REQUESTS:
         return 'Bạn gửi yêu cầu quá nhanh, vui lòng thử lại sau';
+      case HttpStatus.BAD_GATEWAY:
+        return 'Dịch vụ bên ngoài đang gặp sự cố, vui lòng thử lại sau';
+      case HttpStatus.SERVICE_UNAVAILABLE:
+        return 'Dịch vụ tạm thời không khả dụng, vui lòng thử lại sau';
+      case HttpStatus.GATEWAY_TIMEOUT:
+        return 'Dịch vụ phản hồi quá lâu, vui lòng thử lại sau';
       case HttpStatus.INTERNAL_SERVER_ERROR:
       default:
         return 'Có lỗi xảy ra, vui lòng thử lại sau';
@@ -197,9 +205,50 @@ export class AllExceptionsFilter implements ExceptionFilter {
       [/^refresh token không hợp lệ hoặc đã hết hạn$/i, 'Refresh token không hợp lệ hoặc đã hết hạn'],
       [/^Sai tên đăng nhập hoặc mật khẩu$/i, 'Sai tên đăng nhập hoặc mật khẩu'],
       [/^Mật khẩu hiện tại không đúng$/i, 'Mật khẩu hiện tại không đúng'],
+      [/^auth\.invalidCredentials$/i, 'Sai tên đăng nhập hoặc mật khẩu'],
+      [/^auth\.accountRevoked$/i, 'Tài khoản đã bị thu hồi'],
+      [/^auth\.invalidRefreshToken$/i, 'Refresh token không hợp lệ hoặc đã hết hạn'],
+      [/^auth\.revokedRefreshToken$/i, 'Refresh token đã bị thu hồi'],
+      [/^auth\.invalidCurrentPassword$/i, 'Mật khẩu hiện tại không đúng'],
+      [/^user\.usernameExists$/i, 'Username đã tồn tại'],
+      [/^user\.notFound$/i, 'Không tìm thấy người dùng'],
+      [/^room\.notFound$/i, 'Không tìm thấy phòng'],
+      [/^user\.roomAssignmentNotFound$/i, 'User chưa được gán vào room này'],
+      [/^room\.codeExists:(.+)$/i, (match) => `Mã phòng "${match[1]}" đã tồn tại`],
+      [/^room\.memberAlreadyExists$/i, 'Người dùng đã là thành viên của phòng này'],
+      [/^room\.memberNotFound$/i, 'Không tìm thấy thành viên trong phòng này'],
+      [/^face\.imageRequired$/i, 'Ảnh khuôn mặt là bắt buộc'],
+      [/^face\.labelNotFound$/i, 'Không tìm thấy nhãn khuôn mặt'],
+      [/^mobile\.roomNotAssigned$/i, 'Người dùng hiện tại chưa được gán phòng'],
+      [/^hardware\.configNotFound$/i, 'Chưa cấu hình phần cứng cho phòng này'],
+      [/^hardware\.adafruitUnavailable$/i, 'Không thể kết nối Adafruit IO, vui lòng kiểm tra cấu hình phần cứng'],
+      [/^ai\.serviceUnavailable$/i, 'Dịch vụ AI tạm thời không khả dụng'],
+      [/^sensor\.invalidKey:(.+):(.+)$/i, (match) => `Cảm biến "${match[1]}" không hợp lệ. Hợp lệ: ${match[2]}`],
+      [/^device\.invalidKey:(.+):(.+)$/i, (match) => `Thiết bị "${match[1]}" không hợp lệ. Hợp lệ: ${match[2]}`],
+      [/^device\.globalInvalidKey:(.+):(.+)$/i, (match) => `Thiết bị chung "${match[1]}" không hợp lệ. Hợp lệ: ${match[2]}`],
+      [/^autoControl\.unsupportedDevice:(.+)$/i, (match) => `Tự động điều khiển chỉ hỗ trợ: ${match[1]}`],
+      [/^autoControl\.manualDisabled:(.+)$/i, (match) => `Vui lòng tắt chế độ tự động của ${match[1]} trước khi điều khiển thủ công`],
+      [/^autoControl\.invalidAiAction:(.+)$/i, (match) => `AI không trả về thao tác hợp lệ cho ${match[1]}`],
+      [/^command\.valueOrToggleRequired$/i, 'Chỉ cung cấp một trong hai: value hoặc action: toggle'],
       [/^User is already a member of this room$/i, 'Người dùng đã là thành viên của phòng này'],
       [/^Face label is required$/i, 'Nhãn khuôn mặt là bắt buộc'],
       [/^Provide either value or action: toggle$/i, 'Chỉ cung cấp một trong hai: value hoặc action: toggle'],
+      [/^Room code "(.+)" already exists$/i, (match) => `Mã phòng "${match[1]}" đã tồn tại`],
+      [/^Room not found$/i, 'Không tìm thấy phòng'],
+      [/^User not found$/i, 'Không tìm thấy người dùng'],
+      [/^Member not found in this room$/i, 'Không tìm thấy thành viên trong phòng này'],
+      [/^Face image is required$/i, 'Ảnh khuôn mặt là bắt buộc'],
+      [/^Face label not found$/i, 'Không tìm thấy nhãn khuôn mặt'],
+      [/^No room assigned to current user$/i, 'Người dùng hiện tại chưa được gán phòng'],
+      [/^Hardware config not found for room (.+)$/i, 'Chưa cấu hình phần cứng cho phòng này'],
+      [/^Adafruit IO error (\d+): (.+)$/i, 'Không thể kết nối Adafruit IO, vui lòng kiểm tra cấu hình phần cứng'],
+      [/^Python AI service is unavailable$/i, 'Dịch vụ AI tạm thời không khả dụng'],
+      [/^Invalid sensor key "(.+)". Valid: (.+)$/i, (match) => `Cảm biến "${match[1]}" không hợp lệ. Hợp lệ: ${match[2]}`],
+      [/^Invalid device key "(.+)". Valid: (.+)$/i, (match) => `Thiết bị "${match[1]}" không hợp lệ. Hợp lệ: ${match[2]}`],
+      [/^Invalid global device key "(.+)". Valid: (.+)$/i, (match) => `Thiết bị chung "${match[1]}" không hợp lệ. Hợp lệ: ${match[2]}`],
+      [/^Auto control only supports (.+)$/i, (match) => `Tự động điều khiển chỉ hỗ trợ: ${match[1]}`],
+      [/^Disable (.+) auto mode before manual control$/i, (match) => `Vui lòng tắt chế độ tự động của ${match[1]} trước khi điều khiển thủ công`],
+      [/^AI did not return a valid (.+) action$/i, (match) => `AI không trả về thao tác hợp lệ cho ${match[1]}`],
     ];
 
     for (const [pattern, replacement] of replacements) {

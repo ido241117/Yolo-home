@@ -11,12 +11,13 @@ export default function AlertsPage() {
   const { room, isRoomMissing } = useRoomOverview();
   const [events, setEvents] = useState<RoomEventSummary[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const roomRef = room?.code ?? room?.id;
 
   async function refreshEvents() {
-    if (!room?.id) return;
+    if (!roomRef) return;
     setRefreshing(true);
     try {
-      const nextEvents = await getRoomEvents(room.id);
+      const nextEvents = await getRoomEvents(roomRef);
       setEvents(nextEvents);
     } catch {
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -28,7 +29,7 @@ export default function AlertsPage() {
   useEffect(() => {
     void refreshEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [room?.id]);
+  }, [roomRef]);
 
   const faceEvents = useMemo(() => events.filter((event) => event.type === 'face'), [events]);
   const hasEvents = faceEvents.length > 0;

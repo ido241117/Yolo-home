@@ -16,11 +16,11 @@ export class AuthService {
 
   async login(username: string, password: string) {
     const user = await this.userService.findByUsername(username);
-    if (!user) throw new UnauthorizedException('Sai tên đăng nhập hoặc mật khẩu');
-    if (!user.active) throw new UnauthorizedException('Tài khoản đã bị thu hồi');
+    if (!user) throw new UnauthorizedException('auth.invalidCredentials');
+    if (!user.active) throw new UnauthorizedException('auth.accountRevoked');
 
     const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) throw new UnauthorizedException('Sai tên đăng nhập hoặc mật khẩu');
+    if (!valid) throw new UnauthorizedException('auth.invalidCredentials');
 
     const accessToken = this.signAccessToken(user.id, user.username, user.role, user.isGlobalAdmin);
     const { token: refreshToken, hash } = this.buildRefreshToken(user.id);
@@ -52,7 +52,7 @@ export class AuthService {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET', 'refresh_change_me'),
       }) as { sub: string; type: string };
     } catch {
-      throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã hết hạn');
+      throw new UnauthorizedException('auth.invalidRefreshToken');
     }
 
     if (payload.type !== 'refresh') throw new UnauthorizedException();
@@ -61,7 +61,7 @@ export class AuthService {
     const user = await this.userService.findByIdWithRefreshToken(payload.sub);
 
     if (!user || !user.active || user.refreshTokenHash !== hash) {
-      throw new UnauthorizedException('Refresh token đã bị thu hồi');
+      throw new UnauthorizedException('auth.revokedRefreshToken');
     }
 
     return { accessToken: this.signAccessToken(user.id, user.username, user.role, user.isGlobalAdmin) };
@@ -74,7 +74,7 @@ export class AuthService {
     if (!user) throw new UnauthorizedException();
 
     const valid = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!valid) throw new BadRequestException('Mật khẩu hiện tại không đúng');
+    if (!valid) throw new BadRequestException('auth.invalidCurrentPassword');
 
     const newHash = await bcrypt.hash(newPassword, 10);
     await this.userService.updatePassword(userId, newHash);

@@ -8,11 +8,15 @@ export function RoomsTable({
   total,
   isLoading,
   isError,
+  deletingRoomId,
+  onDeleteRoom,
 }: {
   rows: RoomRow[];
   total: number;
   isLoading: boolean;
   isError: boolean;
+  deletingRoomId?: string;
+  onDeleteRoom: (room: RoomRow) => void;
 }) {
   const navigate = useNavigate();
   return (
@@ -94,8 +98,15 @@ export function RoomsTable({
                   <p className="text-label-sm text-on-surface-variant/50">{room.lastSensor}</p>
                 </td>
                 <td className="px-6 py-5 text-right" onClick={e => e.stopPropagation()}>
-                  <button className="text-on-surface-variant hover:text-primary p-1 transition-colors">
-                    <Icon name="more_vert" size={20} />
+                  <button
+                    type="button"
+                    disabled={deletingRoomId === room.id}
+                    onClick={() => onDeleteRoom(room)}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded border border-outline-variant text-on-surface-variant transition-colors hover:border-error hover:bg-error-container/20 hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
+                    title={`Delete ${room.name}`}
+                    aria-label={`Delete ${room.name}`}
+                  >
+                    <Icon name={deletingRoomId === room.id ? 'hourglass_empty' : 'delete'} size={20} />
                   </button>
                 </td>
               </tr>

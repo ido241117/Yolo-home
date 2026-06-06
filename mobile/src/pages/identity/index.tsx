@@ -34,6 +34,7 @@ export default function IdentityPage() {
   const [isRecognizing, setIsRecognizing] = useState(false);
   const [isLocking, setIsLocking] = useState(false);
   const [isRetraining, setIsRetraining] = useState(false);
+  const [deletingFaceId, setDeletingFaceId] = useState<string | null>(null);
   const [isCameraVisible, setIsCameraVisible] = useState(false);
   const [cameraMode, setCameraMode] = useState<CameraMode | null>(null);
   const [cameraFacing, setCameraFacing] = useState<CameraType>('front');
@@ -53,10 +54,12 @@ export default function IdentityPage() {
     };
   }, []);
 
+  const roomRef = room?.code ?? room?.id;
+
   useEffect(() => {
-    if (!room?.id) return;
-    void loadIdentityData(room.id);
-  }, [room?.id]);
+    if (!roomRef) return;
+    void loadIdentityData(roomRef);
+  }, [roomRef]);
 
   const totalLabel = useMemo(() => `${faces.length} Total`, [faces.length]);
 
@@ -163,7 +166,7 @@ export default function IdentityPage() {
   }
 
   async function openCameraSession(mode: CameraMode) {
-    if (!room?.id) return;
+    if (!roomRef) return;
 
     const granted = await ensureCameraPermission();
     if (!granted) return;
@@ -204,7 +207,7 @@ export default function IdentityPage() {
       }
 
       if (cameraMode === 'unlock') {
-        const roomId = room?.id;
+        const roomId = roomRef;
         resetCameraSession();
         if (!roomId) return;
 
@@ -236,14 +239,14 @@ export default function IdentityPage() {
   }
 
   async function handleFinalizeCameraRegistration() {
-    if (!room?.id || isRegistering) return;
+    if (!roomRef || isRegistering) return;
 
     if (cameraShots.length < REGISTER_MIN_IMAGES) {
       Alert.alert('More samples needed', `Capture at least ${REGISTER_MIN_IMAGES} clear face photos.`);
       return;
     }
 
-    const roomId = room.id;
+    const roomId = roomRef;
     const images = cameraShots;
 
     setIsRegistering(true);
@@ -266,7 +269,7 @@ export default function IdentityPage() {
   }
 
   async function handleRegisterFace(source: 'camera' | 'library') {
-    if (!room?.id || isRegistering) return;
+    if (!roomRef || isRegistering) return;
 
     if (source === 'camera') {
       await openCameraSession('register');
@@ -279,8 +282,8 @@ export default function IdentityPage() {
       const images = await pickRegisterImagesBase64();
       if (!images) return;
       setStatus(`Uploading ${images.length} face samples...`);
-      const result = await registerRoomFace(room.id, images);
-      await loadIdentityData(room.id);
+      const result = await registerRoomFace(roomRef, images);
+      await loadIdentityData(roomRef);
       const ai = result as { ai?: { accepted_samples?: number; rejected_samples?: number } };
       const accepted = ai.ai?.accepted_samples ?? images.length;
       const rejected = ai.ai?.rejected_samples ?? 0;
@@ -294,7 +297,7 @@ export default function IdentityPage() {
   }
 
   async function handleFaceUnlock(source: 'camera' | 'library') {
-    if (!room?.id || isRecognizing) return;
+    if (!roomRef || isRecognizing) return;
 
     if (source === 'camera') {
       await openCameraSession('unlock');
@@ -306,10 +309,10 @@ export default function IdentityPage() {
     try {
       const image = await pickImageBase64();
       if (!image) return;
-      const result = await recognizeRoomFace(room.id, image);
+      const result = await recognizeRoomFace(roomRef, image);
       const confidence = result.confidence == null ? '-' : `${Math.round(result.confidence * 100)}%`;
       setStatus(result.doorUnlocked ? `Door unlocked (${confidence})` : `Access denied (${confidence})`);
-      await Promise.all([loadIdentityData(room.id), refresh()]);
+      await Promise.all([loadIdentityData(roomRef), refresh()]);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Unable to recognize face');
     } finally {
@@ -318,12 +321,12 @@ export default function IdentityPage() {
   }
 
   async function handleLockDoor() {
-    if (!room?.id || isLocking) return;
+    if (!roomRef || isLocking) return;
     setIsLocking(true);
     try {
-      await commandRoomDevice(room.id, 'door', 'LOCKED');
+      await commandRoomDevice(roomRef, 'door', 'LOCKED');
       setStatus('Door locked.');
-      await Promise.all([loadIdentityData(room.id), refresh()]);
+      await Promise.all([loadIdentityData(roomRef), refresh()]);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Unable to lock door');
     } finally {
@@ -332,10 +335,10 @@ export default function IdentityPage() {
   }
 
   async function handleRetrain() {
-    if (!room?.id || isRetraining) return;
+    if (!roomRef || isRetraining) return;
     setIsRetraining(true);
     try {
-      await retrainRoomFaces(room.id);
+      await retrainRoomFaces(roomRef);
       setStatus('Face model retrained.');
     } catch {
       setStatus('Retrain request failed.');
@@ -345,9 +348,19 @@ export default function IdentityPage() {
   }
 
   async function handleDelete(faceId: string) {
-    setFaces((current) => current.filter((face) => face.id !== faceId));
-    if (!room?.id) return;
-    deleteRoomFace(room.id, faceId).catch(() => undefined);
+    if (!roomRef || deletingFaceId) return;
+
+    setDeletingFaceId(faceId);
+    setStatus('Deleting face profile...');
+    try {
+      await deleteRoomFace(roomRef, faceId);
+      await Promise.all([loadIdentityData(roomRef), refresh()]);
+      setStatus('Face profile deleted.');
+    } catch (err) {
+      setStatus(err instanceof Error ? `Unable to delete face: ${err.message}` : 'Unable to delete face');
+    } finally {
+      setDeletingFaceId(null);
+    }
   }
 
   return (
@@ -511,8 +524,16 @@ export default function IdentityPage() {
                 <Text style={pageStyles.faceName}>{face.name}</Text>
               </View>
             </View>
-            <Pressable style={pageStyles.deleteButton} onPress={() => handleDelete(face.id)}>
-              <Trash2 size={20} color={theme.colors.error} />
+            <Pressable
+              style={[pageStyles.deleteButton, deletingFaceId === face.id && pageStyles.deleteButtonDisabled]}
+              onPress={() => handleDelete(face.id)}
+              disabled={Boolean(deletingFaceId)}
+            >
+              {deletingFaceId === face.id ? (
+                <ActivityIndicator color={theme.colors.error} />
+              ) : (
+                <Trash2 size={20} color={theme.colors.error} />
+              )}
             </Pressable>
           </View>
         ))}
@@ -866,6 +887,9 @@ const pageStyles = StyleSheet.create({
     backgroundColor: colors.errorContainer,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  deleteButtonDisabled: {
+    opacity: 0.6,
   },
   emptyCard: {
     borderRadius: rounded.lg,

@@ -46,7 +46,7 @@ export class UserController {
       throw new ForbiddenException();
     }
     const user = await this.userService.findById(id);
-    if (!user) throw new NotFoundException('User không tồn tại');
+    if (!user) throw new NotFoundException('user.notFound');
     const { passwordHash, ...safe } = user as any;
     return safe;
   }

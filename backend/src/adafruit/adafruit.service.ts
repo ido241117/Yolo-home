@@ -32,7 +32,7 @@ export class AdafruitService {
       where: { room: { id: roomId } },
       relations: { room: true },
     });
-    if (!config) throw new NotFoundException(`Hardware config not found for room ${roomId}`);
+    if (!config) throw new NotFoundException('hardware.configNotFound');
     return config;
   }
 
@@ -49,7 +49,7 @@ export class AdafruitService {
       headers: { 'X-AIO-Key': apiKey },
     });
     if (!res.ok) {
-      throw new BadGatewayException(`Adafruit IO error ${res.status}: ${path}`);
+      throw new BadGatewayException('hardware.adafruitUnavailable');
     }
     return res.json() as Promise<T>;
   }
@@ -66,7 +66,7 @@ export class AdafruitService {
       body: JSON.stringify(body),
     });
     if (!res.ok) {
-      throw new BadGatewayException(`Adafruit IO error ${res.status}: ${path}`);
+      throw new BadGatewayException('hardware.adafruitUnavailable');
     }
     return res.json() as Promise<T>;
   }
