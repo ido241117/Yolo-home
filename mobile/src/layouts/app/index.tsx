@@ -18,23 +18,11 @@ const navItems = [
   { key: 'profile', label: 'Profile', Icon: User },
 ] as const;
 
-const APP_HEADER_VERSION = '02';
-
 export default function AppLayout({ activeTab = 'home', children, onTabPress, title = 'My Room' }: AppLayoutProps) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.appShell}>
-        <View style={styles.topAppBar}>
-          <View style={styles.appBarIdentity}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>DA</Text>
-            </View>
-            <Text style={styles.appBarTitle}>{title}</Text>
-            <View style={styles.appVersionPill}>
-              <Text style={styles.appVersionText}>{APP_HEADER_VERSION}</Text>
-            </View>
-          </View>
-        </View>
+        <View style={styles.topSpacer} />
 
         <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
           {children}

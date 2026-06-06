@@ -8,6 +8,7 @@ import {
   MembersTable,
   RoomDetailHeader,
   RoomEventsLog,
+  RoomSensorHistoryCharts,
   SensorPanel,
 } from '@/components/room-detail';
 import { useRoomDetailData, useRoomDeviceAutoCommand, useRoomDeviceCommand, useUpsertRoomHardware } from '@/hooks';
@@ -18,7 +19,17 @@ const emptySensors: SensorMap = { temp: null, humi: null, light: null, human: nu
 export default function RoomDetailPage() {
   const { code = '' } = useParams();
   const navigate = useNavigate();
-  const { summaryQuery, hardwareQuery, membersQuery, facesQuery, eventsQuery, hasPartialError } = useRoomDetailData(code);
+  const {
+    summaryQuery,
+    hardwareQuery,
+    membersQuery,
+    facesQuery,
+    eventsQuery,
+    tempHistoryQuery,
+    humiHistoryQuery,
+    presenceHistoryQuery,
+    hasPartialError,
+  } = useRoomDetailData(code);
   const commandMutation = useRoomDeviceCommand(code);
   const autoCommandMutation = useRoomDeviceAutoCommand(code);
   const hardwareMutation = useUpsertRoomHardware(code);
@@ -65,6 +76,14 @@ export default function RoomDetailPage() {
       )}
 
       <SensorPanel sensors={sensors} />
+      <RoomSensorHistoryCharts
+        temp={sensors.temp}
+        humi={sensors.humi}
+        human={sensors.human}
+        tempHistory={tempHistoryQuery.data?.history}
+        humiHistory={humiHistoryQuery.data?.history}
+        presenceHistory={presenceHistoryQuery.data?.history}
+      />
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 lg:col-span-4 space-y-6">
           <DeviceControlPanel

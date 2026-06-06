@@ -637,7 +637,20 @@ export class RoomService implements OnModuleInit {
     });
     if (!face) throw new NotFoundException('face.labelNotFound');
 
-    const ai = await this.aiService.deleteFace(roomId, face.label);
+    let ai: unknown;
+    try {
+      ai = await this.aiService.deleteFace(roomId, face.label);
+    } catch (error) {
+      if (!this.isAiFaceLabelMissing(error)) {
+        throw error;
+      }
+      ai = {
+        success: false,
+        missingInAi: true,
+        label: face.label,
+        message: 'Face label was missing from AI storage; removed stale database record',
+      };
+    }
     await this.faceLabels.remove(face);
     await this.eventLogs.save(
       this.eventLogs.create({
@@ -648,6 +661,17 @@ export class RoomService implements OnModuleInit {
     );
 
     return { deleted: true, label: face.label, ai };
+  }
+
+  private isAiFaceLabelMissing(error: unknown) {
+    const response = (error as {
+      response?: {
+        status?: number;
+        data?: { error?: unknown; message?: unknown };
+      };
+    })?.response;
+    const message = String(response?.data?.error ?? response?.data?.message ?? '');
+    return response?.status === 404 && /face label not found/i.test(message);
   }
 
   async retrainFaces(ref: string) {

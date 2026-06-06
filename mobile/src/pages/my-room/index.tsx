@@ -82,9 +82,7 @@ export default function MyRoomPage() {
   return (
     <>
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>DADN Mobile</Text>
         <Text style={styles.title}>{room?.name ?? 'My Room'}</Text>
-        <Text style={styles.subtitle}>Tenant accounts can control room devices through the NestJS API.</Text>
       </View>
 
       {error ? (

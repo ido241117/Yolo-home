@@ -13,6 +13,10 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  topSpacer: {
+    height: topSafePadding + spacing.sm,
+    backgroundColor: colors.surfaceContainerLow,
+  },
   topAppBar: {
     minHeight: 72,
     paddingHorizontal: spacing.marginMobile,

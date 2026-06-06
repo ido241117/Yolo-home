@@ -28,6 +28,12 @@ export interface HistoryValueState {
   createdAt: string;
 }
 
+export interface RoomSensorHistoryResponse {
+  sensorKey: keyof SensorMap;
+  unit: string | null;
+  history: HistoryValueState[];
+}
+
 export interface AutoModeMap {
   led: boolean;
   fan: boolean;
@@ -346,6 +352,17 @@ export async function getRoomFaces(roomId: string) {
 
 export async function getRoomEvents(roomId: string, limit = 20) {
   const response = await http.get<EventDto[]>(`/rooms/${roomId}/events`, { params: { limit } });
+  return response.data;
+}
+
+export async function getRoomSensorHistory(
+  roomId: string,
+  sensorKey: keyof SensorMap,
+  limit = 50,
+) {
+  const response = await http.get<RoomSensorHistoryResponse>(`/rooms/${roomId}/sensors/history`, {
+    params: { sensorKey, limit },
+  });
   return response.data;
 }
 

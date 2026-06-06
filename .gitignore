@@ -24,8 +24,10 @@ backend/coverage/
 backend/AI/.venv/
 backend/AI/__pycache__/
 backend/AI/**/__pycache__/
-backend/AI/models/*.pkl
-backend/AI/data/user_log.csv
+backend/AI/data/
+backend/AI/models/
+pkt/
+*.pkt
 backend/*.yml
 backend/*.yaml
 

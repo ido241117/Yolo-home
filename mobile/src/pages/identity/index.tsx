@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleShe
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import type { CameraType } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera, CheckCircle2, CircleAlert, Lock, ScanFace, Trash2, UserPlus, Wand2 } from 'lucide-react-native';
+import { Camera, CheckCircle2, CircleAlert, Lock, ScanFace, Trash2, UserPlus } from 'lucide-react-native';
 import {
   commandRoomDevice,
   deleteRoomFace,
@@ -11,7 +11,6 @@ import {
   getRoomFaces,
   recognizeRoomFace,
   registerRoomFace,
-  retrainRoomFaces,
 } from '../../apis';
 import { RoomAccessNotice } from '../../components';
 import { useRoomOverview } from '../../hooks';
@@ -24,7 +23,7 @@ const REGISTER_MAX_IMAGES = 7;
 type CameraMode = 'register' | 'unlock';
 
 export default function IdentityPage() {
-  const { room, refresh, isRoomMissing } = useRoomOverview();
+  const { room, devices, refresh, isRoomMissing } = useRoomOverview();
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [faces, setFaces] = useState<FaceSummary[]>([]);
@@ -33,7 +32,6 @@ export default function IdentityPage() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isRecognizing, setIsRecognizing] = useState(false);
   const [isLocking, setIsLocking] = useState(false);
-  const [isRetraining, setIsRetraining] = useState(false);
   const [deletingFaceId, setDeletingFaceId] = useState<string | null>(null);
   const [isCameraVisible, setIsCameraVisible] = useState(false);
   const [cameraMode, setCameraMode] = useState<CameraMode | null>(null);
@@ -55,6 +53,8 @@ export default function IdentityPage() {
   }, []);
 
   const roomRef = room?.code ?? room?.id;
+  const door = devices.find((device) => device.key === 'door');
+  const isDoorUnlocked = door?.value === 'UNLOCKED' || door?.active;
 
   useEffect(() => {
     if (!roomRef) return;
@@ -334,17 +334,12 @@ export default function IdentityPage() {
     }
   }
 
-  async function handleRetrain() {
-    if (!roomRef || isRetraining) return;
-    setIsRetraining(true);
-    try {
-      await retrainRoomFaces(roomRef);
-      setStatus('Face model retrained.');
-    } catch {
-      setStatus('Retrain request failed.');
-    } finally {
-      setIsRetraining(false);
+  async function handleDoorAction() {
+    if (isDoorUnlocked) {
+      await handleLockDoor();
+      return;
     }
+    await handleFaceUnlock('camera');
   }
 
   async function handleDelete(faceId: string) {
@@ -387,19 +382,15 @@ export default function IdentityPage() {
             <UserPlus size={18} color={theme.colors.onSurface} />
             <Text style={pageStyles.tertiaryActionText}>Camera Add</Text>
           </Pressable>
-          <Pressable style={pageStyles.tertiaryAction} onPress={() => handleFaceUnlock('camera')} disabled={isRecognizing}>
-            <ScanFace size={18} color={theme.colors.onSurface} />
-            <Text style={pageStyles.tertiaryActionText}>Camera Unlock</Text>
-          </Pressable>
-        </View>
-        <View style={pageStyles.actionRow}>
-          <Pressable style={pageStyles.tertiaryAction} onPress={handleLockDoor} disabled={isLocking}>
-            <Lock size={18} color={theme.colors.onSurface} />
-            <Text style={pageStyles.tertiaryActionText}>{isLocking ? 'Locking...' : 'Lock Door'}</Text>
-          </Pressable>
-          <Pressable style={pageStyles.tertiaryAction} onPress={handleRetrain} disabled={isRetraining}>
-            <Wand2 size={18} color={theme.colors.onSurface} />
-            <Text style={pageStyles.tertiaryActionText}>{isRetraining ? 'Processing...' : 'Retrain AI'}</Text>
+          <Pressable style={pageStyles.tertiaryAction} onPress={handleDoorAction} disabled={isRecognizing || isLocking}>
+            {isDoorUnlocked ? (
+              <Lock size={18} color={theme.colors.onSurface} />
+            ) : (
+              <ScanFace size={18} color={theme.colors.onSurface} />
+            )}
+            <Text style={pageStyles.tertiaryActionText}>
+              {isLocking ? 'Locking...' : isRecognizing ? 'Scanning...' : isDoorUnlocked ? 'Lock Door' : 'Camera Unlock'}
+            </Text>
           </Pressable>
         </View>
         {status && <Text style={pageStyles.statusText}>{status}</Text>}

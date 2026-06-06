@@ -6,6 +6,7 @@ import {
   getRoomFaces,
   getRoomHardware,
   getRoomMembers,
+  getRoomSensorHistory,
   getRoomSummary,
   upsertRoomHardware,
   type UpsertHardwareConfigPayload,
@@ -18,6 +19,9 @@ export function useRoomDetailData(roomCode: string) {
   const membersQuery = useQuery({ queryKey: ['rooms', roomCode, 'members'], queryFn: () => getRoomMembers(roomCode), enabled });
   const facesQuery = useQuery({ queryKey: ['rooms', roomCode, 'faces'], queryFn: () => getRoomFaces(roomCode), enabled });
   const eventsQuery = useQuery({ queryKey: ['rooms', roomCode, 'events'], queryFn: () => getRoomEvents(roomCode, 20), enabled });
+  const tempHistoryQuery = useQuery({ queryKey: ['rooms', roomCode, 'sensors', 'temp', 'history'], queryFn: () => getRoomSensorHistory(roomCode, 'temp', 80), enabled });
+  const humiHistoryQuery = useQuery({ queryKey: ['rooms', roomCode, 'sensors', 'humi', 'history'], queryFn: () => getRoomSensorHistory(roomCode, 'humi', 80), enabled });
+  const presenceHistoryQuery = useQuery({ queryKey: ['rooms', roomCode, 'sensors', 'human', 'history'], queryFn: () => getRoomSensorHistory(roomCode, 'human', 80), enabled });
 
   return {
     summaryQuery,
@@ -25,7 +29,17 @@ export function useRoomDetailData(roomCode: string) {
     membersQuery,
     facesQuery,
     eventsQuery,
-    hasPartialError: hardwareQuery.isError || membersQuery.isError || facesQuery.isError || eventsQuery.isError,
+    tempHistoryQuery,
+    humiHistoryQuery,
+    presenceHistoryQuery,
+    hasPartialError:
+      hardwareQuery.isError ||
+      membersQuery.isError ||
+      facesQuery.isError ||
+      eventsQuery.isError ||
+      tempHistoryQuery.isError ||
+      humiHistoryQuery.isError ||
+      presenceHistoryQuery.isError,
   };
 }
 

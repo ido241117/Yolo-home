@@ -4,4 +4,5 @@ export { HardwarePanel } from './HardwarePanel';
 export { MembersTable } from './MembersTable';
 export { RoomDetailHeader } from './RoomDetailHeader';
 export { RoomEventsLog } from './RoomEventsLog';
+export { RoomSensorHistoryCharts } from './RoomSensorHistoryCharts';
 export { SensorPanel } from './SensorPanel';
